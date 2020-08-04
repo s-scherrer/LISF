@@ -1,3 +1,5 @@
 *.o
 *.mod
 *.d
+KUL_LIS_modules
+KUL_LDT_modules
