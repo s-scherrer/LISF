@@ -3,3 +3,13 @@
 *.d
 KUL_LIS_modules
 KUL_LDT_modules
+ldt/make/LDT_NetCDF_inc.h
+ldt/make/LDT_misc.h
+ldt/make/configure.ldt
+lis/LIS
+lis/make/LIS_NetCDF_inc.h
+lis/make/LIS_misc.h
+lis/make/LIS_plugins.h
+lis/make/configure.lis
+lis/make/user.cfg
+
