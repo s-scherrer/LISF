@@ -445,7 +445,7 @@ contains
        endif
 
        call LIS_diagnoseRTMOutputVar(n, t,LIS_MOC_RTM_Sig0VV,value=       &
-x          wcm_struc(n)%Sig0VV(t),             &
+          wcm_struc(n)%Sig0VV(t),             &
           vlevel=1, unit="dB",direction="-")
 
        call LIS_diagnoseRTMOutputVar(n, t,LIS_MOC_RTM_Sig0VH,value=       &
