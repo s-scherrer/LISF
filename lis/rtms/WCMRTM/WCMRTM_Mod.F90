@@ -376,7 +376,7 @@ contains
    integer             :: status
    integer             :: col,row
    real                :: A_VV_cal,B_VV_cal,C_VV_cal,D_VV_cal,A_VH_cal,&
-                          B_VH_cal, C_VH_cal, D_VH_cal,lon,lat,lon1,lat1
+                          B_VH_cal, C_VH_cal; D_VH_cal,lon,lat,lon1,lat1
    real, pointer       :: sm(:), lai(:)
    real                :: sigmabare_VV,sigmabare_VH,s0VV_s_db, s0VH_s_dB, &
                         sigmacan_VV, sigmacan_VH,sigmasoil_VV,sigmasoil_VH,&
@@ -445,7 +445,7 @@ contains
        endif
 
        call LIS_diagnoseRTMOutputVar(n, t,LIS_MOC_RTM_Sig0VV,value=       &
-          wcm_struc(n)%Sig0VV(t),             &
+x          wcm_struc(n)%Sig0VV(t),             &
           vlevel=1, unit="dB",direction="-")
 
        call LIS_diagnoseRTMOutputVar(n, t,LIS_MOC_RTM_Sig0VH,value=       &
