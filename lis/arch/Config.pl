@@ -9,7 +9,6 @@
 #-------------------------END NOTICE -- DO NOT EDIT-----------------------
 # 6 Jan 2012: Sujay Kumar, Initial Specification
 # 15 Sep 2020: Sara Modanesi, added specification for USE_WCM (Water Cloud Model)
-# 11 Nov 2020: Alexander Gruber/Sara Modanesi, use lis-crtm-profile-utility also for other RTMs
 # Process environment and configure options
 #
 
