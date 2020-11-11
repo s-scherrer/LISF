@@ -625,7 +625,6 @@ if($use_wcm eq ""){
    $use_wcm=0;
 }
 
-
 print "Use LIS-CRTM? (1-yes, 0-no, default=0): ";
 $use_crtm=<stdin>;
 chomp($use_crtm);
