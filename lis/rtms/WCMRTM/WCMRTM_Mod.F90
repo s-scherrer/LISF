@@ -1,4 +1,4 @@
-W!-----------------------BEGIN---------------------------------------------
+!-----------------------BEGIN---------------------------------------------
 ! NASA Goddard Space Flight Center Land Information System (LIS) v7.2
 !
 ! Copyright (c) 2015 United States Government as represented by the
