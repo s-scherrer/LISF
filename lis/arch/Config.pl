@@ -994,6 +994,7 @@ else{
    printf misc_file "%s\n","#undef RTMS ";
 }
 
+
 if($use_lapack == 1) {
    printf misc_file "%s\n","#define LAPACK ";
 }
