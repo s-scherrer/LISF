@@ -144,10 +144,12 @@ subroutine NoahMP401_setlaisoilm(n, LSM_State)
      
      !MN: delta = X(+) - X(-)
      !NOTE: "noahmp401_updatelaisoilm.F90" updates the soilm_(t)     
-     delta1 = soilm1(t)-noahmp401_struc(n)%noahmp401(t)%smc(1)
+     ! delta1 = soilm1(t)-noahmp401_struc(n)%noahmp401(t)%smc(1)
+     delta1 = 0.0
      delta2 = soilm2(t)-noahmp401_struc(n)%noahmp401(t)%smc(2)
      delta3 = soilm3(t)-noahmp401_struc(n)%noahmp401(t)%smc(3)
-     delta4 = soilm4(t)-noahmp401_struc(n)%noahmp401(t)%smc(4)
+     ! delta4 = soilm4(t)-noahmp401_struc(n)%noahmp401(t)%smc(4)
+     delta4 = 0.0
 
      ! MN: check    MIN_THRESHOLD < volumetric liquid soil moisture < threshold 
      if(noahmp401_struc(n)%noahmp401(t)%sh2o(1)+delta1.gt.MIN_THRESHOLD .and.&
@@ -276,11 +278,14 @@ subroutine NoahMP401_setlaisoilm(n, LSM_State)
            ! MN check update status for each tile  
            if(update_flag_tile(t)) then
               
-              delta1 = soilm1(t)-noahmp401_struc(n)%noahmp401(t)%smc(1)
+              !delta1 = soilm1(t)-noahmp401_struc(n)%noahmp401(t)%smc(1)
+              delta1 = 0.0
               delta2 = soilm2(t)-noahmp401_struc(n)%noahmp401(t)%smc(2)
               delta3 = soilm3(t)-noahmp401_struc(n)%noahmp401(t)%smc(3)
-              delta4 = soilm4(t)-noahmp401_struc(n)%noahmp401(t)%smc(4)
+              ! delta4 = soilm4(t)-noahmp401_struc(n)%noahmp401(t)%smc(4)
+              delta4 = 0.0
 
+#if 0
               noahmp401_struc(n)%noahmp401(t)%sh2o(1) = noahmp401_struc(n)%noahmp401(t)%sh2o(1)+&
                    delta1
               noahmp401_struc(n)%noahmp401(t)%smc(1) = soilm1(t)
@@ -288,6 +293,7 @@ subroutine NoahMP401_setlaisoilm(n, LSM_State)
                  print*, 'setsoilm1 ',t,soilm1(t)
                  stop
               endif
+#endif
               if(noahmp401_struc(n)%noahmp401(t)%sh2o(2)+delta2.gt.MIN_THRESHOLD .and.&
                    noahmp401_struc(n)%noahmp401(t)%sh2o(2)+delta2.lt.sm_threshold) then 
                  noahmp401_struc(n)%noahmp401(t)%sh2o(2) = noahmp401_struc(n)%noahmp401(t)%sh2o(2)+&
@@ -298,7 +304,7 @@ subroutine NoahMP401_setlaisoilm(n, LSM_State)
                     stop
                  endif
               endif
-  
+
               if(noahmp401_struc(n)%noahmp401(t)%sh2o(3)+delta3.gt.MIN_THRESHOLD .and.&
                    noahmp401_struc(n)%noahmp401(t)%sh2o(3)+delta3.lt.sm_threshold) then 
                  noahmp401_struc(n)%noahmp401(t)%sh2o(3) = noahmp401_struc(n)%noahmp401(t)%sh2o(3)+&
@@ -310,6 +316,7 @@ subroutine NoahMP401_setlaisoilm(n, LSM_State)
                  endif
               endif
 
+#if 0
               if(noahmp401_struc(n)%noahmp401(t)%sh2o(4)+delta4.gt.MIN_THRESHOLD .and.&
                    noahmp401_struc(n)%noahmp401(t)%sh2o(4)+delta4.lt.sm_threshold) then 
                  noahmp401_struc(n)%noahmp401(t)%sh2o(4) = noahmp401_struc(n)%noahmp401(t)%sh2o(4)+&
@@ -321,6 +328,7 @@ subroutine NoahMP401_setlaisoilm(n, LSM_State)
                     stop
                  endif
               endif
+#endif
               
               
 !-----------------------------------------------------------------------------------------              
@@ -334,9 +342,9 @@ subroutine NoahMP401_setlaisoilm(n, LSM_State)
               
               ! use mean value
               ! Assume sh2o = smc (i.e. ice content=0) 
-              smc_tmp = (MaxEnsSM1 - MinEnsSM1)/2 + MinEnsSM1
-              noahmp401_struc(n)%noahmp401(t)%sh2o(1) = smc_tmp 
-              noahmp401_struc(n)%noahmp401(t)%smc(1) = smc_tmp
+              !smc_tmp = (MaxEnsSM1 - MinEnsSM1)/2 + MinEnsSM1
+              !noahmp401_struc(n)%noahmp401(t)%sh2o(1) = smc_tmp 
+              !noahmp401_struc(n)%noahmp401(t)%smc(1) = smc_tmp
                           
               smc_tmp = (MaxEnsSM2 - MinEnsSM2)/2 + MinEnsSM2            
               noahmp401_struc(n)%noahmp401(t)%sh2o(2) = smc_tmp
@@ -346,9 +354,9 @@ subroutine NoahMP401_setlaisoilm(n, LSM_State)
               noahmp401_struc(n)%noahmp401(t)%sh2o(3) = smc_tmp
               noahmp401_struc(n)%noahmp401(t)%smc(3) = smc_tmp
               
-              smc_tmp = (MaxEnsSM4 - MinEnsSM4)/2 + MinEnsSM4
-              noahmp401_struc(n)%noahmp401(t)%sh2o(4) = smc_tmp
-              noahmp401_struc(n)%noahmp401(t)%smc(4) = smc_tmp
+              !smc_tmp = (MaxEnsSM4 - MinEnsSM4)/2 + MinEnsSM4
+              !noahmp401_struc(n)%noahmp401(t)%sh2o(4) = smc_tmp
+              !noahmp401_struc(n)%noahmp401(t)%smc(4) = smc_tmp
               
  
            endif ! flag for each tile
@@ -370,7 +378,7 @@ subroutine NoahMP401_setlaisoilm(n, LSM_State)
               niter = niter + 1
               !t_unpert = i*LIS_rc%nensem(n)
 	      t_unpert = i+LIS_rc%nensem(n)-1
-              do j=1,4
+              do j=2,3 ! TODO
                  delta(j) = 0.0
                  do m=1,LIS_rc%nensem(n)-1
                      t = i+m-1
@@ -385,7 +393,7 @@ subroutine NoahMP401_setlaisoilm(n, LSM_State)
                  enddo
               enddo
               
-              do j=1,4
+              do j=2,3  ! TODO: change back to j=1,4 for SSM update
                  delta(j) =delta(j)/(LIS_rc%nensem(n)-1)
                  do m=1,LIS_rc%nensem(n)-1
                      t = i+m-1
@@ -419,7 +427,7 @@ subroutine NoahMP401_setlaisoilm(n, LSM_State)
               !--------------------------------------------------------------------------
               ! Recalculate the deltas and adjust the ensemble
               !--------------------------------------------------------------------------
-              do j=1,4
+              do j=2,3 ! TODO
                  delta(j) = 0.0
                  do m=1,LIS_rc%nensem(n)-1
                     t = i+m-1
@@ -432,7 +440,7 @@ subroutine NoahMP401_setlaisoilm(n, LSM_State)
                  enddo
               enddo
               
-              do j=1,4
+              do j=2,3 ! TODO
                  delta(j) =delta(j)/(LIS_rc%nensem(n)-1)
                  do m=1,LIS_rc%nensem(n)-1
                     t = i+m-1
@@ -476,7 +484,7 @@ subroutine NoahMP401_setlaisoilm(n, LSM_State)
                  write(LIS_logunit,*) '[ERR] Ensemble structure violates physical bounds '
                  write(LIS_logunit,*) '[ERR] Please adjust the perturbation settings ..'
 
-                 do j=1,4
+                 do j=2,3 ! TODO
                     do m=1,LIS_rc%nensem(n)
                        t = i+m-1
                        !t = (i-1)*LIS_rc%nensem(n)+m
