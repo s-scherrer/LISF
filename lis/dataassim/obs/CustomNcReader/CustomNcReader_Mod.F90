@@ -553,6 +553,83 @@ contains
              "[INFO] read Custom "//trim(varname)//" data specifications"
 
         !------------------------------------------------------------
+        ! Read grid information and resample
+        !------------------------------------------------------------
+        do n=1,LIS_rc%nnest
+
+            if(LIS_rc%lis_obs_map_proj(k).ne."latlon") then
+                write(LIS_logunit,*)&
+                     '[ERROR] The Custom reader module only works with latlon projection'       
+                call LIS_endrun
+            endif
+
+            reader_struc(n)%gridDesci(1) = 0  ! regular lat-lon grid
+            reader_struc(n)%gridDesci(2) = reader_struc(n)%nc
+            reader_struc(n)%gridDesci(3) = reader_struc(n)%nr
+            reader_struc(n)%gridDesci(4) = reader_struc(n)%latmax
+            reader_struc(n)%gridDesci(5) = reader_struc(n)%lonmin
+            reader_struc(n)%gridDesci(6) = 128
+            reader_struc(n)%gridDesci(7) = reader_struc(n)%latmin
+            reader_struc(n)%gridDesci(8) = reader_struc(n)%lonmax
+            reader_struc(n)%gridDesci(9) = reader_struc(n)%dlat
+            reader_struc(n)%gridDesci(10) = reader_struc(n)%dlon
+            reader_struc(n)%gridDesci(20) = 64
+
+            reader_struc(n)%mi = reader_struc(n)%nc*reader_struc(n)%nr
+
+            !-----------------------------------------------------------------------------
+            !   Use interpolation if LIS is running finer than native resolution.
+            !-----------------------------------------------------------------------------
+            if(LIS_rc%obs_gridDesc(k,10).le.reader_struc(n)%dlon) then
+
+                allocate(reader_struc(n)%rlat(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
+                allocate(reader_struc(n)%rlon(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
+                allocate(reader_struc(n)%n11(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
+                allocate(reader_struc(n)%n12(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
+                allocate(reader_struc(n)%n21(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
+                allocate(reader_struc(n)%n22(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
+                allocate(reader_struc(n)%w11(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
+                allocate(reader_struc(n)%w12(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
+                allocate(reader_struc(n)%w21(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
+                allocate(reader_struc(n)%w22(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
+
+                write(LIS_logunit,*)&
+                     "[INFO] create interpolation input for Custom "//trim(varname)//""
+
+                call bilinear_interp_input_withgrid(reader_struc(n)%gridDesci(:), &
+                     LIS_rc%obs_gridDesc(k,:),&
+                     LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k),&
+                     reader_struc(n)%rlat, reader_struc(n)%rlon,&
+                     reader_struc(n)%n11, reader_struc(n)%n12, &
+                     reader_struc(n)%n21, reader_struc(n)%n22, &
+                     reader_struc(n)%w11, reader_struc(n)%w12, &
+                     reader_struc(n)%w21, reader_struc(n)%w22)
+            else
+
+                allocate(reader_struc(n)%n11(&
+                     reader_struc(n)%nc*reader_struc(n)%nr))
+
+                write(LIS_logunit,*)&
+                     "[INFO] create upscaling input for Custom "//trim(varname)//""
+
+                call upscaleByAveraging_input(reader_struc(n)%gridDesci(:),&
+                     LIS_rc%obs_gridDesc(k,:),&
+                     reader_struc(n)%nc*reader_struc(n)%nr, &
+                     LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k), reader_struc(n)%n11)
+
+                write(LIS_logunit,*)&
+                     "[INFO] finished creating upscaling input for Custom "//trim(varname)//""
+            endif
+
+            call LIS_registerAlarm("Custom "//trim(varname)//" read alarm",&
+                 86400.0, 86400.0)
+
+            call ESMF_StateAdd(OBS_State(n),(/obsField(n)/),rc=status)
+            call LIS_verify(status, "Adding observation field failed")
+
+        enddo
+
+        !------------------------------------------------------------
         ! Read perturbation settings
         !------------------------------------------------------------
         do n=1,LIS_rc%nnest
@@ -834,82 +911,6 @@ contains
             endif ! dascaloption .ne. "none"
         enddo
 
-        !------------------------------------------------------------
-        ! Read grid information and resample
-        !------------------------------------------------------------
-        do n=1,LIS_rc%nnest
-
-            if(LIS_rc%lis_obs_map_proj(k).ne."latlon") then
-                write(LIS_logunit,*)&
-                     '[ERROR] The Custom reader module only works with latlon projection'       
-                call LIS_endrun
-            endif
-
-            reader_struc(n)%gridDesci(1) = 0  ! regular lat-lon grid
-            reader_struc(n)%gridDesci(2) = reader_struc(n)%nc
-            reader_struc(n)%gridDesci(3) = reader_struc(n)%nr
-            reader_struc(n)%gridDesci(4) = reader_struc(n)%latmax
-            reader_struc(n)%gridDesci(5) = reader_struc(n)%lonmin
-            reader_struc(n)%gridDesci(6) = 128
-            reader_struc(n)%gridDesci(7) = reader_struc(n)%latmin
-            reader_struc(n)%gridDesci(8) = reader_struc(n)%lonmax
-            reader_struc(n)%gridDesci(9) = reader_struc(n)%dlat
-            reader_struc(n)%gridDesci(10) = reader_struc(n)%dlon
-            reader_struc(n)%gridDesci(20) = 64
-
-            reader_struc(n)%mi = reader_struc(n)%nc*reader_struc(n)%nr
-
-            !-----------------------------------------------------------------------------
-            !   Use interpolation if LIS is running finer than native resolution.
-            !-----------------------------------------------------------------------------
-            if(LIS_rc%obs_gridDesc(k,10).le.reader_struc(n)%dlon) then
-
-                allocate(reader_struc(n)%rlat(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
-                allocate(reader_struc(n)%rlon(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
-                allocate(reader_struc(n)%n11(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
-                allocate(reader_struc(n)%n12(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
-                allocate(reader_struc(n)%n21(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
-                allocate(reader_struc(n)%n22(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
-                allocate(reader_struc(n)%w11(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
-                allocate(reader_struc(n)%w12(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
-                allocate(reader_struc(n)%w21(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
-                allocate(reader_struc(n)%w22(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
-
-                write(LIS_logunit,*)&
-                     "[INFO] create interpolation input for Custom "//trim(varname)//""
-
-                call bilinear_interp_input_withgrid(reader_struc(n)%gridDesci(:), &
-                     LIS_rc%obs_gridDesc(k,:),&
-                     LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k),&
-                     reader_struc(n)%rlat, reader_struc(n)%rlon,&
-                     reader_struc(n)%n11, reader_struc(n)%n12, &
-                     reader_struc(n)%n21, reader_struc(n)%n22, &
-                     reader_struc(n)%w11, reader_struc(n)%w12, &
-                     reader_struc(n)%w21, reader_struc(n)%w22)
-            else
-
-                allocate(reader_struc(n)%n11(&
-                     reader_struc(n)%nc*reader_struc(n)%nr))
-
-                write(LIS_logunit,*)&
-                     "[INFO] create upscaling input for Custom "//trim(varname)//""
-
-                call upscaleByAveraging_input(reader_struc(n)%gridDesci(:),&
-                     LIS_rc%obs_gridDesc(k,:),&
-                     reader_struc(n)%nc*reader_struc(n)%nr, &
-                     LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k), reader_struc(n)%n11)
-
-                write(LIS_logunit,*)&
-                     "[INFO] finished creating upscaling input for Custom "//trim(varname)//""
-            endif
-
-            call LIS_registerAlarm("Custom "//trim(varname)//" read alarm",&
-                 86400.0, 86400.0)
-
-            call ESMF_StateAdd(OBS_State(n),(/obsField(n)/),rc=status)
-            call LIS_verify(status, "Adding observation field failed")
-
-        enddo
     end subroutine CustomNcReader_setup
 
     !BOP
