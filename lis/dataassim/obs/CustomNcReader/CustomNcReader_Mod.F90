@@ -609,15 +609,13 @@ contains
                          "[INFO] observation perturbation size for "//trim(varname)//":",&
                          reader_struc(n)%ssdev_inp
                 else if (reader_struc(n)%obs_pert_option.eq.1) then ! option "spatial"
-                    call CustomNcReader_readSsdevData(n, k, reader_struc(n)%mean_obs_unc_file,&
-                         reader_struc(n)%mean_obs_unc_varname, ssdev)
+                    call CustomNcReader_read_mean_obs_uncertainty(reader_struc, n, k, ssdev)
                     allocate(reader_struc(n)%ssdev_inp_field(LIS_rc%obs_ngrid(k)))
                     reader_struc(n)%ssdev_inp_field = ssdev
                 else if (reader_struc(n)%obs_pert_option.eq.2) then ! option "full"
                     call LIS_readPertAttributes(1,LIS_rc%obspertAttribfile(k),&
                          obs_pert)
-                    call CustomNcReader_readSsdevData(n, k, reader_struc(n)%mean_obs_unc_file,&
-                         reader_struc(n)%mean_obs_unc_varname, ssdev)
+                    call CustomNcReader_read_mean_obs_uncertainty(reader_struc, n, k, ssdev)
                     allocate(reader_struc(n)%ssdev_inp_field(LIS_rc%obs_ngrid(k)))
                     ! in the "full" option, we use the spatial field for some
                     ! spatial scaling (typically the mean uncertainty over
@@ -1458,54 +1456,54 @@ contains
 
         endif !obs_pert_opton.eq.2
 
-        call interp_data(obs_in, obs_b_in, obs_ip, obs_b_ip)
+        call CustomNcReader_interp_data(reader_struc, obs_in, obs_b_in, obs_ip, obs_b_ip)
         if (reader_struc(n)%obs_pert_option.eq.2) then
-            call interp_data(obs_unc_in, obs_unc_b_in, obs_unc_ip, obs_unc_b_ip)
+            call CustomNcReader_interp_data(reader_struc, obs_unc_in, obs_unc_b_in, obs_unc_ip, obs_unc_b_ip)
         endif
         write(LIS_logunit,*) '[INFO] Finished reading ',trim(fname)
-
-    contains
-
-        subroutine interp_data(data_in, data_b_in, data_ip, data_b_ip)
-            real, intent(inout)        :: data_in(reader_struc(n)%nc*reader_struc(n)%nr)
-            logical*1, intent(inout)   :: data_b_in(reader_struc(n)%nc*reader_struc(n)%nr)
-            real, intent(inout)        :: data_ip(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k))
-            logical*1, intent(inout)   :: data_b_ip(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k))
-
-            if(LIS_rc%obs_gridDesc(k,10).le.reader_struc(n)%dlon) then
-                write(LIS_logunit,*) '[INFO] interpolating Custom ',&
-                     trim(reader_struc(n)%varname), ' ',&
-                     trim(fname)
-                !--------------------------------------------------------------------------
-                ! Interpolate to the LIS running domain if model has finer resolution
-                ! than observations
-                !--------------------------------------------------------------------------
-                call bilinear_interp(LIS_rc%obs_gridDesc(k,:),&
-                     data_b_in, data_in, data_b_ip, data_ip, &
-                     reader_struc(n)%nc*reader_struc(n)%nr, &
-                     LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k), &
-                     reader_struc(n)%rlat,reader_struc(n)%rlon,&
-                     reader_struc(n)%w11,reader_struc(n)%w12,&
-                     reader_struc(n)%w21,reader_struc(n)%w22,&
-                     reader_struc(n)%n11,reader_struc(n)%n12,&
-                     reader_struc(n)%n21,reader_struc(n)%n22,LIS_rc%udef,ios)
-             else
-                write(LIS_logunit,*) '[INFO] upscaling Custom',&
-                     trim(reader_struc(n)%varname),&
-                     trim(fname)
-                !--------------------------------------------------------------------------
-                ! Upscale to the LIS running domain if model has coarser resolution
-                ! than observations
-                !--------------------------------------------------------------------------
-                call upscaleByAveraging(reader_struc(n)%nc*reader_struc(n)%nr,&
-                     LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k), &
-                     LIS_rc%udef, reader_struc(n)%n11,&
-                     data_b_in,data_in, data_b_ip, data_ip)
-            endif
-        end subroutine interp_data
-
 #endif
     end subroutine read_CustomNetCDF_data
+
+
+    subroutine CustomNcReader_interp_data(reader_struc, data_in, data_b_in, data_ip, data_b_ip)
+        type(CustomNcReader_dec)   :: reader_struc(LIS_rc%nnest)
+        real, intent(inout)        :: data_in(reader_struc(n)%nc*reader_struc(n)%nr)
+        logical*1, intent(inout)   :: data_b_in(reader_struc(n)%nc*reader_struc(n)%nr)
+        real, intent(inout)        :: data_ip(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k))
+        logical*1, intent(inout)   :: data_b_ip(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k))
+
+        if(LIS_rc%obs_gridDesc(k,10).le.reader_struc(n)%dlon) then
+            write(LIS_logunit,*) '[INFO] interpolating Custom ',&
+                 trim(reader_struc(n)%varname), ' ',&
+                 trim(fname)
+            !--------------------------------------------------------------------------
+            ! Interpolate to the LIS running domain if model has finer resolution
+            ! than observations
+            !--------------------------------------------------------------------------
+            call bilinear_interp(LIS_rc%obs_gridDesc(k,:),&
+                 data_b_in, data_in, data_b_ip, data_ip, &
+                 reader_struc(n)%nc*reader_struc(n)%nr, &
+                 LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k), &
+                 reader_struc(n)%rlat,reader_struc(n)%rlon,&
+                 reader_struc(n)%w11,reader_struc(n)%w12,&
+                 reader_struc(n)%w21,reader_struc(n)%w22,&
+                 reader_struc(n)%n11,reader_struc(n)%n12,&
+                 reader_struc(n)%n21,reader_struc(n)%n22,LIS_rc%udef,ios)
+         else
+            write(LIS_logunit,*) '[INFO] upscaling Custom',&
+                 trim(reader_struc(n)%varname),&
+                 trim(fname)
+            !--------------------------------------------------------------------------
+            ! Upscale to the LIS running domain if model has coarser resolution
+            ! than observations
+            !--------------------------------------------------------------------------
+            call upscaleByAveraging(reader_struc(n)%nc*reader_struc(n)%nr,&
+                 LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k), &
+                 LIS_rc%udef, reader_struc(n)%n11,&
+                 data_b_in,data_in, data_b_ip, data_ip)
+        endif
+    end subroutine CustomNcReader_interp_data
+
 
 
     !BOP
@@ -1906,7 +1904,7 @@ contains
         real, intent(inout)           :: ssdev(:)
         !
         ! !DESCRIPTION:
-        !  This routine reads the input seasonal mean file.
+        !  This routine reads the mean uncertainty file
         !
         !  The arguments are:
         !  \begin{description}
@@ -2018,5 +2016,135 @@ contains
         endif
 
     end function CustomNcReader_timeidx
+
+    !BOP
+    !
+    ! !ROUTINE: read_CustomNetCDF_data
+    ! \label{read_CustomNetCDF_data}
+    !
+    ! !INTERFACE:
+    subroutine CustomNcReader_read_mean_obs_uncertainty(reader_struc, n, k, unc_out)
+        !
+        ! !USES:
+#if(defined USE_NETCDF3 || defined USE_NETCDF4)
+        use netcdf
+#endif
+        use LIS_coreMod,  only : LIS_rc, LIS_domain
+        use LIS_logMod
+        use LIS_timeMgrMod
+
+        implicit none
+        !
+        ! !INPUT PARAMETERS:
+        !
+        type(CustomNcReader_dec)      :: reader_struc(LIS_rc%nnest)
+        integer,   intent(in)         :: n
+        integer,   intent(in)         :: k
+        real, intent(inout)           :: unc_out(:)
+
+        integer                 :: lat_offset, lon_offset
+        real                    :: uncertainty(reader_struc(n)%nc,reader_struc(n)%nr)
+        real                    :: unc_in(reader_struc(n)%nc*reader_struc(n)%nr)
+        real                    :: unc_ip(reader_struc(n)%obs_lnc(k)*reader_struc(n)%obs_lnr(k))
+        logical*1               :: unc_b_in(reader_struc(n)%nc*reader_struc(n)%nr)
+        logical*1               :: unc_b_ip(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k))
+        integer                 :: c,r,t
+        integer                 :: nid, lid, latsize_file, lonsize_file
+        integer                 :: lat(reader_struc(n)%nr)
+        integer                 :: obsid, flagid
+        integer                 :: ios
+        integer                 :: numvalidobs
+        character*256           :: fname
+        character*100           :: varname
+
+#if !(defined USE_NETCDF3 || defined USE_NETCDF4)
+        write(LIS_logunit,*) "[ERR] read_CustomNetCDF requires NETCDF"
+        call LIS_endrun
+#else
+
+        fname = reader_struc(n)%mean_obs_unc_file
+        varname = reader_struc(n)%mean_obs_unc_varname
+
+        unc_b_in = .false.
+
+        lat_offset = 1  ! no offset
+        lon_offset = 1
+
+        write(LIS_logunit,*) '[INFO] Reading ',trim(fname)
+        ios = nf90_open(path=trim(fname),mode=NF90_NOWRITE,ncid=nid)
+        call LIS_verify(ios,'Error opening file '//trim(fname))
+
+        call LIS_verify(nf90_inq_dimid(nid, "lat",lid), &
+             "Error nf90_inq_dimid: lat")
+        call LIS_verify(nf90_inquire_dimension(nid, lid, len=latsize_file), &
+             "Error nf90_inquire_dimension:lat")
+
+        call LIS_verify(nf90_inq_dimid(nid, "lon",lid), &
+             "Error nf90_inq_dimid: lon")
+        call LIS_verify(nf90_inquire_dimension(nid, lid, len=lonsize_file), &
+             "Error nf90_inquire_dimension:lon")
+
+        ! check if the grid has the right size
+        if (latsize_file.ne.reader_struc(n)%nr.or.lonsize_file.ne.reader_struc(n)%nc) then
+            write(LIS_logunit,*) "[ERR] Dimension sizes not consistent with expectations"
+            write(LIS_logunit,*) 'lat size on file: ',latsize_file
+            write(LIS_logunit,*) 'lat size expected: ',reader_struc(n)%nr
+            write(LIS_logunit,*) 'lon size on file: ',lonsize_file
+            write(LIS_logunit,*) 'lon size expected: ',reader_struc(n)%nc
+            call LIS_endrun 
+        endif
+
+        ! make sure that latitude axis is inverted
+        ios = nf90_inq_varid(nid, "lat", lid)
+        call LIS_verify(ios, 'Error nf90_inq_varid: lat')
+        ios = nf90_get_var(nid, lid, lat)
+        call LIS_verify(ios, 'Error nf90_inquire_variable: lat')
+        if (lat(1) < lat(latsize_file)) then
+            write(LIS_logunit,*) "[ERR] Reader expects inverted latitude coordinate"
+            call LIS_endrun
+        endif
+
+        ! read main variable
+        ios = nf90_inq_varid(nid, trim(varname), obsid)
+        call LIS_verify(ios, 'Error nf90_inq_varid: '//varname)
+        ios = nf90_get_var(nid, obsid, uncertainty, &
+             start=(/lon_offset,lat_offset/), &
+             count=(/reader_struc(n)%nc,reader_struc(n)%nr/))
+        call LIS_verify(ios, 'Error nf90_get_var: '//varname)
+
+        ios = nf90_close(ncid=nid)
+        call LIS_verify(ios,'Error closing file '//trim(fname))
+
+
+        ! the data is already read into 'uncertainty', but we have to replace
+        ! NaNs/invalid values with LIS_rc%udef
+        do r=1, reader_struc(n)%nr
+            do c=1, reader_struc(n)%nc
+                if (isnan(uncertainty(c, r))) then
+                    uncertainty(c, r) = LIS_rc%udef
+                endif
+                ! fill obs_in and obs_b_in, which are required further on
+                unc_in(c+(r-1)*reader_struc(n)%nc) = uncertainty(c,r)
+                unc_b_in(c+(r-1)*reader_struc(n)%nc) = uncertainty(c, r).ne.LIS_rc%udef
+            end do
+        end do
+
+        call CustomNcReader_interp_data(unc_in, unc_b_in, unc_ip, unc_b_ip)
+        write(LIS_logunit,*) '[INFO] Finished reading ',trim(fname)
+
+        ! now we have to move from the (obs_lnc(k)*obs_lnr(k),) shape to
+        ! (obs_ngrid(k),)
+        unc_ngrid = LIS_rc%udef
+        do r=1, LIS_rc%obs_lnr(k)
+            do c=1, LIS_rc%obs_lnc(k)
+                if(LIS_obs_domain(n,k)%gindex(c,r).ne.-1) then
+                    unc_ngrid(LIS_obs_domain(n,k)%gindex(c,r)) = unc_ip(c+(r-1)*LIS_rc%obs_lnc(k))
+                endif
+             end do
+         end do
+    end subroutine CustomNcReader_read_mean_obs_uncertainty
+
+
+
 
 end module CustomNcReader_Mod
