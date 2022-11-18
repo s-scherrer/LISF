@@ -298,7 +298,7 @@ subroutine LIS_DAobs_plugin
          CustomVOD_setup, read_CustomVOD, write_CustomVOD
 #endif
 #if ( defined DA_OBS_CUSTOM_SSM )
-    use CustomLAI_Mod,       only :&
+    use CustomSSM_Mod,       only :&
          CustomSSM_setup, read_CustomSSM, write_CustomSSM
 #endif
 #if ( defined DA_OBS_NRT_SMAPSM )

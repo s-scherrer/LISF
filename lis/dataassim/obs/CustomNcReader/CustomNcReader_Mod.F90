@@ -419,9 +419,9 @@ contains
         enddo
 
 
+        call ESMF_ConfigFindLabel(LIS_config,"Custom "//trim(varname)//" mean observation uncertainty file:",&
+             rc=status)
         do n=1,LIS_rc%nnest
-            call ESMF_ConfigFindLabel(LIS_config,"Custom "//trim(varname)//"mean observation uncertainty file:",&
-                 rc=status)
             if (reader_struc(n)%obs_pert_option .ne. 0) then
                 call ESMF_ConfigGetAttribute(LIS_config,reader_struc(n)%mean_obs_unc_file,&
                      rc=status)
@@ -2153,8 +2153,5 @@ contains
          end do
 #endif
     end subroutine CustomNcReader_read_mean_obs_uncertainty
-
-
-
 
 end module CustomNcReader_Mod
