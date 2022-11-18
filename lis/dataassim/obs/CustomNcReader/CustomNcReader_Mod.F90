@@ -621,12 +621,6 @@ contains
                      "[INFO] finished creating upscaling input for Custom "//trim(varname)//""
             endif
 
-            call LIS_registerAlarm("Custom "//trim(varname)//" read alarm",&
-                 86400.0, 86400.0)
-
-            call ESMF_StateAdd(OBS_State(n),(/obsField(n)/),rc=status)
-            call LIS_verify(status, "Adding observation field failed")
-
         enddo
 
         !------------------------------------------------------------
@@ -909,6 +903,16 @@ contains
                     deallocate(ssdev)
                 endif
             endif ! dascaloption .ne. "none"
+        enddo
+
+
+        do n=1,LIS_rc%nnest
+            call LIS_registerAlarm("Custom "//trim(varname)//" read alarm",&
+                 86400.0, 86400.0)
+
+            call ESMF_StateAdd(OBS_State(n),(/obsField(n)/),rc=status)
+            call LIS_verify(status, "Adding observation field failed")
+
         enddo
 
     end subroutine CustomNcReader_setup
