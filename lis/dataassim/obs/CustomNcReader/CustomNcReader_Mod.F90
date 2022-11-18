@@ -51,7 +51,7 @@
 !       0).
 !   Custom <varname> assimilation time (hour):
 !   Custom <varname> assimilation time (minute):
-!       Time when to assimilate, default is 0:00
+!       Time when to assimilate for local time DA, default is 0:00
 !   Custom <varname> observation perturbation option:
 !       One of "scalar", "spatial", "full".
 !       - "scalar": a scalar is read from the observation perturbation

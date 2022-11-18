@@ -297,6 +297,10 @@ subroutine LIS_DAobs_plugin
     use CustomVOD_Mod,       only :&
          CustomVOD_setup, read_CustomVOD, write_CustomVOD
 #endif
+#if ( defined DA_OBS_CUSTOM_SSM )
+    use CustomLAI_Mod,       only :&
+         CustomSSM_setup, read_CustomSSM, write_CustomSSM
+#endif
 #if ( defined DA_OBS_NRT_SMAPSM )
     use SMAPNRTsm_Mod,           only : SMAPNRTsm_setup
 #endif
@@ -988,6 +992,16 @@ subroutine LIS_DAobs_plugin
         read_CustomLAI)
    call registerwritedaobs(trim(LIS_CustomLAIobsId)//char(0),&
         write_CustomLAI)
+#endif
+
+#if ( defined DA_OBS_CUSTOM_SSM )
+   call registerdaobsclass(trim(LIS_CustomSSMobsId),"LSM")
+   call registerdaobssetup(trim(LIS_CustomSSMobsId)//char(0),&
+        CustomSSM_setup)
+   call registerreaddaobs(trim(LIS_CustomSSMobsId)//char(0),&
+        read_CustomSSM)
+   call registerwritedaobs(trim(LIS_CustomSSMobsId)//char(0),&
+        write_CustomSSM)
 #endif
 
 #if ( defined DA_OBS_CUSTOM_VOD )
