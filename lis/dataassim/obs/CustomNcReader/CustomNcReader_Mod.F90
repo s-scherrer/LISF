@@ -547,6 +547,9 @@ contains
         do n=1, LIS_rc%nnest
             allocate(reader_struc(n)%daobs(LIS_rc%obs_lnc(k),LIS_rc%obs_lnr(k)))
             allocate(reader_struc(n)%datime(LIS_rc%obs_lnc(k),LIS_rc%obs_lnr(k)))
+            if (reader_struc(n)%obs_pert_option.eq.2) then
+                allocate(reader_struc(n)%daobs_unc(LIS_rc%obs_lnc(k),LIS_rc%obs_lnr(k)))
+            endif
         enddo
 
         write(LIS_logunit,*)&
@@ -1455,7 +1458,7 @@ contains
                 end do
             end do
 
-        endif !obs_pert_opton.eq.2
+        endif !obs_pert_option.eq.2
 
         call CustomNcReader_interp_data(reader_struc, n, k, obs_in, obs_b_in, obs_ip, obs_b_ip, fname)
         if (reader_struc(n)%obs_pert_option.eq.2) then
