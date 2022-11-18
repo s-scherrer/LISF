@@ -1456,21 +1456,29 @@ contains
 
         endif !obs_pert_opton.eq.2
 
-        call CustomNcReader_interp_data(reader_struc, obs_in, obs_b_in, obs_ip, obs_b_ip)
+        call CustomNcReader_interp_data(reader_struc, n, k, obs_in, obs_b_in, obs_ip, obs_b_ip, fname)
         if (reader_struc(n)%obs_pert_option.eq.2) then
-            call CustomNcReader_interp_data(reader_struc, obs_unc_in, obs_unc_b_in, obs_unc_ip, obs_unc_b_ip)
+            call CustomNcReader_interp_data(reader_struc, n, k, obs_unc_in, obs_unc_b_in, obs_unc_ip, obs_unc_b_ip, fname)
         endif
         write(LIS_logunit,*) '[INFO] Finished reading ',trim(fname)
 #endif
     end subroutine read_CustomNetCDF_data
 
 
-    subroutine CustomNcReader_interp_data(reader_struc, data_in, data_b_in, data_ip, data_b_ip)
+    subroutine CustomNcReader_interp_data(reader_struc, n, k, data_in, data_b_in, data_ip, data_b_ip, fname)
+        use LIS_coreMod,  only : LIS_rc, LIS_domain
+        use LIS_logMod
+
         type(CustomNcReader_dec)   :: reader_struc(LIS_rc%nnest)
+        integer,   intent(in)         :: n
+        integer,   intent(in)         :: k
         real, intent(inout)        :: data_in(reader_struc(n)%nc*reader_struc(n)%nr)
         logical*1, intent(inout)   :: data_b_in(reader_struc(n)%nc*reader_struc(n)%nr)
         real, intent(inout)        :: data_ip(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k))
         logical*1, intent(inout)   :: data_b_ip(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k))
+        character(len=*), intent(in) :: fname
+
+        integer                 :: ios
 
         if(LIS_rc%obs_gridDesc(k,10).le.reader_struc(n)%dlon) then
             write(LIS_logunit,*) '[INFO] interpolating Custom ',&
@@ -2023,7 +2031,7 @@ contains
     ! \label{read_CustomNetCDF_data}
     !
     ! !INTERFACE:
-    subroutine CustomNcReader_read_mean_obs_uncertainty(reader_struc, n, k, unc_out)
+    subroutine CustomNcReader_read_mean_obs_uncertainty(reader_struc, n, k, unc_ngrid)
         !
         ! !USES:
 #if(defined USE_NETCDF3 || defined USE_NETCDF4)
@@ -2032,6 +2040,7 @@ contains
         use LIS_coreMod,  only : LIS_rc, LIS_domain
         use LIS_logMod
         use LIS_timeMgrMod
+        use LIS_DAobservationsMod, only: LIS_obs_domain
 
         implicit none
         !
@@ -2040,12 +2049,12 @@ contains
         type(CustomNcReader_dec)      :: reader_struc(LIS_rc%nnest)
         integer,   intent(in)         :: n
         integer,   intent(in)         :: k
-        real, intent(inout)           :: unc_out(:)
+        real, intent(inout)           :: unc_ngrid(:)
 
         integer                 :: lat_offset, lon_offset
         real                    :: uncertainty(reader_struc(n)%nc,reader_struc(n)%nr)
         real                    :: unc_in(reader_struc(n)%nc*reader_struc(n)%nr)
-        real                    :: unc_ip(reader_struc(n)%obs_lnc(k)*reader_struc(n)%obs_lnr(k))
+        real                    :: unc_ip(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k))
         logical*1               :: unc_b_in(reader_struc(n)%nc*reader_struc(n)%nr)
         logical*1               :: unc_b_ip(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k))
         integer                 :: c,r,t
@@ -2129,7 +2138,7 @@ contains
             end do
         end do
 
-        call CustomNcReader_interp_data(unc_in, unc_b_in, unc_ip, unc_b_ip)
+        call CustomNcReader_interp_data(reader_struc, n, k, unc_in, unc_b_in, unc_ip, unc_b_ip, fname)
         write(LIS_logunit,*) '[INFO] Finished reading ',trim(fname)
 
         ! now we have to move from the (obs_lnc(k)*obs_lnr(k),) shape to
@@ -2142,6 +2151,7 @@ contains
                 endif
              end do
          end do
+#endif
     end subroutine CustomNcReader_read_mean_obs_uncertainty
 
 
