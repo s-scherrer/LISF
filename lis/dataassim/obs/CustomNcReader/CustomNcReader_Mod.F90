@@ -426,7 +426,7 @@ contains
                 call ESMF_ConfigGetAttribute(LIS_config,reader_struc(n)%mean_obs_unc_file,&
                      rc=status)
                 call LIS_verify(status, &
-                     "Custom "//trim(varname)//" observation perturbation variable name: not defined")
+                     "Custom "//trim(varname)//" mean observation uncertainty file: not defined")
             endif
         enddo
 
