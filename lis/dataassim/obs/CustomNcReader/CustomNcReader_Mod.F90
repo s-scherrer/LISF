@@ -244,7 +244,7 @@ contains
         character*100          :: modelscalingvarname(LIS_rc%nnest)
         character*100          :: obsscalingvarname(LIS_rc%nnest)
         character*20           :: obs_pert_option(LIS_rc%nnest)
-        integer                :: c,r
+        integer                :: c,r,t
         integer                :: ngrid
         integer                :: timeidx
         character*100          :: varname
@@ -695,7 +695,13 @@ contains
                     ! spatial scaling (typically the mean uncertainty over
                     ! time), and scale this by the value in the observation
                     ! perturbation attributes file, to have a tuning factor
-                    reader_struc(n)%ssdev_inp_field = ssdev * obs_pert%ssdev(1)
+                    do t=1,LIS_rc%obs_ngrid(k)
+                        if (.not.ssdev(t).eq.LIS_rc%udef) then
+                            reader_struc(n)%ssdev_inp_field(t) = obs_pert%ssdev(1) / ssdev(t)
+                        else
+                            reader_struc(n)%ssdev_inp_field(t) = LIS_rc%udef
+                        endif
+                    end do
                 endif
 
                 pertField(n) = ESMF_FieldCreate(arrayspec=pertArrSpec,&
@@ -1004,9 +1010,9 @@ contains
             allocate(observations_unc(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
             allocate(obs_unc_current(LIS_rc%obs_lnc(k),LIS_rc%obs_lnr(k)))
             allocate(obs_unc_ngrid(LIS_rc%obs_ngrid(k)))
+            observations_unc = LIS_rc%udef
+            obs_unc_current = LIS_rc%udef
             obs_unc_ngrid = LIS_rc%udef
-            obs_unc_ngrid = LIS_rc%udef
-            obs_current = LIS_rc%udef
         endif
         obs_unscaled = LIS_rc%udef
         obs_current = LIS_rc%udef
@@ -1034,6 +1040,7 @@ contains
             ! set daobs and datime
             reader_struc(n)%daobs  = LIS_rc%udef
             if (reader_struc(n)%obs_pert_option.eq.2) then
+                reader_struc(n)%daobs_unc  = LIS_rc%udef
                 do r=1,LIS_rc%obs_lnr(k)
                     do c=1,LIS_rc%obs_lnc(k)
                         if(LIS_obs_domain(n,k)%gindex(c,r).ne.-1) then
@@ -1266,7 +1273,14 @@ contains
                 else if (reader_struc(n)%obs_pert_option.eq.1) then
                     ssdev = reader_struc(n)%ssdev_inp_field
                 else ! option 2, i.e. "full"
-                    ssdev = reader_struc(n)%ssdev_inp_field * obs_unc_ngrid
+                    do t=1,LIS_rc%obs_ngrid(k)
+                        if (.not.obs_unc_ngrid(t).eq.LIS_rc%udef&
+                            .and. .not. reader_struc(n)%ssdev_inp_field(t).eq.LIS_rc%udef) then
+                            ssdev(t) = reader_struc(n)%ssdev_inp_field(t) * obs_unc_ngrid(t)
+                        else
+                            ssdev(t) = LIS_rc%udef
+                        endif
+                    end do
                 endif
 
                 timeidx = CustomNcReader_timeidx(reader_struc(n)%ntimes)
