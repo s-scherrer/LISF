@@ -532,6 +532,14 @@ subroutine LIS_lsmda_plugin
    external NoahMP401_descale_laisoilm
    external NoahMP401_updatelaisoilm
 
+   ! NOAHMP4.0.1 LAI+SLA update with LAI DA
+   external NoahMP401_getlaisla
+   external NoahMP401_setlaisla
+   external NoahMP401_qc_laisla
+   external NoahMP401_scale_laisla
+   external NoahMP401_descale_laisla
+   external NoahMP401_updatelaisla
+
    ! VOD
    external NoahMP401_getVODpred
    external noahmp401_qc_VODobs
@@ -3006,6 +3014,7 @@ subroutine LIS_lsmda_plugin
         trim(LIS_CGLSlaismobsId)//char(0),noahmp401_descale_laisoilm)
 
    call register_noahmp401_laida(LIS_CustomLAIobsId)
+   call register_noahmp401_laislada(LIS_CustomLAIwithSLAobsId)
    call register_noahmp401_vodda(LIS_CustomVODobsId)
    call register_noahmp401_vodda_only_lai(LIS_CustomVODonlyLAIobsId)
    call register_noahmp401_vodda_only_sm(LIS_CustomVODonlySMobsId)
@@ -4207,6 +4216,31 @@ contains
             trim(obsId)//char(0),noahmp401_scale_veg)
        call registerlsmdadescalestatevar(trim(LIS_noahmp401Id)//"+"//&
             trim(obsId)//char(0),noahmp401_descale_veg)
+
+       call registerlsmdagetobspred(trim(LIS_noahmp401Id)//"+"//&
+            trim(obsId)//char(0),noahmp401_getLAIpred)
+       call registerlsmdaqcobsstate(trim(LIS_noahmp401Id)//"+"//&
+            trim(obsId)//char(0),noahmp401_qc_LAIobs)
+    end subroutine register_noahmp401_laida
+
+    subroutine register_noahmp401_laislada(obsId)
+        implicit none
+        character*50, intent(in) :: obsId
+
+       call registerlsmdainit(trim(LIS_noahmp401Id)//"+"//&
+            trim(obsId)//char(0),noahmp401_dalaisla_init)
+       call registerlsmdagetstatevar(trim(LIS_noahmp401Id)//"+"//&
+            trim(obsId)//char(0),noahmp401_getlaisla)
+       call registerlsmdasetstatevar(trim(LIS_noahmp401Id)//"+"//&
+            trim(obsId)//char(0),noahmp401_setlaisla)
+       call registerlsmdaupdatestate(trim(LIS_noahmp401Id)//"+"//&
+            trim(obsId)//char(0),noahmp401_updatelaisla)
+       call registerlsmdaqcstate(trim(LIS_noahmp401Id)//"+"//&
+            trim(obsId)//char(0),noahmp401_qc_laisla)
+       call registerlsmdascalestatevar(trim(LIS_noahmp401Id)//"+"//&
+            trim(obsId)//char(0),noahmp401_scale_laisla)
+       call registerlsmdadescalestatevar(trim(LIS_noahmp401Id)//"+"//&
+            trim(obsId)//char(0),noahmp401_descale_laisla)
 
        call registerlsmdagetobspred(trim(LIS_noahmp401Id)//"+"//&
             trim(obsId)//char(0),noahmp401_getLAIpred)
