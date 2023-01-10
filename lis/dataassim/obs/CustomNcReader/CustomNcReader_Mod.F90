@@ -702,6 +702,7 @@ contains
                             reader_struc(n)%ssdev_inp_field(t) = LIS_rc%udef
                         endif
                     end do
+                    ssdev = reader_struc(n)%ssdev_inp_field
                 endif
 
                 pertField(n) = ESMF_FieldCreate(arrayspec=pertArrSpec,&
@@ -886,31 +887,6 @@ contains
 
                 endif
 
-                if (reader_struc(n)%useSsdevScal) then
-
-                    allocate(ssdev(LIS_rc%obs_ngrid(k)))
-                    if (reader_struc(n)%obs_pert_option.ne.0) then
-                        ssdev = reader_struc(n)%ssdev_inp_field
-                    else
-                        ssdev = reader_struc(n)%ssdev_inp
-                    endif
-
-                    timeidx = CustomNcReader_timeidx(reader_struc(n)%ntimes)
-
-                    call CustomNcReader_updateSsdev(k,&
-                         reader_struc(n)%obs_sigma(:, timeidx),&
-                         reader_struc(n)%model_sigma(:, timeidx),&
-                         ssdev)
-
-                    if(LIS_rc%obs_ngrid(k).gt.0) then
-                        call ESMF_AttributeSet(pertField(n),"Standard Deviation",&
-                             ssdev,itemCount=LIS_rc%obs_ngrid(k),rc=status)
-                        call LIS_verify(status, &
-                             "updating perturbation standard deviation failed")
-                    endif
-
-                    deallocate(ssdev)
-                endif
             endif ! dascaloption .ne. "none"
         enddo
 
@@ -1262,8 +1238,10 @@ contains
             endif
 
             ! rescale perturbation standard deviations if rescaling of the
-            ! data is performed
-            if(LIS_rc%dascaloption(k).ne."none".and.reader_struc(n)%useSsdevScal.eq.1) then
+            ! data is performed, or if we use daily different perturbations
+            ! (option 2)
+            if ((LIS_rc%dascaloption(k).ne."none".and.reader_struc(n)%useSsdevScal.eq.1)&
+                 .or.reader_struc(n)%obs_pert_option.eq.2) then
                 call ESMF_StateGet(OBS_Pert_State,"Observation01",pertfield,&
                      rc=status)
                 call LIS_verify(status, 'Error: StateGet Observation01')
@@ -1283,12 +1261,13 @@ contains
                     end do
                 endif
 
-                timeidx = CustomNcReader_timeidx(reader_struc(n)%ntimes)
-
-                call CustomNcReader_updateSsdev(k,&
-                     reader_struc(n)%obs_sigma(:, timeidx),&
-                     reader_struc(n)%model_sigma(:, timeidx),&
-                     ssdev)
+                if (LIS_rc%dascaloption(k).ne."none".and.reader_struc(n)%useSsdevScal.eq.1) then
+                    timeidx = CustomNcReader_timeidx(reader_struc(n)%ntimes)
+                    call CustomNcReader_updateSsdev(k,&
+                         reader_struc(n)%obs_sigma(:, timeidx),&
+                         reader_struc(n)%model_sigma(:, timeidx),&
+                         ssdev)
+                endif
 
                 if(LIS_rc%obs_ngrid(k).gt.0) then
                     call ESMF_AttributeSet(pertfield,"Standard Deviation",&
