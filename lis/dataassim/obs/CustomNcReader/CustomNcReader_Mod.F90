@@ -76,7 +76,7 @@
 !       Whether to rescale the observation perturbations if observations are
 !       rescaled.
 !   Data assimilation scaling strategy:
-!       Options are "none", "CDF matching", "seasonal", "seasonal multiplicative"
+!       Options are "none", "CDF matching", "Normal deviate scaling", "seasonal", "seasonal multiplicative"
 !   Custom <varname> model scaling file:
 !       Path to the model CDF/mean file (optional, only required if scaling is
 !       applied)
@@ -765,7 +765,7 @@ contains
 
             if(LIS_rc%dascaloption(k).ne."none") then
 
-                if(LIS_rc%dascaloption(k).eq."CDF matching") then
+                if(LIS_rc%dascaloption(k).eq."CDF matching".or.LIS_rc%dascaloption(k).eq."Normal deviate scaling") then
                     !------------------------------------------------------------
                     ! CDF matching
                     !------------------------------------------------------------
@@ -1141,6 +1141,19 @@ contains
                  reader_struc(n)%model_cdf,     &
                  reader_struc(n)%obs_cdf,       &
                  obs_current)
+
+        elseif (LIS_rc%dascaloption(k).eq."Normal deviate scaling".and.fnd.ne.0) then
+
+            write(LIS_logunit,*) '[INFO] perform normal deviate scaling'
+            call LIS_rescale_with_normal_deviate_scaling(     &
+                 n,k,                               &
+                 reader_struc(n)%ntimes,        &
+                 reader_struc(n)%model_mu,  &
+                 reader_struc(n)%model_sigma,    &
+                 reader_struc(n)%obs_mu,     &
+                 reader_struc(n)%obs_sigma,       &
+                 obs_current)
+            
         elseif ((LIS_rc%dascaloption(k).eq."seasonal"&
                  .or.LIS_rc%dascaloption(k).eq."seasonal multiplicative")&
              .and.fnd.ne.0) then
