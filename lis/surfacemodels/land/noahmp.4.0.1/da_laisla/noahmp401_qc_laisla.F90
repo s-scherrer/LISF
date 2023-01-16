@@ -8,14 +8,14 @@
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
 !BOP
-! !ROUTINE: noahmp401_qclaisla
-! \label{noahmp401_qclaisla}
+! !ROUTINE: noahmp401_qc_laisla
+! \label{noahmp401_qc_laisla}
 !
 ! !REVISION HISTORY:
 ! 10 Jan 2023: Samuel Scherrer; Initial Specification based on da_LAI
 !
 ! !INTERFACE:
-subroutine noahmp401_qclaisla(n, LSM_State)
+subroutine noahmp401_qc_laisla(n, LSM_State)
 
 ! !USES:
   use ESMF
@@ -150,5 +150,5 @@ subroutine noahmp401_qclaisla(n, LSM_State)
      endif
   enddo
 
-end subroutine noahmp401_qclaisla
+end subroutine noahmp401_qc_laisla
 

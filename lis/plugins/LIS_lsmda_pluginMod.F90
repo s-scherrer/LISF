@@ -206,6 +206,7 @@ subroutine LIS_lsmda_plugin
    use noahmp401_datws_Mod
    use noahmp401_daveg_Mod
    use noahmp401_dalaisoilm_Mod
+   use noahmp401_dalaisla_Mod
    use noahmp401_LAI_DAlogMod, only : noahmp401_LAI_DAlog
 #endif
 
@@ -4246,7 +4247,7 @@ contains
             trim(obsId)//char(0),noahmp401_getLAIpred)
        call registerlsmdaqcobsstate(trim(LIS_noahmp401Id)//"+"//&
             trim(obsId)//char(0),noahmp401_qc_LAIobs)
-    end subroutine register_noahmp401_laida
+    end subroutine register_noahmp401_laislada
 
     subroutine register_noahmp401_vodda(obsId)
         implicit none
