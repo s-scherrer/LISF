@@ -1294,6 +1294,11 @@ contains
                  .false., rc=status)
             call LIS_verify(status)
         endif
+        if (reader_struc(n)%obs_pert_option.eq.2) then
+            deallocate(observations_unc)
+            deallocate(obs_unc_current)
+            deallocate(obs_unc_ngrid)
+        endif
 
     end subroutine read_CustomNetCDF
 
@@ -1474,6 +1479,15 @@ contains
         if (reader_struc(n)%obs_pert_option.eq.2) then
             call CustomNcReader_interp_data(reader_struc, n, k, obs_unc_in, obs_unc_b_in, obs_unc_ip, obs_unc_b_ip, fname)
         endif
+
+        if (reader_struc(n)%obs_pert_option.eq.2) then
+            deallocate(observation_unc)
+            deallocate(obs_unc_in)
+            deallocate(obs_unc_b_in)
+            deallocate(obs_unc_b_ip)
+        endif
+
+
         write(LIS_logunit,*) '[INFO] Finished reading ',trim(fname)
 #endif
     end subroutine read_CustomNetCDF_data
