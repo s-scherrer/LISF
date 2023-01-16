@@ -517,7 +517,7 @@ contains
         call ESMF_ConfigFindLabel(LIS_config, &
              "Custom "//trim(varname)//" number of bins in the CDF:", rc=status)
         do n=1, LIS_rc%nnest
-            if(LIS_rc%dascaloption(k).eq."CDF matching") then
+            if(LIS_rc%dascaloption(k).eq."CDF matching".or.LIS_rc%dascaloption(k).eq."Normal deviate scaling") then
                 call ESMF_ConfigGetAttribute(LIS_config,reader_struc(n)%nbins, rc=status)
                 call LIS_verify(status, &
                      "Custom "//trim(varname)//" number of bins in the CDF: not defined")
