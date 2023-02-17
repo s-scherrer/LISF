@@ -24,7 +24,7 @@ module LIS_lsmrtm_pluginMod
 !  18 Dec 18    Peter Shellito; Registered for NoahMp36 CMEM3
 !  21 Feb 19    Peter Shellito; Registered for Noah36 CMEM3
 !  04 Sep 20    Sara Modanesi; Registered for NoahMp36 WCM
-!  24 Mar 22    Samuel Scherrer; Registered for NoahMp401 VODFM
+!  24 Mar 22    Samuel Scherrer; Registered for NoahMp401 VODOO
 ! 
 !EOP  
   implicit none
@@ -198,8 +198,8 @@ subroutine LIS_lsmrtm_plugin
 #endif
 
 #if ( defined SM_NOAHMP_4_0_1 )
-#if ( defined RTMS_VODFM )
-   call registerlsm2rtm(trim(LIS_VODFMId)//"+"//&
+#if ( defined RTMS_VODOO )
+   call registerlsm2rtm(trim(LIS_VODOOId)//"+"//&
         trim(LIS_noahmp401Id)//char(0), noahmp401_sfc2vod)
 #endif
 #endif

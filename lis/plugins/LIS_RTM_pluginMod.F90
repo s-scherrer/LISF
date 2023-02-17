@@ -82,10 +82,10 @@ subroutine LIS_RTM_plugin
        WCMRTM_run
 #endif
 
-#if ( defined RTMS_VODFM )
-   use VODFM_Mod, only : VODFM_initialize, VODFM_f2t,&
-       VODFM_geometry, &
-       VODFM_run
+#if ( defined RTMS_VODOO )
+   use VODOO_Mod, only : VODOO_initialize, VODOO_f2t,&
+       VODOO_geometry, &
+       VODOO_run
 #endif
 
 #if ( defined RTMS_CRTM )
@@ -140,12 +140,12 @@ subroutine LIS_RTM_plugin
    call registerrtmrun(trim(LIS_wcmrtmId)//char(0),WCMRTM_run)
 #endif
 
-#if ( defined RTMS_VODFM )
-   call registerrtminit(trim(LIS_VODFMId)//char(0),VODFM_initialize)
-   call registerrtmf2t(trim(LIS_VODFMId)//char(0),VODFM_f2t)
-   call registergeometry2rtm(trim(LIS_VODFMId)//char(0), &
-                             VODFM_geometry)
-   call registerrtmrun(trim(LIS_VODFMId)//char(0),VODFM_run)
+#if ( defined RTMS_VODOO )
+   call registerrtminit(trim(LIS_VODOOId)//char(0),VODOO_initialize)
+   call registerrtmf2t(trim(LIS_VODOOId)//char(0),VODOO_f2t)
+   call registergeometry2rtm(trim(LIS_VODOOId)//char(0), &
+                             VODOO_geometry)
+   call registerrtmrun(trim(LIS_VODOOId)//char(0),VODOO_run)
 #endif
 #endif
 end subroutine LIS_RTM_plugin

@@ -13,7 +13,7 @@
 # 15 Sep 2020: Sara Modanesi, added specification for USE_WCM (Water Cloud Model)
 # 11 Nov 2020: Alexander Gruber/Sara Modanesi, use lis-crtm-profile-utility also for other RTMs
 # Process environment and configure options
-# 30 Mar 2022: Samuel Scherrer, added specification for USE_VODFM (VOD observation operator)
+# 30 Mar 2022: Samuel Scherrer, added specification for USE_VODOO (VOD observation operator)
 #
 
 if(defined($ENV{LIS_ARCH})){
@@ -742,11 +742,11 @@ if($use_wcm eq ""){
    $use_wcm=0;
 }
 
-print "Use LIS-VODFM? (1-yes, 0-no, default=0): ";
-$use_vodfm=<stdin>;
-chomp($use_vodfm);
-if($use_vodfm eq ""){
-   $use_vodfm=0;
+print "Use LIS-VODOO? (1-yes, 0-no, default=0): ";
+$use_vodoo=<stdin>;
+chomp($use_vodoo);
+if($use_vodoo eq ""){
+   $use_vodoo=0;
 }
 
 print "Use LIS-CRTM? (1-yes, 0-no, default=0): ";
@@ -1220,7 +1220,7 @@ else{
    printf misc_file "%s\n","#undef USE_MINPACK ";
 }
 
-if($use_crtm == 1 || $use_cmem == 1 || $use_wcm == 1 || $use_vodfm == 1) {
+if($use_crtm == 1 || $use_cmem == 1 || $use_wcm == 1 || $use_vodoo == 1) {
    printf misc_file "%s\n","#define RTMS ";
 }
 else{

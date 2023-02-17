@@ -58,14 +58,14 @@ subroutine noahmp401_getVODpred(n,k,obs_pred)
 !!call the forward model
 call LIS_RTM_run(n)
 
-  call ESMF_StateGet(LIS_forwardState(n), "VODFM_VOD", varField, rc=status)
+  call ESMF_StateGet(LIS_forwardState(n), "VODOO_VOD", varField, rc=status)
 !LIS_histDAtaMod
   call LIS_verify(status, &
-       "Error in StateGet in noahmp401_getVODpred for VODFM_VOD")
+       "Error in StateGet in noahmp401_getVODpred for VODOO_VOD")
   
   call ESMF_FieldGet(varField, localDE=0,farrayPtr=vod, rc=status)
   call LIS_verify(status, &
-       'Error in FieldGet in noahmp401_getVODPred for VODFM_VOD')
+       'Error in FieldGet in noahmp401_getVODPred for VODOO_VOD')
 
   obs_pred = 0.0
   count1 = 0.0
