@@ -3015,6 +3015,7 @@ subroutine LIS_lsmda_plugin
         trim(LIS_CGLSlaismobsId)//char(0),noahmp401_descale_laisoilm)
 
    call register_noahmp401_laida(LIS_CustomLAIobsId)
+   call register_noahmp401_laismda(LIS_CustomLAIobsId)
    call register_noahmp401_laislada(LIS_CustomLAIwithSLAobsId)
    call register_noahmp401_vodda(LIS_CustomVODobsId)
    call register_noahmp401_vodda_only_lai(LIS_CustomVODonlyLAIobsId)
@@ -4223,6 +4224,30 @@ contains
        call registerlsmdaqcobsstate(trim(LIS_noahmp401Id)//"+"//&
             trim(obsId)//char(0),noahmp401_qc_LAIobs)
     end subroutine register_noahmp401_laida
+
+    subroutine register_noahmp401_laismda(obsId)
+        implicit none
+        character*50, intent(in) :: obsId
+       call registerlsmdainit(trim(LIS_noahmp401Id)//"+"//&
+            trim(obsid)//char(0),noahmp401_dalaisoilm_init)
+       call registerlsmdagetstatevar(trim(LIS_noahmp401Id)//"+"//&
+            trim(obsid)//char(0),noahmp401_getlaisoilm)
+       call registerlsmdasetstatevar(trim(LIS_noahmp401Id)//"+"//&
+            trim(obsid)//char(0),noahmp401_setlaisoilm)
+       call registerlsmdaupdatestate(trim(LIS_noahmp401Id)//"+"//&
+            trim(obsid)//char(0),noahmp401_updatelaisoilm)
+       call registerlsmdaqcstate(trim(LIS_noahmp401Id)//"+"//&
+            trim(obsid)//char(0),noahmp401_qclaisoilm)
+       call registerlsmdascalestatevar(trim(LIS_noahmp401Id)//"+"//&
+            trim(obsid)//char(0),noahmp401_scale_laisoilm)
+       call registerlsmdadescalestatevar(trim(LIS_noahmp401Id)//"+"//&
+            trim(obsid)//char(0),noahmp401_descale_laisoilm)
+
+       call registerlsmdagetobspred(trim(LIS_noahmp401Id)//"+"//&
+            trim(obsid)//char(0),noahmp401_getlaipred_laism)
+       call registerlsmdaqcobsstate(trim(LIS_noahmp401Id)//"+"//&
+            trim(obsid)//char(0),noahmp401_qc_laiobs_laism)
+    end subroutine register_noahmp401_laismda
 
     subroutine register_noahmp401_laislada(obsId)
         implicit none

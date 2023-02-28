@@ -290,6 +290,8 @@ module LIS_pluginIndices
         "CGLS LAI with soil moisture update"
    character*50, public,  parameter :: LIS_CustomLAIobsId      = &
         "Custom LAI"
+   character*50, public,  parameter :: LIS_CustomLAIsmobsId      = &
+        "Custom LAI with soil moisture update"
    character*50, public,  parameter :: LIS_CustomLAIwithSLAobsId      = &
         "Custom LAI with SLA update"
    character*50, public,  parameter :: LIS_CustomVODobsId      = &
