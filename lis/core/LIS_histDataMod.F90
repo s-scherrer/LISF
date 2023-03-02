@@ -194,6 +194,7 @@ module LIS_histDataMod
   public :: LIS_MOC_ELEVATION
   public :: LIS_MOC_SLOPE
   public :: LIS_MOC_LAI       
+  public :: LIS_MOC_SLA      
   public :: LIS_MOC_SAI       
   public :: LIS_MOC_SNFRALBEDO
   public :: LIS_MOC_MXSNALBEDO
@@ -647,6 +648,7 @@ module LIS_histDataMod
    integer :: LIS_MOC_ELEVATION  = -9999
    integer :: LIS_MOC_SLOPE      = -9999
    integer :: LIS_MOC_LAI        = -9999
+   integer :: LIS_MOC_SLA        = -9999
    integer :: LIS_MOC_SAI        = -9999
    integer :: LIS_MOC_SNFRALBEDO = -9999
    integer :: LIS_MOC_MXSNALBEDO = -9999
@@ -2975,6 +2977,18 @@ contains
          "leaf area index",rc)
     if ( rc == 1 ) then
        call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_LAI,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"-"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+    call ESMF_ConfigFindLabel(modelSpecConfig,"SLA:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "SLA",&
+         "specific_leaf_area",&
+         "specific leaf area",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_SLA,&
             LIS_histData(n)%head_lsm_list,&
             n,1,ntiles,(/"-"/),1,(/"-"/),1,1,1,&
             model_patch=.true.)
