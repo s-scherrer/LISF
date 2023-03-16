@@ -3015,7 +3015,7 @@ subroutine LIS_lsmda_plugin
         trim(LIS_CGLSlaismobsId)//char(0),noahmp401_descale_laisoilm)
 
    call register_noahmp401_laida(LIS_CustomLAIobsId)
-   call register_noahmp401_laismda(LIS_CustomLAIobsId)
+   call register_noahmp401_laismda(LIS_CustomLAIsmobsId)
    call register_noahmp401_laislada(LIS_CustomLAIwithSLAobsId)
    call register_noahmp401_vodda(LIS_CustomVODobsId)
    call register_noahmp401_vodda_only_lai(LIS_CustomVODonlyLAIobsId)

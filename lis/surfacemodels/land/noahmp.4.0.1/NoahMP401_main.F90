@@ -1074,7 +1074,7 @@ subroutine NoahMP401_main(n)
 
             ! output variable: sla (unit=m2/kg). ***  specific leaf area
             call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_SLA, value = NOAHMP401_struc(n)%noahmp401(t)%param%sla, &
-                                              vlevel=1, unit="m^2 kg-1", direction="-", surface_type = LIS_rc%lsm_index)
+                                              vlevel=1, unit="-", direction="-", surface_type = LIS_rc%lsm_index)
 
 
             ![ 39] output variable: sai (unit=- ). ***  stem area index
