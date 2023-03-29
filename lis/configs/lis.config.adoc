@@ -1141,6 +1141,7 @@ Acceptable values are:
 |"`ANSA snow depth`"            | ANSA snow depth
 |"`SMMR snow depth`"            | SMMR snow depth
 |"`SMMI snow depth`"            | SMMI snow depth
+|"`S1 snow depth`"              | S1 snow depth
 |"`S1 backscatter VVSM`"        | S1 backscatter VV for SM
 |"`S1 backscatter VVSMLAI`"     | S1 backscatter VV for SM and LAI
 |"`S1 backscatter VHSM`"        | S1 backscatter VH for SM
@@ -2230,6 +2231,16 @@ SMMR snow depth data.
 SMMR snow depth data directory:                  ./SMMR
 ....
 
+==== S1 snow depth Assimilation
+anchor:sssec_s1snowdepthda[S1 snow depth Assimilation]
+
+`S1 snow depth data directory:` specifies the directory for the
+S1 snow depth data.
+
+.Example _lis.config_ entry
+....
+S1 snow depth data directory:                  ./S1
+....
 
 [[sssec_s1backscatterda,S1 backscatter Assimilation]]
 ==== S1 backscatter Assimilation
@@ -2826,6 +2837,18 @@ moisture data.
 |"`combined`" | combined sensor type
 |===
 
+`ESA CCI soil moisture assimilate over barren grounds:` specifies whether to ignore the advisory flag for barren grounds
+in the ESA CCI product from v7.1 onwards
+
+Acceptable values are:
+
+|====
+|Value   | Description
+
+|.true.  | Assimilate over barren grounds
+|.false. | Don't assimilate over barren grounds
+|====
+
 `ESA CCI use scaled standard deviation model:` specifies if the observation
 error standard deviation is to be scaled using model and observation standard
 deviation.
@@ -2853,14 +2876,14 @@ Acceptable values are:
 NOTE: Select 0 for yearly CDF data.
 
 `ESA CCI soil moisture assimilate at 0UTC:` specifies whether to assimilate at 00:00 UTC
-or at local noon.
+or at local noon (note that ESA CCI retrievals are centered around 00:00 UTC).
 
 Acceptable values are:
 
 |====
-|Value    | Description
+|Value   | Description
 
-|.true. | Assimilate at 00:00 UTC
+|.true.  | Assimilate at 00:00 UTC
 |.false. | Assimilate at local noon
 |====
 
@@ -2869,7 +2892,8 @@ Acceptable values are:
 ....
 ESA CCI soil moisture data directory:
 ESA CCI soil moisture data version:
-ESA CCI soil moisture sensor type:            combined
+ESA CCI soil moisture sensor type:                    combined
+ESA CCI soil moisture assimilate over barren grounds:
 ESA CCI use scaled standard deviation model:
 ESA CCI model CDF file:
 ESA CCI observation CDF file:
@@ -8165,7 +8189,7 @@ landcover classification.
 
 `Noah-MP.4.0.1 apply soil moisture observation QC:` specifies whether
 quality control should reject observations which are too close to the
-tails. Defaults to `.true.`.
+soil moisture boundaries. Defaults to `.true.`.
 
 `Noah-MP.4.0.1 apply soil moisture DA over forests:` specifies whether
 soil moisture data assimilaion may be performed over forests. Defaults
