@@ -27,6 +27,7 @@ subroutine noahmp401_qc_VODobs(n,k,OBS_State)
   use LIS_DAobservationsMod
   use noahmp401_lsmMod
   use NOAHMP_TABLES_401, ONLY : SMCMAX_TABLE,SMCWLT_TABLE
+  use VODOO_Mod, only : vodoo_struc
 
 
   implicit none
@@ -58,7 +59,8 @@ subroutine noahmp401_qc_VODobs(n,k,OBS_State)
   real                     :: lat,lon
 
 ! mn
-  integer                 :: SOILTYP           ! soil type index [-]
+  integer                  :: SOILTYP           ! soil type index [-]
+  real                     :: rtm_valid(LIS_rc%npatch(n,LIS_rc%lsm_index))
   real                     :: smc1(LIS_rc%npatch(n,LIS_rc%lsm_index))
   real                     :: smc2(LIS_rc%npatch(n,LIS_rc%lsm_index))
   real                     :: smc3(LIS_rc%npatch(n,LIS_rc%lsm_index))
@@ -75,6 +77,7 @@ subroutine noahmp401_qc_VODobs(n,k,OBS_State)
   real                     :: SMCMAX(LIS_rc%npatch(n,LIS_rc%lsm_index))
   real                     :: SMCWLT(LIS_rc%npatch(n,LIS_rc%lsm_index))
 
+  real                     :: rtm_valid_obs(LIS_rc%obs_ngrid(k))
   real                     :: rainf_obs(LIS_rc%obs_ngrid(k))
   real                     :: sneqv_obs(LIS_rc%obs_ngrid(k))
   real                     :: sca_obs(LIS_rc%obs_ngrid(k))
@@ -109,6 +112,13 @@ subroutine noahmp401_qc_VODobs(n,k,OBS_State)
 !---------------------------------------------------------------------------  
 
   do t=1, LIS_rc%npatch(n,LIS_rc%lsm_index)
+     if (vodoo_struc(n)%isvalid(n,t)) then
+         ! setting to a real because conversion to obs space is only defined
+         ! for reals
+         rtm_valid(t) = 1.0
+     else
+         rtm_valid(t) = 0.0
+     endif
      smc1(t) = noahmp401_struc(n)%noahmp401(t)%smc(1)
      smc2(t) = noahmp401_struc(n)%noahmp401(t)%smc(2)
      smc3(t) = noahmp401_struc(n)%noahmp401(t)%smc(3)
@@ -135,6 +145,9 @@ subroutine noahmp401_qc_VODobs(n,k,OBS_State)
      SMCWLT(t) = SMCWLT_TABLE(SOILTYP)
   enddo
 
+  call LIS_convertPatchSpaceToObsSpace(n,k,&       
+       LIS_rc%lsm_index, &
+       rtm_valid, rtm_valid_obs)
   call LIS_convertPatchSpaceToObsSpace(n,k,&       
        LIS_rc%lsm_index, &
        noahmp401_struc(n)%noahmp401(:)%prcp,&
@@ -219,50 +232,58 @@ subroutine noahmp401_qc_VODobs(n,k,OBS_State)
 
    do t = 1,LIS_rc%obs_ngrid(k)
        !------------------start loop considering one obs--------------------------
+       if(rtm_valid_obs(t).ne.1.0) then
+           obsl(t) = LIS_rc%udef
+       endif
+
        if(obsl(t).ne.LIS_rc%udef) then 
-           ! MN: check for frozen soil
-       elseif(abs(smc1_obs(t)- &
+          ! MN: check for rain
+          if(rainf_obs(t).gt.3E-6) then   ! Var name Noah36 --> rainf 
+              obsl(t) = LIS_rc%udef
+          ! MN: check for frozen soil
+          elseif(abs(smc1_obs(t)- &
                sh2o1_obs(t)).gt.0.0001) then
-           obsl(t) = LIS_rc%udef
-       elseif(abs(smc2_obs(t)- &
+             obsl(t) = LIS_rc%udef
+          elseif(abs(smc2_obs(t)- &
                sh2o2_obs(t)).gt.0.0001) then
-           obsl(t) = LIS_rc%udef
-       elseif(abs(smc3_obs(t)- &
+             obsl(t) = LIS_rc%udef
+          elseif(abs(smc3_obs(t)- &
                sh2o3_obs(t)).gt.0.0001) then
-           obsl(t) = LIS_rc%udef
-       elseif(abs(smc4_obs(t)- &
+             obsl(t) = LIS_rc%udef
+          elseif(abs(smc4_obs(t)- &
                sh2o4_obs(t)).gt.0.0001) then
-           obsl(t) = LIS_rc%udef
-       elseif(stc1_obs(t).le.LIS_CONST_TKFRZ) then
-           obsl(t) = LIS_rc%udef
-       elseif(stc2_obs(t).le.LIS_CONST_TKFRZ) then
-           obsl(t) = LIS_rc%udef
-       elseif(stc3_obs(t).le.LIS_CONST_TKFRZ) then
-           obsl(t) = LIS_rc%udef
-       elseif(stc4_obs(t).le.LIS_CONST_TKFRZ) then
-           obsl(t) = LIS_rc%udef 
-       elseif(t1_obs(t).le.LIS_CONST_TKFRZ) then ! Var name Noah401 --> t1
-           obsl(t) = LIS_rc%udef
-           !        elseif(vegt_obs(t).le.4) then !forest types ! Var name Noah401 --> vegt
-           !           obsl(t) = LIS_rc%udef
-       elseif(vegt_obs(t).eq.13) then !urban ! Var name Noah401 --> vegt
-           obsl(t) = LIS_rc%udef
-       elseif(vegt_obs(t).eq.17) then !water ! Var name Noah401 --> vegt
-           obsl(t) = LIS_rc%udef
-           ! MN: check for snow  
-       elseif(sneqv_obs(t).gt.0.001) then 
-           obsl(t) = LIS_rc%udef
-       elseif(sca_obs(t).gt.0.0001) then  ! Var name sca 
-           obsl(t) = LIS_rc%udef
-           ! MN: check for green vegetation fraction NOTE: threshold incerased from 0.5 to 0.7 !commented out for now
-           !      elseif(shdfac_obs(t).gt.0.7) then  ! var name Noah401 shdfac 12-month green veg. frac.  
-           !          obsl(t) = LIS_rc%udef        
-           !too close to the tails, could be due to scaling, so reject. !commented out for
-           !now. It was written for soil moisture
-           !        elseif(smcmax_obs(t)-obsl(t).lt.0.02) then 
-           !           obsl(t) = LIS_rc%udef
-           !        elseif(obsl(t) - smcwlt_obs(t).lt.0.02) then 
-           !           obsl(t) = LIS_rc%udef
+             obsl(t) = LIS_rc%udef
+          elseif(stc1_obs(t).le.LIS_CONST_TKFRZ) then
+             obsl(t) = LIS_rc%udef
+          elseif(stc2_obs(t).le.LIS_CONST_TKFRZ) then
+             obsl(t) = LIS_rc%udef
+          elseif(stc3_obs(t).le.LIS_CONST_TKFRZ) then
+             obsl(t) = LIS_rc%udef
+          elseif(stc4_obs(t).le.LIS_CONST_TKFRZ) then
+             obsl(t) = LIS_rc%udef 
+          elseif(t1_obs(t).le.LIS_CONST_TKFRZ) then ! Var name Noah36 --> t1
+             obsl(t) = LIS_rc%udef
+  !        elseif(vegt_obs(t).le.4) then !forest types ! Var name Noah36 --> vegt
+  !           obsl(t) = LIS_rc%udef
+          elseif(vegt_obs(t).eq.13) then !urban ! Var name Noah36 --> vegt
+             obsl(t) = LIS_rc%udef
+          elseif(vegt_obs(t).eq.17) then !urban ! Var name Noah36 --> vegt
+             obsl(t) = LIS_rc%udef
+   ! MN: check for snow  
+          elseif(sneqv_obs(t).gt.0.001) then 
+             obsl(t) = LIS_rc%udef
+          elseif(sca_obs(t).gt.0.0001) then  ! Var name sca 
+             obsl(t) = LIS_rc%udef
+   ! MN: check for green vegetation fraction NOTE: threshold incerased from 0.5 to 0.7 !commented out for now
+   !      elseif(shdfac_obs(t).gt.0.7) then  ! var name Noah36 shdfac 12-month green veg. frac.  
+   !          obsl(t) = LIS_rc%udef        
+  !too close to the tails, could be due to scaling, so reject. !commented out for
+  !now. It was written for soil moisture
+  !        elseif(smcmax_obs(t)-obsl(t).lt.0.02) then 
+  !           obsl(t) = LIS_rc%udef
+  !        elseif(obsl(t) - smcwlt_obs(t).lt.0.02) then 
+  !           obsl(t) = LIS_rc%udef
+          endif
        endif
    enddo
 

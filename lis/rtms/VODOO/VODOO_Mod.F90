@@ -64,23 +64,24 @@ module VODOO_Mod
         character*256 :: parameter_fname
         !-------output------------!
         real, allocatable :: VOD(:)
+        integer :: ncoef
         contains
         procedure, pass(self) :: initialize => VODOO_initialize_default
         procedure, pass(self) :: run => VODOO_run_default
+        procedure, pass(self) :: isvalid => VODOO_isvalid_default
     end type vodoo_type_dec
 
     type, extends(vodoo_type_dec) :: vodoo_window_model
-        integer, parameter :: ncoef = 2
         ! coefs has dimensions (ngrid, doy, predictor)
         real, allocatable :: coefs(:, :, :)
         real, allocatable :: intercept(:, :)
         contains
             procedure, pass(self) :: initialize => VODOO_initialize_window_model
             procedure, pass(self) :: run => VODOO_run_window_model
+            procedure, pass(self) :: isvalid => VODOO_isvalid_window_model
     end type vodoo_window_model
 
     type, extends(vodoo_type_dec) :: vodoo_anom_model
-        integer, parameter :: ncoef = 5
         real, allocatable :: vod_clim(:, :)
         real, allocatable :: lai_clim(:, :)
         real, allocatable :: rzsm_clim(:, :)
@@ -89,6 +90,7 @@ module VODOO_Mod
         contains
             procedure, pass(self) :: initialize => VODOO_initialize_anom_model
             procedure, pass(self) :: run => VODOO_run_anom_model
+            procedure, pass(self) :: isvalid => VODOO_isvalid_anom_model
     end type vodoo_anom_model
 
     class(vodoo_type_dec), allocatable :: vodoo_struc(:)
@@ -130,6 +132,8 @@ contains
         enddo
         if (modeltype(1) .eq. "window") then
             allocate(vodoo_window_model :: vodoo_struc(LIS_rc%nnest))
+        elseif (modeltype(1) .eq. "anom") then
+            allocate(vodoo_anom_model :: vodoo_struc(LIS_rc%nnest))
         else
             write(LIS_logunit, *)&
                  "[ERR] VODOO model type must be 'window' or 'anom'"
@@ -180,6 +184,8 @@ contains
         integer :: ios, nid, npatch
         integer :: ngridId, ngrid
 
+        self%ncoef = 2
+
 #if !(defined USE_NETCDF3 || defined USE_NETCDF4)
         write(LIS_logunit,*) "[ERR] VODOO requires NETCDF"
         call LIS_endrun
@@ -227,6 +233,8 @@ contains
 
         integer :: ios, nid, npatch
         integer :: ngridId, ngrid
+
+        self%ncoef = 5
 
 #if !(defined USE_NETCDF3 || defined USE_NETCDF4)
         write(LIS_logunit,*) "[ERR] VODOO requires NETCDF"
@@ -486,7 +494,6 @@ contains
 
     end subroutine add_sfc_fields
 
-
     subroutine VODOO_f2t(n)
 
         implicit none
@@ -494,7 +501,6 @@ contains
         integer, intent(in)    :: n
 
     end subroutine VODOO_f2t
-
 
     subroutine VODOO_geometry(n)
         implicit none
@@ -529,7 +535,11 @@ contains
             pred(1) = lai(t)
             pred(2) = rzsm(t)
 
-            call vodoo_struc(n)%run(n, t, pred)
+            if (vodoo_struc(n)%isvalid(n, t)) then
+                call vodoo_struc(n)%run(n, t, pred)
+            else
+                vodoo_struc(n)%VOD(t) = LIS_rc%udef
+            endif
 
             if (vodoo_struc(n)%VOD(t).ne.LIS_rc%udef.and.vodoo_struc(n)%VOD(t).lt.-10) then
                 write(LIS_logunit, *) "[WARN] VOD lower than -10"
@@ -545,18 +555,15 @@ contains
 
         call getsfcvar(LIS_forwardState(n),"VODOO_VOD", vodval)
         vodval = vodoo_struc(n)%VOD
-
-
     end subroutine VODOO_run
 
     subroutine VODOO_run_default(self, n, t, pred)
         class(vodoo_type_dec), intent(inout) :: self
         integer, intent(in) :: n, t
-        real, intent(in) :: pred(self%npred)
+        real, intent(in) :: pred(self%ncoef)
         write(LIS_logunit,*) "[ERR] VODOO should use window or anom model"
         call LIS_endrun
     end subroutine VODOO_run_default
-        
 
     subroutine VODOO_run_window_model(self, n, t, pred)
         use LIS_histDataMod
@@ -568,22 +575,11 @@ contains
         real, intent(in) :: pred(self%ncoef)
 
         real                :: coefs(self%ncoef)
-        logical             :: coefs_valid
         integer             :: doy 
 
         doy = VODOO_current_doy()
-
         coefs = self%coefs(:, doy, t)
-
-        ! For some pixels no VOD was available and therefore no forward
-        ! model was fitted. No assimilation will take place over these
-        ! pixels anyways, so it's no problem to not predict anything here
-        coefs_valid = (.not.isnan(coefs(1)).and.coefs(1).ne.LIS_rc%udef)
-        if (coefs_valid) then
-            self%VOD(t) = sum(coefs * pred) + self%intercept(doy, t)
-        else
-            self%VOD(t)=LIS_rc%udef
-        endif
+        self%VOD(t) = sum(coefs * pred) + self%intercept(doy, t)
     end subroutine VODOO_run_window_model
 
 
@@ -600,13 +596,14 @@ contains
         real                :: actual_preds(self%ncoef)
         real                :: vod_clim, lai_clim, rzsm_clim
         real                :: lai, rzsm, lai_anom, rzsm_anom
-        logical             :: coefs_valid
         integer             :: doy 
 
         doy = VODOO_current_doy()
 
         coefs = self%coefs(:, t)
         vod_clim = self%vod_clim(doy, t)
+        lai_clim = self%lai_clim(doy, t)
+        rzsm_clim = self%rzsm_clim(doy, t)
 
         lai = pred(1)
         rzsm = pred(2)
@@ -619,30 +616,21 @@ contains
         actual_preds(4) = rzsm * rzsm_anom
         actual_preds(5) = lai * rzsm * rzsm_anom
 
-        ! For some pixels no VOD was available and therefore no forward
-        ! model was fitted. No assimilation will take place over these
-        ! pixels anyways, so it's no problem to not predict anything here
-        coefs_valid = (.not.isnan(coefs(1)).and.coefs(1).ne.LIS_rc%udef)
-        if (coefs_valid) then
-            self%VOD(t) = sum(coefs * pred) + self%intercept(doy, t) + vod_clim
-        else
-            self%VOD(t)=LIS_rc%udef
-        endif
+        self%VOD(t) = sum(coefs * actual_preds) + self%intercept(t) + vod_clim
     end subroutine VODOO_run_anom_model
-
 
     function VODOO_current_doy()
         use LIS_coreMod, only : LIS_rc
 
         integer   :: VODOO_current_doy
-        integer   :: k
+        integer   :: k, days(13), ldays(13)
 
         data days /31,28,31,30,31,30,31,31,30,31,30,31,30/
         data ldays /31,29,31,30,31,30,31,31,30,31,30,31,30/
 
         VODOO_current_doy = 0
-        if((mod(yr,4).eq.0.and.mod(yr,100).ne.0) &     !correct for leap year
-             .or.(mod(yr,400).eq.0))then             !correct for y2k
+        if((mod(LIS_rc%yr,4).eq.0.and.mod(LIS_rc%yr,100).ne.0) &     !correct for leap year
+             .or.(mod(LIS_rc%yr,400).eq.0))then             !correct for y2k
             do k=1,(LIS_rc%mo-1)
                 VODOO_current_doy=VODOO_current_doy+ldays(k)
             enddo
@@ -653,6 +641,51 @@ contains
         endif
         VODOO_current_doy = VODOO_current_doy + LIS_rc%da
     end function VODOO_current_doy
+
+    function VODOO_isvalid_default(self, n, t)
+        class(vodoo_type_dec), intent(inout) :: self
+        integer, intent(in) :: n, t
+        logical             :: VODOO_isvalid_default
+        VODOO_isvalid_default = .false.
+        write(LIS_logunit,*) "[ERR] VODOO should use window or anom model"
+        call LIS_endrun
+    end function VODOO_isvalid_default
+
+    function VODOO_isvalid_window_model(self, n, t)
+        class(vodoo_window_model), intent(inout) :: self
+        integer, intent(in) :: n, t
+        logical             :: VODOO_isvalid_window_model
+
+        integer             :: doy 
+        real                :: coefs(self%ncoef)
+
+        doy = VODOO_current_doy()
+        coefs = self%coefs(:, doy, t)
+
+        VODOO_isvalid_window_model = (.not.isnan(coefs(1)).and.coefs(1).ne.LIS_rc%udef)
+    end function VODOO_isvalid_window_model
+
+    function VODOO_isvalid_anom_model(self, n, t)
+        class(vodoo_anom_model), intent(inout) :: self
+        integer, intent(in) :: n, t
+        logical             :: VODOO_isvalid_anom_model
+
+        integer             :: doy 
+        real                :: vod_clim, lai_clim, rzsm_clim
+        real                :: coefs(self%ncoef)
+
+        doy = VODOO_current_doy()
+        coefs = self%coefs(:, t)
+        vod_clim = self%vod_clim(doy, t)
+        lai_clim = self%lai_clim(doy, t)
+        rzsm_clim = self%rzsm_clim(doy, t)
+
+        ! if any coef is NaN or undefined, all are, but climatologies might differ
+        VODOO_isvalid_anom_model = (.not.isnan(coefs(1)).and.coefs(1).ne.LIS_rc%udef&
+                .and..not.isnan(vod_clim).and.vod_clim.ne.LIS_rc%udef&
+                .and..not.isnan(lai_clim).and.lai_clim.ne.LIS_rc%udef&
+                .and..not.isnan(rzsm_clim).and.rzsm_clim.ne.LIS_rc%udef)
+    end function VODOO_isvalid_anom_model
 
 
     !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
