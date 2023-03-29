@@ -267,7 +267,7 @@ subroutine LIS_DAobs_plugin
     use pildassmobs_module,      only : pildassmobs_setup
 #endif
 
-#if ( defined DA_OBS_NASA_SMAPSM )
+#if ( defined DA_OBS_NASA_SMAPSM ) || ( defined DA_OBS_NASA_SMAPSMLAI )
     use NASASMAPsm_Mod,          only : NASASMAPsm_setup
 #endif
 
@@ -487,7 +487,7 @@ subroutine LIS_DAobs_plugin
     external read_pildassmobs, write_pildassmobs
 #endif
 
-#if ( defined DA_OBS_NASA_SMAPSM )
+#if ( defined DA_OBS_NASA_SMAPSM ) || ( defined DA_OBS_NASA_SMAPSMLAI )
     external read_NASASMAPsm, write_NASASMAPsmobs
 #endif
 
@@ -920,6 +920,16 @@ subroutine LIS_DAobs_plugin
    call registerreaddaobs(trim(LIS_NASASMAPsmobsId)//char(0),&
         read_NASASMAPsm)
    call registerwritedaobs(trim(LIS_NASASMAPsmobsId)//char(0),&
+        write_NASASMAPsmobs)
+#endif
+
+#if ( defined DA_OBS_NASA_SMAPSMLAI )
+   call registerdaobsclass(trim(LIS_NASASMAPsmlaiobsId),"LSM")
+   call registerdaobssetup(trim(LIS_NASASMAPsmlaiobsId)//char(0),&
+        NASASMAPsm_setup)
+   call registerreaddaobs(trim(LIS_NASASMAPsmlaiobsId)//char(0),&
+        read_NASASMAPsm)
+   call registerwritedaobs(trim(LIS_NASASMAPsmlaiobsId)//char(0),&
         write_NASASMAPsmobs)
 #endif
 
