@@ -7,17 +7,20 @@
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
 !BOP
 !
-! !MODULE: S1_sigmaVVSM_Mod
+! !MODULE: S1_SNWD_Mod
 ! 
 ! !DESCRIPTION: 
 !   This module contains interfaces and subroutines to
-!   handle S1 backscatter retrievals. 
+!   handle S1 snow depth retrievals. 
 !   
 ! !REVISION HISTORY: 
-!  29 Aug 2019   Hans Lievens;   Initial Specification for sigma depth
-!  9 Mar 2021    Isis Brangers;  Adaptation for backscatter
-! 
-module S1_sigmaVVSM_Mod
+!  29 Aug 2019   Hans Lievens;   Initial Specification
+!
+! This reader can be used for netcdf data in the following format:
+! filename: 'snd_yyyymmdd.nc' with variables 'snd' [m],'lat' and 'lon'
+
+ 
+module S1_SNWD_Mod
 ! !USES: 
   use ESMF
 !EOP
@@ -28,31 +31,31 @@ module S1_sigmaVVSM_Mod
 !-----------------------------------------------------------------------------
 ! !PUBLIC MEMBER FUNCTIONS:
 !-----------------------------------------------------------------------------
-  public :: S1_sigmaVVSM_setup
+  public :: S1_SNWD_setup
 !-----------------------------------------------------------------------------
 ! !PUBLIC TYPES:
 !-----------------------------------------------------------------------------
-  PUBLIC :: S1_sigma_struc
+  PUBLIC :: S1_SNWD_struc
 
-  type, public ::  S1_sigma_dec
+  type, public ::  S1_SNWD_dec
      logical             :: startMode
      real                :: ssdev
-     integer             :: sigmafield
+     integer             :: snowfield
      integer             :: nc,nr
-     real,    allocatable    :: sigma(:,:)
-     real,    allocatable    :: sigmatime(:,:)
-  end type S1_sigma_dec
+     real,    allocatable    :: snwd(:,:)
+     real,    allocatable    :: snwdtime(:,:)
+  end type S1_SNWD_dec
 
-  type(S1_sigma_dec), allocatable :: S1_sigma_struc(:)
+  type(S1_SNWD_dec), allocatable :: S1_SNWD_struc(:)
 
 contains
 !BOP
 ! 
-! !ROUTINE: S1_sigmaVVSM_setup
-! \label{S1_sigmaVVSM_setup}
+! !ROUTINE: S1_SNWD_setup
+! \label{S1_SNWD_setup}
 ! 
 ! !INTERFACE: 
-  subroutine S1_sigmaVVSM_setup(k, OBS_State, OBS_Pert_State)
+  subroutine S1_SNWD_setup(k, OBS_State, OBS_Pert_State)
 ! !USES: 
 
     use LIS_coreMod
@@ -62,7 +65,7 @@ contains
     use LIS_DAobservationsMod
     use LIS_logMod
     use netcdf
-   
+ 
     implicit none 
 
 ! !ARGUMENTS: 
@@ -73,7 +76,7 @@ contains
 ! !DESCRIPTION: 
 !   
 !   This routine completes the runtime initializations and 
-!   creation of data structures required for S1 backscatter data. 
+!   creation of data strctures required for S1 snow depth data. 
 !
 !   The arguments are: 
 !   \begin{description}
@@ -89,7 +92,7 @@ contains
     type(ESMF_ArraySpec)   ::  intarrspec, realarrspec
     type(ESMF_Field)       ::  pertField(LIS_rc%nnest)
     type(ESMF_ArraySpec)   ::  pertArrSpec
-    character*100          ::  S1sigmaobsdir
+    character*100          ::  S1snowobsdir
     character*100          ::  temp
     real,  allocatable         ::  obsstd(:)
     character*1            ::  vid(2)
@@ -100,8 +103,7 @@ contains
     real, pointer          :: obs_temp(:,:)
     real, allocatable          :: ssdev(:)
 
-
-    allocate(S1_sigma_struc(LIS_rc%nnest))
+    allocate(S1_SNWD_struc(LIS_rc%nnest))
 
     call ESMF_ArraySpecSet(intarrspec,rank=1,typekind=ESMF_TYPEKIND_I4,&
          rc=status)
@@ -115,14 +117,14 @@ contains
          rc=status)
     call LIS_verify(status)
 
-    call ESMF_ConfigFindLabel(LIS_config,"S1 backscatter data directory:",&
+    call ESMF_ConfigFindLabel(LIS_config,"S1 snow depth data directory:",&
          rc=status)
     do n=1,LIS_rc%nnest
-       call ESMF_ConfigGetattribute(LIS_config,S1sigmaobsdir,&
+       call ESMF_ConfigGetattribute(LIS_config,S1snowobsdir,&
             rc=status)
-       call LIS_verify(status,'S1 backscatter data directory: not defined')
+       call LIS_verify(status,'S1 snow depth data directory: not defined')
        call ESMF_AttributeSet(OBS_State(n),"Data Directory",&
-            S1sigmaobsdir, rc=status)
+            S1snowobsdir, rc=status)
        call LIS_verify(status)
     enddo
 
@@ -145,7 +147,7 @@ contains
        
     enddo
 
-    write(LIS_logunit,*)'[INFO] read S1 backscatter data specifications'
+    write(LIS_logunit,*)'[INFO] read S1 snow depth data specifications'
 
 !----------------------------------------------------------------------------
 !   Create the array containers that will contain the observations and
@@ -204,7 +206,7 @@ contains
                obs_pert)
 
           ssdev = obs_pert%ssdev(1)
-          S1_sigma_struc(n)%ssdev =obs_pert%ssdev(1) 
+          S1_SNWD_struc(n)%ssdev =obs_pert%ssdev(1) 
 
           pertField(n) = ESMF_FieldCreate(arrayspec=pertArrSpec,&
                grid=LIS_obsEnsOnGrid(n,k),name="Observation"//vid(1)//vid(2),&
@@ -261,29 +263,30 @@ contains
 
     do n=1,LIS_rc%nnest
        call ESMF_ConfigFindLabel(LIS_config,&
-                    "S1 backscatter domain x-dimension size:",rc=status)
-       call ESMF_ConfigGetAttribute(LIS_config,S1_sigma_struc(n)%nc,rc=status)
-       call LIS_verify(status,'[ERR] S1 backscatter domain x-dimension size: not defined')
+                     "S1 snow depth domain x-dimension size:",rc=status)
+       call ESMF_ConfigGetAttribute(LIS_config,S1_SNWD_struc(n)%nc,rc=status)
+       call LIS_verify(status,'[ERR] S1 snow depth domain x-dimension size: not defined')
 
        call ESMF_ConfigFindLabel(LIS_config,&
-                   "S1 backscatter domain y-dimension size:",rc=status)
-       call ESMF_ConfigGetAttribute(LIS_config,S1_sigma_struc(n)%nr,rc=status)
-       call LIS_verify(status,'[ERR] S1 backscatter domain y-dimension size: not defined')
+		             "S1 snow depth domain y-dimension size:",rc=status)
+       call ESMF_ConfigGetAttribute(LIS_config,S1_SNWD_struc(n)%nr,rc=status)
+       call LIS_verify(status,'[ERR] S1 snow depth domain y-dimension size: not defined')
 
-       allocate(S1_sigma_struc(n)%sigma(LIS_rc%obs_lnc(k),LIS_rc%obs_lnr(k)))
-       allocate(S1_sigma_struc(n)%sigmatime(&
+       allocate(S1_SNWD_struc(n)%snwd(LIS_rc%obs_lnc(k),LIS_rc%obs_lnr(k)))
+       allocate(S1_SNWD_struc(n)%snwdtime(&
             LIS_rc%obs_lnc(k), LIS_rc%obs_lnr(k)))
-       S1_sigma_struc(n)%sigma = LIS_rc%udef
-       S1_sigma_struc(n)%sigmatime = -1
+       S1_SNWD_struc(n)%snwd = LIS_rc%udef
+       S1_SNWD_struc(n)%snwdtime = -1
 
-       call LIS_registerAlarm("S1 backscatter read alarm",&
+       call LIS_registerAlarm("S1 snow depth read alarm",&
             86400.0, 86400.0)
 
-       S1_sigma_struc(n)%startMode = .true. 
+       S1_SNWD_struc(n)%startMode = .true. 
     enddo
 
     write(LIS_logunit,*) '[INFO] Created ESMF States to hold S1 observations data'
 
-  end subroutine S1_sigmaVVSM_setup
+  end subroutine S1_SNWD_setup
   
-end module S1_sigmaVVSM_Mod
+end module S1_SNWD_Mod
+
