@@ -2739,23 +2739,23 @@ subroutine LIS_lsmda_plugin
 !Scherrer
 ! Noah-MP.4.0.1 SMAP(NASA) soil moisture
    call registerlsmdainit(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_NASASMAPlaismlaiobsId )//char(0),NoahMP401_dalaisoilm_init)
+        trim(LIS_NASASMAPsmlaiobsId )//char(0),NoahMP401_dalaisoilm_init)
    call registerlsmdagetstatevar(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_NASASMAPlaismlaiobsId )//char(0),NoahMP401_getlaisoilm)
+        trim(LIS_NASASMAPsmlaiobsId )//char(0),NoahMP401_getlaisoilm)
    call registerlsmdasetstatevar(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_NASASMAPlaismobsId )//char(0),NoahMP401_setlaisoilm)
+        trim(LIS_NASASMAPsmlaiobsId )//char(0),NoahMP401_setlaisoilm)
    call registerlsmdagetobspred(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_NASASMAPlaismobsId )//char(0),NoahMP401_getsmpred)
+        trim(LIS_NASASMAPsmlaiobsId )//char(0),NoahMP401_getsmpred)
    call registerlsmdaqcstate(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_NASASMAPlaismobsId )//char(0),NoahMP401_qclaisoilm)
+        trim(LIS_NASASMAPsmlaiobsId )//char(0),NoahMP401_qclaisoilm)
    call registerlsmdaqcobsstate(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_NASASMAPlaismobsId )//char(0),NoahMP401_qc_soilmobs)
+        trim(LIS_NASASMAPsmlaiobsId )//char(0),NoahMP401_qc_soilmobs)
    call registerlsmdascalestatevar(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_NASASMAPlaismobsId )//char(0),NoahMP401_scale_laisoilm)
+        trim(LIS_NASASMAPsmlaiobsId )//char(0),NoahMP401_scale_laisoilm)
    call registerlsmdadescalestatevar(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_NASASMAPlaismobsId )//char(0),NoahMP401_descale_laisoilm)
+        trim(LIS_NASASMAPsmlaiobsId )//char(0),NoahMP401_descale_laisoilm)
    call registerlsmdaupdatestate(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_NASASMAPlaismobsId )//char(0),NoahMP401_updatelaisoilm)
+        trim(LIS_NASASMAPsmlaiobsId )//char(0),NoahMP401_updatelaisoilm)
 
 !ZH
 ! Noah-MP.4.0.1 ESACCI soil moisture
