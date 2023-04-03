@@ -517,7 +517,9 @@ contains
         call ESMF_ConfigFindLabel(LIS_config, &
              "Custom "//trim(varname)//" number of bins in the CDF:", rc=status)
         do n=1, LIS_rc%nnest
-            if(LIS_rc%dascaloption(k).eq."CDF matching".or.LIS_rc%dascaloption(k).eq."Normal deviate scaling") then
+            if(LIS_rc%dascaloption(k).eq."CDF matching"&
+                 .or.LIS_rc%dascaloption(k).eq."Unsafe CDF matching"&
+                 .or.LIS_rc%dascaloption(k).eq."Normal deviate scaling") then
                 call ESMF_ConfigGetAttribute(LIS_config,reader_struc(n)%nbins, rc=status)
                 call LIS_verify(status, &
                      "Custom "//trim(varname)//" number of bins in the CDF: not defined")
@@ -562,7 +564,7 @@ contains
 
             if(LIS_rc%lis_obs_map_proj(k).ne."latlon") then
                 write(LIS_logunit,*)&
-                     '[ERROR] The Custom reader module only works with latlon projection'       
+                     '[ERROR] The Custom reader module only works with latlon projection'
                 call LIS_endrun
             endif
 
@@ -765,7 +767,9 @@ contains
 
             if(LIS_rc%dascaloption(k).ne."none") then
 
-                if(LIS_rc%dascaloption(k).eq."CDF matching".or.LIS_rc%dascaloption(k).eq."Normal deviate scaling") then
+                if(LIS_rc%dascaloption(k).eq."CDF matching"&
+                     .or.LIS_rc%dascaloption(k).eq."unsafe CDF matching"&
+                     .or.LIS_rc%dascaloption(k).eq."Normal deviate scaling") then
                     !------------------------------------------------------------
                     ! CDF matching
                     !------------------------------------------------------------
@@ -1020,9 +1024,9 @@ contains
                 do r=1,LIS_rc%obs_lnr(k)
                     do c=1,LIS_rc%obs_lnc(k)
                         if(LIS_obs_domain(n,k)%gindex(c,r).ne.-1) then
-                            if(observations(c+(r-1)*LIS_rc%obs_lnc(k)).gt.0) then             
+                            if(observations(c+(r-1)*LIS_rc%obs_lnc(k)).gt.0) then
                                 reader_struc(n)%daobs(c,r) = &
-                                     observations(c+(r-1)*LIS_rc%obs_lnc(k))                 
+                                     observations(c+(r-1)*LIS_rc%obs_lnc(k))
                                 reader_struc(n)%daobs_unc(c, r) = &
                                      observations_unc(c+(r-1)*LIS_rc%obs_lnc(k))
                                 lon = LIS_obs_domain(n,k)%lon(c+(r-1)*LIS_rc%obs_lnc(k))
@@ -1043,9 +1047,9 @@ contains
                 do r=1,LIS_rc%obs_lnr(k)
                     do c=1,LIS_rc%obs_lnc(k)
                         if(LIS_obs_domain(n,k)%gindex(c,r).ne.-1) then
-                            if(observations(c+(r-1)*LIS_rc%obs_lnc(k)).gt.0) then             
+                            if(observations(c+(r-1)*LIS_rc%obs_lnc(k)).gt.0) then
                                 reader_struc(n)%daobs(c,r) = &
-                                     observations(c+(r-1)*LIS_rc%obs_lnc(k))                 
+                                     observations(c+(r-1)*LIS_rc%obs_lnc(k))
                                 lon = LIS_obs_domain(n,k)%lon(c+(r-1)*LIS_rc%obs_lnc(k))
                                 if (reader_struc(n)%lt_assim.ne.0) then
                                     localdatime = reader_struc(n)%da_hr * 3600.0 + reader_struc(n)%da_mn * 60.0
@@ -1091,7 +1095,7 @@ contains
                                 obs_unscaled(LIS_obs_domain(n,k)%gindex(c,r)) = &
                                      obs_current(c,r)
                             endif
-                            if(obs_current(c,r).ne.LIS_rc%udef) then 
+                            if(obs_current(c,r).ne.LIS_rc%udef) then
                                 fnd = 1
                             endif
                         endif
@@ -1113,7 +1117,7 @@ contains
                                 obs_unscaled(LIS_obs_domain(n,k)%gindex(c,r)) = &
                                      obs_current(c,r)
                             endif
-                            if(obs_current(c,r).ne.LIS_rc%udef) then 
+                            if(obs_current(c,r).ne.LIS_rc%udef) then
                                 fnd = 1
                             endif
                         endif
@@ -1142,6 +1146,21 @@ contains
                  reader_struc(n)%obs_cdf,       &
                  obs_current)
 
+        elseif(LIS_rc%dascaloption(k).eq."unsafe CDF matching".and.fnd.ne.0) then
+
+            write(LIS_logunit,*) '[INFO] perform CDF matching'
+            call CustomNcReader_rescale_with_unsafe_CDF_matching(     &
+                 n,k,                               &
+                 reader_struc(n)%nbins,         &
+                 reader_struc(n)%ntimes,        &
+                 reader_struc(n)%max_value, &
+                 reader_struc(n)%min_value, &
+                 reader_struc(n)%model_xrange,  &
+                 reader_struc(n)%obs_xrange,    &
+                 reader_struc(n)%model_cdf,     &
+                 reader_struc(n)%obs_cdf,       &
+                 obs_current)
+
         elseif (LIS_rc%dascaloption(k).eq."Normal deviate scaling".and.fnd.ne.0) then
 
             write(LIS_logunit,*) '[INFO] perform normal deviate scaling'
@@ -1153,7 +1172,7 @@ contains
                  reader_struc(n)%obs_mu,     &
                  reader_struc(n)%obs_sigma,       &
                  obs_current)
-            
+
         elseif ((LIS_rc%dascaloption(k).eq."seasonal"&
                  .or.LIS_rc%dascaloption(k).eq."seasonal multiplicative")&
              .and.fnd.ne.0) then
@@ -1203,7 +1222,7 @@ contains
 
         !-------------------------------------------------------------------------
         !  Apply LSM-based QC and screening of observations
-        !-------------------------------------------------------------------------     
+        !-------------------------------------------------------------------------
         call lsmdaqcobsstate(trim(LIS_rc%lsm)//"+"&
              //trim(reader_struc(n)%obsid)//char(0),n, k,OBS_state)
         call LIS_checkForValidObs(n,k,obsl,fnd,obs_current)
@@ -1403,7 +1422,7 @@ contains
             write(LIS_logunit,*) 'lat size expected: ',reader_struc(n)%nr
             write(LIS_logunit,*) 'lon size on file: ',lonsize_file
             write(LIS_logunit,*) 'lon size expected: ',reader_struc(n)%nc
-            call LIS_endrun 
+            call LIS_endrun
         endif
 
         ! make sure that latitude axis is inverted
@@ -2128,7 +2147,7 @@ contains
             write(LIS_logunit,*) 'lat size expected: ',reader_struc(n)%nr
             write(LIS_logunit,*) 'lon size on file: ',lonsize_file
             write(LIS_logunit,*) 'lon size expected: ',reader_struc(n)%nc
-            call LIS_endrun 
+            call LIS_endrun
         endif
 
         ! make sure that latitude axis is inverted
@@ -2181,5 +2200,148 @@ contains
          end do
 #endif
     end subroutine CustomNcReader_read_mean_obs_uncertainty
+
+!BOP
+!
+! !ROUTINE: CustomNcReader_rescale_with_unsafe_CDF_matching
+! \label{CustomNcReader_rescale_with_unsafe_CDF_matching}
+!
+! !INTERFACE:
+  subroutine CustomNcReader_rescale_with_unsafe_CDF_matching(&
+       n,             &
+       k,             &
+       nbins,         &
+       ntimes,        &
+       max_obs_value, &
+       min_obs_value, &
+       model_xrange,  &
+       obs_xrange,    &
+       model_cdf,     &
+       obs_cdf,       &
+       obs_value)
+
+
+    implicit none
+!
+! !ARGUMENTS:
+    integer             :: n
+    integer             :: k
+    integer             :: nbins
+    integer             :: ntimes
+    real                :: max_obs_value
+    real                :: min_obs_value
+    real                :: model_xrange(LIS_rc%obs_ngrid(k),ntimes, nbins)
+    real                :: obs_xrange(LIS_rc%obs_ngrid(k),ntimes, nbins)
+    real                :: model_cdf(LIS_rc%obs_ngrid(k),ntimes, nbins)
+    real                :: obs_cdf(LIS_rc%obs_ngrid(k),ntimes, nbins)
+    real                :: obs_value(LIS_rc%obs_lnc(k),LIS_rc%obs_lnr(k))
+!
+! !DESCRIPTION:
+!
+!   This is a copy of LIS_rescale_with_CDF_matching but without the check for
+!   CDF steepness.
+!
+!  The arguments are:
+!  \begin{description}
+!  \item[n]               index of the nest
+!  \item[nbins]           number of bins used to compute the model and obs CDFs
+!  \item[max\_obs\_value] maximum allowable value of observation
+!  \item[min\_obs\_value] minimum allowable value of observation
+!  \item[model\_xrange]   x-axis values corresponding to the model CDF
+!  \item[obs\_xrange]     x-axis values corresponding to the obs CDF
+!  \item[model\_cdf]      y-axis (CDF) values corresponding to the model CDF
+!  \item[obs\_cdf]        y-axis (CDF) values corresponding to the obs CDF
+!  \item[obs\_value]      observation value to be rescaled.
+! \end{description}
+!EOP
+
+    real                :: model_delta(LIS_rc%obs_ngrid(k))
+    real                :: obs_delta(LIS_rc%obs_ngrid(k))
+
+    integer             :: t,i,kk
+    integer             :: binval
+    integer             :: col,row
+    real                :: cdf_obsval
+    real                :: obs_tmp, obs_in
+    integer, dimension (1)      :: index_25 , index_75
+    real                :: Lb_xrange, Ub_xrange, iqr_obs, iqr_model
+
+    TRACE_ENTER("DA_rescaleCDF")
+    if(ntimes.gt.1) then
+       kk = LIS_rc%mo
+    else
+       kk = 1
+    endif
+    do t=1,LIS_rc%obs_ngrid(k)
+       model_delta(t) = model_xrange(t,kk,2)-model_xrange(t,kk,1)
+       obs_delta(t)   = obs_xrange(t,kk,2)-obs_xrange(t,kk,1)
+    enddo
+    do t=1,LIS_rc%obs_ngrid(k)
+
+        col = LIS_obs_domain(n,k)%col(t)
+        row = LIS_obs_domain(n,k)%row(t)
+! MN : Replaced the dynamic range with the interquartile range
+
+!SVK dynamic range of obs is too small.
+!        if((obs_xrange(t,kk,nbins)-obs_xrange(t,kk,1)).lt.&
+!           (max_obs_value-min_obs_value)*0.25) then
+!           obs_delta(t) = 0
+!        endif
+
+        index_25 = minloc(abs(obs_cdf(t,kk,:) - 0.25))
+        index_75 = minloc(abs(obs_cdf(t,kk,:) - 0.75))
+        Lb_xrange = obs_xrange(t,kk,index_25(1))
+        Ub_xrange = obs_xrange(t,kk,index_75(1))
+        iqr_obs = Ub_xrange - Lb_xrange
+
+        index_25 = minloc(abs(model_cdf(t,kk,:) - 0.25))
+        index_75 = minloc(abs(model_cdf(t,kk,:) - 0.75))
+        Lb_xrange = model_xrange(t,kk,index_25(1))
+        Ub_xrange = model_xrange(t,kk,index_75(1))
+        iqr_model = Ub_xrange - Lb_xrange
+
+        if(obs_value(col,row).ne.-9999.0) then
+           obs_in = obs_value(col,row)
+           if(obs_delta(t).gt.0) then
+              binval = nint((obs_value(col,row)-obs_xrange(t,kk,1))/&
+                   obs_delta(t))+1
+              if(binval.gt.nbins) binval = nbins
+              if(binval.le.0) binval = 1
+              cdf_obsval = obs_cdf(t,kk,binval)
+              if(cdf_obsval.gt.1.0) cdf_obsval = 1.0
+              i=1
+              do while((model_cdf(t,kk,i).lt.cdf_obsval).and.&
+                   (i.le.nbins))
+                 i = i+1
+                 if(i.gt.nbins) exit
+              enddo
+              if(i.gt.nbins) i = i-1
+              obs_tmp = model_xrange(t,kk,i)
+
+              if(obs_tmp.gt.max_obs_value) then
+!                 obs_tmp = max_obs_value
+                 obs_tmp = LIS_rc%udef
+              endif
+
+              if(obs_tmp.le.min_obs_value) then
+!                 obs_tmp = obs_value(col,row)
+                 obs_tmp = LIS_rc%udef
+              endif
+              obs_value(col,row) = obs_tmp
+           else
+              obs_value(col,row) = LIS_rc%udef
+           endif
+           if(obs_value(col,row).le.min_obs_value.and.&
+                obs_value(col,row).ne.-9999.0) then
+              write(LIS_logunit,*) '[ERR] Problem in CDF scaling of observations in the DA instance ',k
+              write(LIS_logunit,*) '[ERR] ',col,row,obs_value(col,row), obs_in
+              call LIS_endrun()
+           endif
+        else
+           obs_value(col,row) = LIS_rc%udef
+        endif
+     enddo
+     TRACE_EXIT("DA_rescaleCDF")
+   end subroutine CustomNcReader_rescale_with_unsafe_CDF_matching
 
 end module CustomNcReader_Mod
