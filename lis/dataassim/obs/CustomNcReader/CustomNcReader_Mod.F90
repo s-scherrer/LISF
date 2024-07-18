@@ -518,7 +518,7 @@ contains
              "Custom "//trim(varname)//" number of bins in the CDF:", rc=status)
         do n=1, LIS_rc%nnest
             if(LIS_rc%dascaloption(k).eq."CDF matching"&
-                 .or.LIS_rc%dascaloption(k).eq."Unsafe CDF matching"&
+                 .or.LIS_rc%dascaloption(k).eq."unsafe CDF matching"&
                  .or.LIS_rc%dascaloption(k).eq."Normal deviate scaling") then
                 call ESMF_ConfigGetAttribute(LIS_config,reader_struc(n)%nbins, rc=status)
                 call LIS_verify(status, &
@@ -2220,6 +2220,9 @@ contains
        obs_cdf,       &
        obs_value)
 
+    use LIS_coreMod,  only : LIS_rc
+    use LIS_DAobservationsMod, only: LIS_obs_domain
+    use LIS_logmod
 
     implicit none
 !
@@ -2266,7 +2269,6 @@ contains
     integer, dimension (1)      :: index_25 , index_75
     real                :: Lb_xrange, Ub_xrange, iqr_obs, iqr_model
 
-    TRACE_ENTER("DA_rescaleCDF")
     if(ntimes.gt.1) then
        kk = LIS_rc%mo
     else
@@ -2341,7 +2343,6 @@ contains
            obs_value(col,row) = LIS_rc%udef
         endif
      enddo
-     TRACE_EXIT("DA_rescaleCDF")
    end subroutine CustomNcReader_rescale_with_unsafe_CDF_matching
 
 end module CustomNcReader_Mod
