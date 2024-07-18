@@ -524,6 +524,12 @@ contains
                 vardata(t) = NoahMP401_struc(n)%noahmp401(t)%param%LTOVRC
              enddo
           endif
+
+          if(vname.eq."LFALLOCA")  then 
+             do t=1,NT 
+                vardata(t) = NoahMP401_struc(n)%noahmp401(t)%param%LFALLOCA
+             enddo
+          endif
                 
           if(vname.eq."DILEFC")  then 
              do t=1,NT 
