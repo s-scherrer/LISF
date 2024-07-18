@@ -9827,6 +9827,7 @@ MODULE NOAHMP_TABLES_401
     REAL :: DILEFW_TABLE(MVT)      !coeficient for leaf stress death [1/s]
     REAL :: FRAGR_TABLE(MVT)       !fraction of growth respiration  !original was 0.3 
     REAL :: LTOVRC_TABLE(MVT)      !leaf turnover [1/s]
+    REAL :: LFALLOCA_TABLE(MVT)    !parameter 'a' for leaf allocation fraction
 
     REAL :: C3PSN_TABLE(MVT)       !photosynthetic pathway: 0. = c4, 1. = c3
     REAL :: KC25_TABLE(MVT)        !co2 michaelis-menten constant at 25c (pa)

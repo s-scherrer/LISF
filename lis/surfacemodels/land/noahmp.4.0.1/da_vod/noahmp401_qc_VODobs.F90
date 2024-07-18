@@ -27,7 +27,9 @@ subroutine noahmp401_qc_VODobs(n,k,OBS_State)
   use LIS_DAobservationsMod
   use noahmp401_lsmMod
   use NOAHMP_TABLES_401, ONLY : SMCMAX_TABLE,SMCWLT_TABLE
+#if defined(RTMS)
   use VODOO_Mod, only : vodoo_struc
+#endif
 
 
   implicit none
@@ -35,6 +37,7 @@ subroutine noahmp401_qc_VODobs(n,k,OBS_State)
   integer, intent(in)      :: n
   integer, intent(in)      :: k
   type(ESMF_State)         :: OBS_State
+#if defined(RTMS)
 !
 ! !DESCRIPTION:
 !
@@ -286,5 +289,6 @@ subroutine noahmp401_qc_VODobs(n,k,OBS_State)
           endif
        endif
    enddo
+#endif
 
 end subroutine noahmp401_qc_VODobs
