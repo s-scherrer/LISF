@@ -111,6 +111,7 @@ subroutine NoahMP401_main(n)
     integer              :: tmp_crop_opt           ! crop model option (0->none; 1->Liu et al.; 2->Gecros) [-]
     integer              :: tmp_maxlai_opt         ! option for maximum LAI parameter
     integer              :: tmp_lfpt_opt           ! option for leaf allocation fraction
+    real                 :: tmp_maxlai             ! maximum LAI parameter
     integer              :: tmp_iz0tlnd            ! option of Chen adjustment of Czil (not used) [-]
     integer              :: tmp_urban_opt          ! urban physics option [-]
     real, allocatable    :: tmp_soilcomp(:)        ! soil sand and clay percentage [-]
@@ -446,6 +447,7 @@ subroutine NoahMP401_main(n)
             tmp_crop_opt          = NOAHMP401_struc(n)%crop_opt
             tmp_maxlai_opt        = NOAHMP401_struc(n)%maxlai_opt
             tmp_lfpt_opt          = NOAHMP401_struc(n)%lfpt_opt
+            tmp_maxlai            = NOAHMP401_struc(n)%maxlai
             tmp_iz0tlnd           = 0
             tmp_urban_opt         = NOAHMP401_struc(n)%urban_opt
 ! Multiply reference height by 2.0 because module_sf_noahmpdrv
@@ -477,6 +479,7 @@ subroutine NoahMP401_main(n)
                 tmp_maxlai = -1.
             else
                 tmp_maxlai = NOAHMP401_struc(n)%noahmp401(t)%maxlai
+            endif
 
 ! Zhuo Wang tested on 11/15/2018, not read from LDT-generated netcdf input file
             if (tmp_soil_opt.eq.2) then 
@@ -633,6 +636,7 @@ subroutine NoahMP401_main(n)
                                    tmp_crop_opt          , & ! in    - crop model option (0->none; 1->Liu et al.; 2->Gecros) [-]
                                    tmp_maxlai_opt        , &
                                    tmp_lfpt_opt          , &
+                                   tmp_maxlai            , &
                                    tmp_iz0tlnd           , & ! in    - option of Chen adjustment of Czil (not used) [-]
                                    tmp_urban_opt         , & ! in    - urban physics option [-]
                                    tmp_soilcomp          , & ! in    - soil sand and clay percentage [-]
@@ -816,6 +820,8 @@ subroutine NoahMP401_main(n)
             NOAHMP401_struc(n)%noahmp401(t)%gdd             = tmp_gdd
             NOAHMP401_struc(n)%noahmp401(t)%pgs             = tmp_pgs
             NOAHMP401_struc(n)%noahmp401(t)%gecros_state(:) = tmp_gecros_state(:)
+
+            NOAHMP401_struc(n)%noahmp401(t)%maxlai    = tmp_maxlai
 
             ! save output variables from local variables to global variables
             NOAHMP401_struc(n)%noahmp401(t)%tsk       = tmp_tsk

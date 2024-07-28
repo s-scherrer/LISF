@@ -8919,7 +8919,7 @@ END  SUBROUTINE SHALLOWWATERTABLE
 ! fraction of carbon into leaf versus nonleaf
 
      IF (OPT_LFPT == 1) THEN
-         IF(VEGTYP == parameters%EBLFOREST)
+         IF(VEGTYP == parameters%EBLFOREST) THEN
              LEAFPT = EXP(0.01*(1.-EXP(0.50*XLAI))*XLAI)
          ELSE
              LEAFPT = EXP(0.01*(1.-EXP(0.75*XLAI))*XLAI)

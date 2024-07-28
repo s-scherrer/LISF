@@ -385,6 +385,7 @@ module NoahMP401_module
         real               :: soilcL2
         real               :: soilcL3
         real               :: soilcL4
+        real               :: maxlai
         !----------------------------------------------------------
         ! multilevel spatial parameter
         !----------------------------------------------------------

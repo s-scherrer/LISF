@@ -149,6 +149,7 @@ module NoahMP401_lsmMod
         character*128      :: LDT_ncvar_soiltype
         character*128      :: LDT_ncvar_shdfac_monthly
         character*128      :: LDT_ncvar_tbot
+        character*128      :: LDT_ncvar_maxlai
         character*128      :: LDT_ncvar_planting
         character*128      :: LDT_ncvar_harvest
         character*128      :: LDT_ncvar_season_gdd
@@ -214,6 +215,7 @@ module NoahMP401_lsmMod
         logical            :: forestDA_opt
         integer            :: lfpt_opt
         integer            :: maxlai_opt
+        real               :: maxlai
         type(NoahMP401dec), pointer :: noahmp401(:)
     end type NoahMP401_type_dec
 

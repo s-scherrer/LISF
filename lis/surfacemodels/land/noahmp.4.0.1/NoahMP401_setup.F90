@@ -124,7 +124,7 @@ subroutine NoahMP401_setup()
             NOAHMP401_struc(n)%noahmp401(t)%tbot = placeholder(col, row)
         enddo
 
-        if(NOAHMP401_struc(n)%maxlai_opt.eq.2)
+        if(NOAHMP401_struc(n)%maxlai_opt.eq.2) then
             write(LIS_logunit,*) &
              "[INFO] Noah-MP.4.0.1 reading parameter MAXLAI from ", &
                                    trim(LIS_rc%paramfile(n))
@@ -132,7 +132,7 @@ subroutine NoahMP401_setup()
             do t = 1, LIS_rc%npatch(n, mtype)
                 col = LIS_surface(n, mtype)%tile(t)%col
                 row = LIS_surface(n, mtype)%tile(t)%row
-                NOAHMP401_struc(n)%parameters%maxlai = placeholder(col, row)
+                NOAHMP401_struc(n)%noahmp401(t)%maxlai = placeholder(col, row)
             enddo
         endif
 
