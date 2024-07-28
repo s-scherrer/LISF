@@ -525,9 +525,9 @@ contains
              enddo
           endif
 
-          if(vname.eq."LFALLOCA")  then 
+          if(vname.eq."MAXLAI")  then 
              do t=1,NT 
-                vardata(t) = NoahMP401_struc(n)%noahmp401(t)%param%LFALLOCA
+                vardata(t) = NoahMP401_struc(n)%noahmp401(t)%param%MAXLAI
              enddo
           endif
                 

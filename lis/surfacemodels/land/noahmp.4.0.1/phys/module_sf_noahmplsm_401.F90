@@ -153,6 +153,16 @@ MODULE MODULE_SF_NOAHMPLSM_401
                       !   1 -> Liu, et al. 2016
 		      !   2 -> Gecros (Genotype-by-Environment interaction on CROp growth Simulator) Yin and van Laar, 2005
 
+  INTEGER :: OPT_MAXLAI ! option for maximum LAI
+                      !   1 -> read from vegetation parameter table
+                      !   2 -> read from file
+
+  INTEGER :: OPT_LFPT ! option for calculation of leaf allocation fraction
+                      !   1 -> default Noah-MP
+                      !   2 -> Noah-MP with modified parameter a
+                      !   3 -> Gim et al. 2017
+  
+
 !------------------------------------------------------------------------------------------!
 ! Physical Constants:                                                                      !
 !------------------------------------------------------------------------------------------!
@@ -207,7 +217,8 @@ MODULE MODULE_SF_NOAHMPLSM_401
     REAL :: DILEFW             !coeficient for leaf stress death [1/s]
     REAL :: FRAGR              !fraction of growth respiration  !original was 0.3 
     REAL :: LTOVRC             !leaf turnover [1/s]
-    REAL :: LFALLOCA           !parameter 'a' governing leaf allocation fraction
+    REAL :: MAXLAI             !maximum LAI
+    REAL :: LFALCTHR           !threshold for finding leaf allocation parameter from maximum LAI
 
     REAL :: C3PSN              !photosynthetic pathway: 0. = c4, 1. = c3
     REAL :: KC25               !co2 michaelis-menten constant at 25c (pa)
@@ -8860,6 +8871,8 @@ END  SUBROUTINE SHALLOWWATERTABLE
   REAL                   :: SC
   REAL                   :: SD
   REAL                   :: VEGFRAC
+  REAL                   :: LFALLOCA
+  REAL                   :: MAXLAITMP
 
 ! Respiration as a function of temperature
 
@@ -8905,7 +8918,21 @@ END  SUBROUTINE SHALLOWWATERTABLE
 
 ! fraction of carbon into leaf versus nonleaf
 
-     LEAFPT = EXP(0.01*(1.-EXP(parameters%LFALLOCA*XLAI))*XLAI)
+     IF (OPT_LFPT == 1) THEN
+         IF(VEGTYP == parameters%EBLFOREST)
+             LEAFPT = EXP(0.01*(1.-EXP(0.50*XLAI))*XLAI)
+         ELSE
+             LEAFPT = EXP(0.01*(1.-EXP(0.75*XLAI))*XLAI)
+         ENDIF
+     ELSEIF (OPT_LFPT == 2) THEN
+         MAXLAITMP = MAX(laimin, parameters%MAXLAI)
+         LFALLOCA = 1.0/MAXLAITMP * LOG(1 - 100./MAXLAITMP &
+              * LOG(parameters%LFALCTHR/(1. - 0.1*MAXLAITMP)))
+         LEAFPT = EXP(0.01*(1.-EXP(LFALLOCA*XLAI))*XLAI)
+     ELSE
+         LEAFPT = EXP(0.0001 * (1.-EXP(10.0*XLAI/parameters%MAXLAI)))
+     ENDIF
+
 
      NONLEF = 1.0 - LEAFPT
      STEMPT = XLAI/10.0*LEAFPT
@@ -9741,7 +9768,8 @@ END SUBROUTINE EMERG
 
   subroutine noahmp_options(idveg     ,iopt_crs  ,iopt_btr  ,iopt_run  ,iopt_sfc  ,iopt_frz , & 
                              iopt_inf  ,iopt_rad  ,iopt_alb  ,iopt_snf  ,iopt_tbot, iopt_stc, &
-			     iopt_rsf , iopt_soil, iopt_pedo, iopt_crop )
+			     iopt_rsf , iopt_soil, iopt_pedo, iopt_crop, &
+                             iopt_maxlai, iopt_lfpt)
 
   implicit none
 
@@ -9764,6 +9792,10 @@ END SUBROUTINE EMERG
   INTEGER,  INTENT(IN) :: iopt_pedo !pedo-transfer function
   INTEGER,  INTENT(IN) :: iopt_crop !crop model option (0->none; 1->Liu et al.; 2->Gecros)
 
+  INTEGER,  INTENT(IN) :: iopt_maxlai
+  INTEGER,  INTENT(IN) :: iopt_lfpt
+  
+
 ! -------------------------------------------------------------------------------------------------
 
   dveg = idveg
@@ -9783,6 +9815,8 @@ END SUBROUTINE EMERG
   opt_soil = iopt_soil
   opt_pedo = iopt_pedo
   opt_crop = iopt_crop
+  opt_maxlai = iopt_maxlai
+  opt_lfpt = iopt_lfpt
   
   end subroutine noahmp_options
  
@@ -9827,7 +9861,7 @@ MODULE NOAHMP_TABLES_401
     REAL :: DILEFW_TABLE(MVT)      !coeficient for leaf stress death [1/s]
     REAL :: FRAGR_TABLE(MVT)       !fraction of growth respiration  !original was 0.3 
     REAL :: LTOVRC_TABLE(MVT)      !leaf turnover [1/s]
-    REAL :: LFALLOCA_TABLE(MVT)    !parameter 'a' for leaf allocation fraction
+    REAL :: MAXLAI_TABLE(MVT)      !maximum LAI
 
     REAL :: C3PSN_TABLE(MVT)       !photosynthetic pathway: 0. = c4, 1. = c3
     REAL :: KC25_TABLE(MVT)        !co2 michaelis-menten constant at 25c (pa)
@@ -10046,7 +10080,7 @@ CONTAINS
     REAL, DIMENSION(MVT) :: RHOL_VIS, RHOL_NIR, RHOS_VIS, RHOS_NIR, &
                                      TAUL_VIS, TAUL_NIR, TAUS_VIS, TAUS_NIR
     REAL, DIMENSION(MVT) :: CH2OP, DLEAF, Z0MVT, HVT, HVB, DEN, RC, MFSNO, XL, CWPVT, C3PSN, KC25, AKC, KO25, AKO, &
-                     AVCMX, AQE, LTOVRC,  LFALLOCA, DILEFC,  DILEFW,  RMF25 ,  SLA   ,  FRAGR ,  TMIN  ,  VCMX25,  TDLEF ,  &
+                     AVCMX, AQE, LTOVRC,  MAXLAI, LFALCTHR, DILEFC,  DILEFW,  RMF25 ,  SLA   ,  FRAGR ,  TMIN  ,  VCMX25,  TDLEF ,  &
                      BP, MP, QE25, RMS25, RMR25, ARM, FOLNMX, WDPOOL, WRRAT, MRP, NROOT, RGL, RS, HS, TOPT, RSMAX, &
 		     SLAREA, EPS1, EPS2, EPS3, EPS4, EPS5
 			     
@@ -10054,7 +10088,7 @@ CONTAINS
     NAMELIST / noahmp_usgs_parameters / ISURBAN, ISWATER, ISBARREN, ISICE, ISCROP, EBLFOREST, NATURAL, &
          LOW_DENSITY_RESIDENTIAL, HIGH_DENSITY_RESIDENTIAL, HIGH_INTENSITY_INDUSTRIAL, &
          CH2OP, DLEAF, Z0MVT, HVT, HVB, DEN, RC, MFSNO, XL, CWPVT, C3PSN, KC25, AKC, KO25, AKO, AVCMX, AQE, &
-         LTOVRC,  LFALLOCA, DILEFC,  DILEFW,  RMF25 ,  SLA   ,  FRAGR ,  TMIN  ,  VCMX25,  TDLEF ,  BP, MP, QE25, RMS25, RMR25, ARM, &
+         LTOVRC,  MAXLAI, LFALCTHR, DILEFC,  DILEFW,  RMF25 ,  SLA   ,  FRAGR ,  TMIN  ,  VCMX25,  TDLEF ,  BP, MP, QE25, RMS25, RMR25, ARM, &
          FOLNMX, WDPOOL, WRRAT, MRP, NROOT, RGL, RS, HS, TOPT, RSMAX, &
          SAI_JAN, SAI_FEB, SAI_MAR, SAI_APR, SAI_MAY, SAI_JUN,SAI_JUL,SAI_AUG,SAI_SEP,SAI_OCT,SAI_NOV,SAI_DEC, &
          LAI_JAN, LAI_FEB, LAI_MAR, LAI_APR, LAI_MAY, LAI_JUN,LAI_JUL,LAI_AUG,LAI_SEP,LAI_OCT,LAI_NOV,LAI_DEC, &
@@ -10064,7 +10098,7 @@ CONTAINS
     NAMELIST / noahmp_modis_parameters / ISURBAN, ISWATER, ISBARREN, ISICE, ISCROP, EBLFOREST, NATURAL, &
          LOW_DENSITY_RESIDENTIAL, HIGH_DENSITY_RESIDENTIAL, HIGH_INTENSITY_INDUSTRIAL, &
          CH2OP, DLEAF, Z0MVT, HVT, HVB, DEN, RC, MFSNO, XL, CWPVT, C3PSN, KC25, AKC, KO25, AKO, AVCMX, AQE, &
-         LTOVRC,  LFALLOCA, DILEFC,  DILEFW,  RMF25 ,  SLA   ,  FRAGR ,  TMIN  ,  VCMX25,  TDLEF ,  BP, MP, QE25, RMS25, RMR25, ARM, &
+         LTOVRC,  MAXLAI, LFALCTHR, DILEFC,  DILEFW,  RMF25 ,  SLA   ,  FRAGR ,  TMIN  ,  VCMX25,  TDLEF ,  BP, MP, QE25, RMS25, RMR25, ARM, &
          FOLNMX, WDPOOL, WRRAT, MRP, NROOT, RGL, RS, HS, TOPT, RSMAX, &
          SAI_JAN, SAI_FEB, SAI_MAR, SAI_APR, SAI_MAY, SAI_JUN,SAI_JUL,SAI_AUG,SAI_SEP,SAI_OCT,SAI_NOV,SAI_DEC, &
          LAI_JAN, LAI_FEB, LAI_MAR, LAI_APR, LAI_MAY, LAI_JUN,LAI_JUL,LAI_AUG,LAI_SEP,LAI_OCT,LAI_NOV,LAI_DEC, &
@@ -10074,7 +10108,7 @@ CONTAINS
     NAMELIST / noahmp_umd_parameters / ISURBAN, ISWATER, ISBARREN, ISICE, ISCROP, EBLFOREST, NATURAL, &
          LOW_DENSITY_RESIDENTIAL, HIGH_DENSITY_RESIDENTIAL, HIGH_INTENSITY_INDUSTRIAL, &
          CH2OP, DLEAF, Z0MVT, HVT, HVB, DEN, RC, MFSNO, XL, CWPVT, C3PSN, KC25, AKC, KO25, AKO, AVCMX, AQE, &
-         LTOVRC,  LFALLOCA, DILEFC,  DILEFW,  RMF25 ,  SLA   ,  FRAGR ,  TMIN  ,  VCMX25,  TDLEF ,  BP, MP, QE25, RMS25, RMR25, ARM, &
+         LTOVRC,  MAXLAI, LFALCTHR, DILEFC,  DILEFW,  RMF25 ,  SLA   ,  FRAGR ,  TMIN  ,  VCMX25,  TDLEF ,  BP, MP, QE25, RMS25, RMR25, ARM, &
          FOLNMX, WDPOOL, WRRAT, MRP, NROOT, RGL, RS, HS, TOPT, RSMAX, &
          SAI_JAN, SAI_FEB, SAI_MAR, SAI_APR, SAI_MAY, SAI_JUN,SAI_JUL,SAI_AUG,SAI_SEP,SAI_OCT,SAI_NOV,SAI_DEC, &
          LAI_JAN, LAI_FEB, LAI_MAR, LAI_APR, LAI_MAY, LAI_JUN,LAI_JUL,LAI_AUG,LAI_SEP,LAI_OCT,LAI_NOV,LAI_DEC, &
@@ -10103,7 +10137,7 @@ CONTAINS
     AVCMX_TABLE  = -1.E36
     AQE_TABLE    = -1.E36
     LTOVRC_TABLE = -1.E36
-    LFALLOCA_TABLE = -1.E36
+    MAXLAI_TABLE = -1.E36
     DILEFC_TABLE = -1.E36
     DILEFW_TABLE = -1.E36
     RMF25_TABLE  = -1.E36
@@ -10195,7 +10229,7 @@ CONTAINS
      AVCMX_TABLE(1:NVEG)  = AVCMX(1:NVEG)
        AQE_TABLE(1:NVEG)  = AQE(1:NVEG)
     LTOVRC_TABLE(1:NVEG)  = LTOVRC(1:NVEG)
-    LFALLOCA_TABLE(1:NVEG)  = LFALLOCA(1:NVEG)
+    MAXLAI_TABLE(1:NVEG)  = MAXLAI(1:NVEG)
     DILEFC_TABLE(1:NVEG)  = DILEFC(1:NVEG)
     DILEFW_TABLE(1:NVEG)  = DILEFW(1:NVEG)
      RMF25_TABLE(1:NVEG)  = RMF25(1:NVEG)

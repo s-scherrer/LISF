@@ -212,6 +212,8 @@ module NoahMP401_lsmMod
         integer            :: urban_opt
         logical            :: QC_opt
         logical            :: forestDA_opt
+        integer            :: lfpt_opt
+        integer            :: maxlai_opt
         type(NoahMP401dec), pointer :: noahmp401(:)
     end type NoahMP401_type_dec
 

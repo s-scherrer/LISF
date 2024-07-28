@@ -418,6 +418,23 @@ subroutine NoahMP401_readcrd()
                               NOAHMP401_struc(n)%forestDA_opt
     enddo
 
+    call ESMF_ConfigFindLabel(LIS_config, &
+         "Noah-MP.4.0.1 maximum LAI option:", rc=rc)
+    do n=1, LIS_rc%nnest
+        call ESMF_ConfigGetAttribute(LIS_config, NOAHMP401_struc(n)%maxlai_opt, &
+             default=1, rc=rc)
+        write(LIS_logunit,33) "maximum LAI option:", &
+                              NOAHMP401_struc(n)%maxlai_opt
+    enddo
+
+    call ESMF_ConfigFindLabel(LIS_config, &
+         "Noah-MP.4.0.1 leaf allocation faction option:", rc=rc)
+    do n=1, LIS_rc%nnest
+        call ESMF_ConfigGetAttribute(LIS_config, NOAHMP401_struc(n)%lfpt_opt, &
+             default=1, rc=rc)
+        write(LIS_logunit,33) "leafallocation fraction option:", &
+                              NOAHMP401_struc(n)%lfpt_opt
+    enddo
 
 
     ! The following lines hard code the LDT NetCDF variable names. 
@@ -436,6 +453,9 @@ subroutine NoahMP401_readcrd()
         NOAHMP401_struc(n)%LDT_ncvar_soilcL2 = 'SOILCL2'            !'NOAHMP401_SOILCL2'
         NOAHMP401_struc(n)%LDT_ncvar_soilcL3 = 'SOILCL3'            !'NOAHMP401_SOILCL3'
         NOAHMP401_struc(n)%LDT_ncvar_soilcL4 = 'SOILCL4'            !'NOAHMP401_SOILCL4'
+        if (NOAHMP401_struc(n)%maxlai_opt.eq.2) then
+            NOAHMP401_struc(n)%LDT_ncvar_maxlai    = 'MAXLAI'               !'NOAHMP401_TBOT'
+        endif
     enddo
 
 !------------------------------------------------------------------------------------------

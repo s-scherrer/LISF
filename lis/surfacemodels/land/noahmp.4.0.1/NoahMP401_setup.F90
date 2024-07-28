@@ -124,6 +124,19 @@ subroutine NoahMP401_setup()
             NOAHMP401_struc(n)%noahmp401(t)%tbot = placeholder(col, row)
         enddo
 
+        if(NOAHMP401_struc(n)%maxlai_opt.eq.2)
+            write(LIS_logunit,*) &
+             "[INFO] Noah-MP.4.0.1 reading parameter MAXLAI from ", &
+                                   trim(LIS_rc%paramfile(n))
+            call LIS_read_param(n, trim(NOAHMP401_struc(n)%LDT_ncvar_maxlai), placeholder)
+            do t = 1, LIS_rc%npatch(n, mtype)
+                col = LIS_surface(n, mtype)%tile(t)%col
+                row = LIS_surface(n, mtype)%tile(t)%row
+                NOAHMP401_struc(n)%parameters%maxlai = placeholder(col, row)
+            enddo
+        endif
+
+
         !!! SW 11/06/2018 
         if(NOAHMP401_struc(n)%crop_opt .ne.0) then 
             ! read: planting
@@ -436,7 +449,7 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,
   parameters%DILEFW = DILEFW_TABLE(VEGTYPE)       !coeficient for leaf stress death [1/s]
   parameters%FRAGR  =  FRAGR_TABLE(VEGTYPE)       !fraction of growth respiration  !original was 0.3 
   parameters%LTOVRC = LTOVRC_TABLE(VEGTYPE)       !leaf turnover [1/s]
-  parameters%LFALLOCA = LFALLOCA_TABLE(VEGTYPE)   !parameter 'a' governing leaf allocation fraction
+  parameters%MAXLAI = MAXLAI_TABLE(VEGTYPE)       !maximum lai
 
   parameters%C3PSN  =  C3PSN_TABLE(VEGTYPE)       !photosynthetic pathway: 0. = c4, 1. = c3
   parameters%KC25   =   KC25_TABLE(VEGTYPE)       !co2 michaelis-menten constant at 25c (pa)

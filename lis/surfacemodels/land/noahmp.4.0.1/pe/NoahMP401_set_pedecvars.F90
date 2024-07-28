@@ -444,8 +444,8 @@ subroutine NoahMP401_setVars(n,DEC_State,mod_flag_NoahMP401)
                    NoahMP401_struc(n)%noahmp401(t)%param%AQE = vardata(t)
               if(vname.eq."LTOVRC") &
                    NoahMP401_struc(n)%noahmp401(t)%param%LTOVRC = vardata(t)
-              if(vname.eq."LFALLOCA") &
-                   NoahMP401_struc(n)%noahmp401(t)%param%LFALLOCA = vardata(t)
+              if(vname.eq."MAXLAI") &
+                   NoahMP401_struc(n)%noahmp401(t)%param%MAXLAI = vardata(t)
               if(vname.eq."DILEFC") &
                    NoahMP401_struc(n)%noahmp401(t)%param%DILEFC = vardata(t)
               if(vname.eq."DILEFW") &
