@@ -756,7 +756,7 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
        vegetypein, soiltypein, vegfrain, vegmaxin, tbotin  ,        & ! in : Vegetation/Soil characteristics
        xlandin , xicein  , xice_thres,                             & ! in : Vegetation/Soil characteristics
        cropcatin , plantingin, harvestin ,season_gddin,                    &
-       maxlaiin,
+       maxlaiin,                                                   &
        dveg_opt, crs_opt , btr_opt ,run_opt  , sfc_opt , frz_opt,  & ! in : user options
        inf_opt , rad_opt , alb_opt ,snf_opt  , tbot_opt, stc_opt,  & ! in : user options
        gla_opt , sndpth_gla_opt, rsf_opt , soil_opt,pedo_opt , crop_opt,           & ! in : user options
