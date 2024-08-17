@@ -428,11 +428,11 @@ subroutine NoahMP401_readcrd()
     enddo
 
     call ESMF_ConfigFindLabel(LIS_config, &
-         "Noah-MP.4.0.1 leaf allocation faction option:", rc=rc)
+         "Noah-MP.4.0.1 leaf allocation fraction option:", rc=rc)
     do n=1, LIS_rc%nnest
         call ESMF_ConfigGetAttribute(LIS_config, NOAHMP401_struc(n)%lfpt_opt, &
              default=1, rc=rc)
-        write(LIS_logunit,33) "leafallocation fraction option:", &
+        write(LIS_logunit,33) "leaf allocation fraction option:", &
                               NOAHMP401_struc(n)%lfpt_opt
     enddo
 
