@@ -8924,13 +8924,16 @@ END  SUBROUTINE SHALLOWWATERTABLE
          ELSE
              LEAFPT = EXP(0.01*(1.-EXP(0.75*XLAI))*XLAI)
          ENDIF
-     ELSEIF (OPT_LFPT == 2) THEN
-         MAXLAITMP = MAX(laimin, parameters%MAXLAI)
-         LFALLOCA = 1.0/MAXLAITMP * LOG(1 - 100./MAXLAITMP &
-              * LOG(parameters%LFALCTHR/(1. - 0.1*MAXLAITMP)))
-         LEAFPT = EXP(0.01*(1.-EXP(LFALLOCA*XLAI))*XLAI)
      ELSE
-         LEAFPT = EXP(0.0001 * (1.-EXP(10.0*XLAI/parameters%MAXLAI)))
+         ! TODO: if opt_maxlai == 2, MAXLAI should be obtained from noahmp401(t)%maxlai
+         MAXLAITMP = MAX(laimin, parameters%MAXLAI)
+         IF (OPT_LFPT == 2) THEN
+             LFALLOCA = 1.0/MAXLAITMP * LOG(1 - 100./MAXLAITMP &
+                  * LOG(parameters%LFALCTHR/(1. - 0.1*MAXLAITMP)))
+             LEAFPT = EXP(0.01*(1.-EXP(LFALLOCA*XLAI))*XLAI)
+         ELSE
+             LEAFPT = EXP(0.0001 * (1.-EXP(10.0*XLAI/parameters%MAXLAI)))
+         ENDIF
      ENDIF
 
 

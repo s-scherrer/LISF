@@ -20,10 +20,11 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
      vegetype, soiltype, shdfac_monthly    , tbot    ,           & ! in : Vegetation/Soil characteristics 
      urban_vegetype,                                             & ! in
      cropcat,  planting, harvest ,season_gdd,                    & ! in : Vegetation/Soil characteristics
+     maxlai,                                                     &
      dveg_opt, crs_opt, btr_opt, run_opt, sfc_opt, frz_opt,      & ! in : User options
      inf_opt, rad_opt, alb_opt , snf_opt, tbot_opt, stc_opt,     & ! in : User options
      gla_opt, sndpth_gla_opt, rsf_opt, soil_opt, pedo_opt,       & ! in : new options
-     crop_opt, maxlai_opt, lfpt_opt, maxlai, iz0tlnd, urban_opt,          & ! in : new options
+     crop_opt, maxlai_opt, lfpt_opt, iz0tlnd, urban_opt,          & ! in : new options
      soilcomp, soilcL1, soilcL2, soilcL3, soilcL4,               & ! in : new options
      tair    , psurf   , wind_e   , wind_n   , qair    ,         & ! in : forcing
      swdown  , lwdown  , prcp    ,                               & ! in : forcing
@@ -95,6 +96,9 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
   real,    intent(inout) :: grain             ! mass of grain XING [g/m2]
   integer,    intent(inout) :: pgs
 
+  ! max lai model
+  real,    intent(in) :: maxlai
+
   ! gecros model
   real,    intent(inout) :: gecros_state(60)  !  gecros crop
 
@@ -124,7 +128,6 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
   integer, intent(in) :: crop_opt             ! crop model option (0->none; 1->Liu et al.; 2->Gecros)
   integer, intent(in) :: maxlai_opt
   integer, intent(in) :: lfpt_opt
-  real,    intent(in) :: maxlai
   integer, intent(in) :: iz0tlnd              ! option of Chen adjustment of Czil (not used)
   integer, intent(in) :: urban_opt            ! urban physics option
   real, intent(in) :: soilcomp(8)             ! soil sand and clay percentage
@@ -753,10 +756,11 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
        vegetypein, soiltypein, vegfrain, vegmaxin, tbotin  ,        & ! in : Vegetation/Soil characteristics
        xlandin , xicein  , xice_thres,                             & ! in : Vegetation/Soil characteristics
        cropcatin , plantingin, harvestin ,season_gddin,                    &
+       maxlaiin,
        dveg_opt, crs_opt , btr_opt ,run_opt  , sfc_opt , frz_opt,  & ! in : user options
        inf_opt , rad_opt , alb_opt ,snf_opt  , tbot_opt, stc_opt,  & ! in : user options
        gla_opt , sndpth_gla_opt, rsf_opt , soil_opt,pedo_opt , crop_opt,           & ! in : user options
-       maxlai_opt, lfpt_opt, maxlaiin, &
+       maxlai_opt, lfpt_opt, &
        iz0tlnd , urban_opt,                                        & ! in : user options
        soilcompin, soilcL1in, soilcL2in, soilcL3in, soilcL4in,               & ! in : user options
        sfctmp(1)  , q2(1)  , uu(1)    , vv(1) , soldnin , lwdnin  , & ! in : forcing 

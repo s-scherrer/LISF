@@ -447,7 +447,6 @@ subroutine NoahMP401_main(n)
             tmp_crop_opt          = NOAHMP401_struc(n)%crop_opt
             tmp_maxlai_opt        = NOAHMP401_struc(n)%maxlai_opt
             tmp_lfpt_opt          = NOAHMP401_struc(n)%lfpt_opt
-            tmp_maxlai            = NOAHMP401_struc(n)%maxlai
             tmp_iz0tlnd           = 0
             tmp_urban_opt         = NOAHMP401_struc(n)%urban_opt
 ! Multiply reference height by 2.0 because module_sf_noahmpdrv
@@ -476,7 +475,7 @@ subroutine NoahMP401_main(n)
             endif
 
             if (tmp_lfpt_opt.eq.1) then
-                tmp_maxlai = -1.
+                tmp_maxlai = LIS_rc%udef
             else
                 tmp_maxlai = NOAHMP401_struc(n)%noahmp401(t)%maxlai
             endif
@@ -616,6 +615,7 @@ subroutine NoahMP401_main(n)
                                    tmp_planting          , & ! in    - planting date [-]
                                    tmp_harvest           , & ! in    - harvest date [-]
                                    tmp_season_gdd        , & ! in    - growing season GDD [-]
+                                   tmp_maxlai            , &
                                    tmp_dveg_opt          , & ! in    - dynamic vegetation, 1->off; 2->on); with opt_crs=1 [-]
                                    tmp_crs_opt           , & ! in    - canopt stomatal resistance (1->Ball-Berry; 2->Jarvis) [-]
                                    tmp_btr_opt           , & ! in    - soil moisture factor for stomatal resistance(1->Noah;2->CLM;3->SSiB) [-]
@@ -636,7 +636,6 @@ subroutine NoahMP401_main(n)
                                    tmp_crop_opt          , & ! in    - crop model option (0->none; 1->Liu et al.; 2->Gecros) [-]
                                    tmp_maxlai_opt        , &
                                    tmp_lfpt_opt          , &
-                                   tmp_maxlai            , &
                                    tmp_iz0tlnd           , & ! in    - option of Chen adjustment of Czil (not used) [-]
                                    tmp_urban_opt         , & ! in    - urban physics option [-]
                                    tmp_soilcomp          , & ! in    - soil sand and clay percentage [-]
@@ -820,8 +819,6 @@ subroutine NoahMP401_main(n)
             NOAHMP401_struc(n)%noahmp401(t)%gdd             = tmp_gdd
             NOAHMP401_struc(n)%noahmp401(t)%pgs             = tmp_pgs
             NOAHMP401_struc(n)%noahmp401(t)%gecros_state(:) = tmp_gecros_state(:)
-
-            NOAHMP401_struc(n)%noahmp401(t)%maxlai    = tmp_maxlai
 
             ! save output variables from local variables to global variables
             NOAHMP401_struc(n)%noahmp401(t)%tsk       = tmp_tsk
