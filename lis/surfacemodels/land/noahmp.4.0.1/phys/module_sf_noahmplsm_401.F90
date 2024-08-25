@@ -8928,9 +8928,9 @@ END  SUBROUTINE SHALLOWWATERTABLE
          MAXLAITMP = MAX(laimin, parameters%MAXLAI)
          IF (OPT_LFPT == 2) THEN
              ! MAXLAI is the lai at which the leaf allocation fraction function
-             ! falls below 0.2 (to change this, change the 0.2 in the second line)
+             ! falls below 0.1 (to change this, change the first 0.1 in the second line)
              LFALLOCA = 1.0/MAXLAITMP * LOG(1 - 100./MAXLAITMP &
-                  * LOG(0.2/(1. - 0.1*MAXLAITMP)))
+                  * LOG(0.1/(1. - 0.1*MAXLAITMP)))
              LEAFPT = EXP(0.01*(1.-EXP(LFALLOCA*XLAI))*XLAI)
          ELSE
              LEAFPT = EXP(0.0001 * (1.-EXP(10.0*XLAI/parameters%MAXLAI)))
