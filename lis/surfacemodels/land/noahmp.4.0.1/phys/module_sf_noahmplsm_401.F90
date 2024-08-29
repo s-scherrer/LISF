@@ -8923,18 +8923,41 @@ END  SUBROUTINE SHALLOWWATERTABLE
          ELSE
              LEAFPT = EXP(0.01*(1.-EXP(0.75*XLAI))*XLAI)
          ENDIF
-     ELSE
+     ELSE IF (OPT_LFPT == 2 .OR. OPT_LFPT == 3) THEN
          ! TODO: if opt_maxlai == 2, MAXLAI should be obtained from noahmp401(t)%maxlai
          MAXLAITMP = MAX(laimin, parameters%MAXLAI)
          IF (OPT_LFPT == 2) THEN
+             ! Original Noah-MP, but reformulated in terms of MAXLAI.
              ! MAXLAI is the lai at which the leaf allocation fraction function
              ! falls below 0.1 (to change this, change the first 0.1 in the second line)
              LFALLOCA = 1.0/MAXLAITMP * LOG(1 - 100./MAXLAITMP &
                   * LOG(0.1/(1. - 0.1*MAXLAITMP)))
              LEAFPT = EXP(0.01*(1.-EXP(LFALLOCA*XLAI))*XLAI)
-         ELSE
+         ELSE !OPT_LFPT == 3
+             ! Gim et al. 2017
              LEAFPT = EXP(0.0001 * (1.-EXP(10.0*XLAI/parameters%MAXLAI)))
          ENDIF
+     ELSE IF (OPT_LFPT == 4) THEN
+         ! Option based on Niu et al. 2020, "Enhancing the Noah-MP Ecosystem
+         ! Response to Droughts With an Explicit Representation of Plant Water
+         ! Storage Supplied by Dynamic Root Water Uptake"
+         ! 
+         ! This is a very simplified adaption of Niu et al. 2020, using only
+         ! the modification to the fraction of carbon allocated to leafs, and
+         ! this option also not completely.
+         !
+         ! The only modification is to use the root allocation fraction F_R
+         ! from Niu et al. 2020 as upper bound for the LEAFPT fraction,
+         ! everything else stays the same.
+         
+         ! ROOTPT used temporarily here, will be overwritten later
+         IF(VEGTYP == parameters%EBLFOREST) THEN
+             LEAFPT = EXP(0.01*(1.-EXP(0.50*XLAI))*XLAI)
+         ELSE
+             LEAFPT = EXP(0.01*(1.-EXP(0.75*XLAI))*XLAI)
+         ENDIF
+         ROOTPT = MAX(0.0, 0.3 * WSTRES)
+         LEAFPT = (1.0 - ROOTPT) * LEAFPT
      ENDIF
 
 
