@@ -48,7 +48,7 @@ CONTAINS
 		 GHBXY,    IRGXY,    IRCXY,     IRBXY,     TRXY,     EVCXY, & ! OUT Noah MP only
                  FGEV_PETXY, FCEV_PETXY, FCTR_PETXY,                & ! PET code from Sujay 
               CHLEAFXY,   CHUCXY,   CHV2XY,    CHB2XY, RS, FPICE,           & ! OUT Noah MP only
-                 PARXY,  FAPARXY,
+                 PARXY,  FAPARXY,                                           &
               parameters, &
 !                 BEXP_3D,SMCDRY_3D,SMCWLT_3D,SMCREF_3D,SMCMAX_3D,          & ! placeholders to activate 3D soil
 !		 DKSAT_3D,DWSAT_3D,PSISAT_3D,QUARTZ_3D,                     &
