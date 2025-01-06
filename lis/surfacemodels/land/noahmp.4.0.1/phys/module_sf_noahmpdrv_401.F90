@@ -1033,7 +1033,11 @@ CONTAINS
              FIRAXY   (I,J)                = FIRA
              APARXY   (I,J)                = APAR
              PARXY    (I,J)                = SWDN  ! photosynthetically active radiation = shortwave downwelling radiation
-             FAPARXY  (I,J)                = PARXY(I,J) / APARXY(I,J)
+             IF (SWDN .eq. 0.0) THEN
+                 FAPARXY(I, J) = 0.0
+             ELSE
+                 FAPARXY(I, J) = APAR / SWDN
+             ENDIF
              PSNXY    (I,J)                = PSN
              SAVXY    (I,J)                = SAV
              SAGXY    (I,J)                = SAG
