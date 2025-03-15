@@ -1034,11 +1034,11 @@ CONTAINS
              ! "APAR" in Noah-MP is the absorbed PAR times LAIFRA with LAIFRA
              ! = (ELAI)/(ELAI+ESAI), so the APAR fraction going to leaves, not
              ! green stems. This is corrected here in the output
-             APARXY   (I,J)                = APAR * (ESAI + ELAI) / ELAI
+             APARXY   (I,J)                = APAR * (PSAI + PLAI) / PLAI
              ! the photosynthetically active radiation in Noah-MP is the
              ! visible fraction of SWDOWN, which is 0.5 (see SUBROUTINE
              ! ATMOSPHERE, where SOLAD and SOLAI are set)
-             PARXY    (I,J)                = SWDOWN * 0.5
+             PARXY    (I,J)                = SWDOWN(I, J) * 0.5
              IF (SWDN .eq. 0.0) THEN
                  FAPARXY(I, J) = 0.0
              ELSE
