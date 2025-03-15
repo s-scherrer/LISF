@@ -1031,12 +1031,18 @@ CONTAINS
              ETRANXY  (I,J)                = ETRAN
              FSAXY    (I,J)                = FSA
              FIRAXY   (I,J)                = FIRA
-             APARXY   (I,J)                = APAR
-             PARXY    (I,J)                = SWDN  ! photosynthetically active radiation = shortwave downwelling radiation
+             ! "APAR" in Noah-MP is the absorbed PAR times LAIFRA with LAIFRA
+             ! = (ELAI)/(ELAI+ESAI), so the APAR fraction going to leaves, not
+             ! green stems. This is corrected here in the output
+             APARXY   (I,J)                = APAR * (ESAI + ELAI) / ELAI
+             ! the photosynthetically active radiation in Noah-MP is the
+             ! visible fraction of SWDOWN, which is 0.5 (see SUBROUTINE
+             ! ATMOSPHERE, where SOLAD and SOLAI are set)
+             PARXY    (I,J)                = SWDOWN * 0.5
              IF (SWDN .eq. 0.0) THEN
                  FAPARXY(I, J) = 0.0
              ELSE
-                 FAPARXY(I, J) = APAR / SWDN
+                 FAPARXY(I, J) = APARXY(I, J) / PARXY(I, J)
              ENDIF
              PSNXY    (I,J)                = PSN
              SAVXY    (I,J)                = SAV
