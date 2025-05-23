@@ -1,9 +1,9 @@
 !-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
 ! NASA Goddard Space Flight Center
 ! Land Information System Framework (LISF)
-! Version 7.4
+! Version 7.5
 !
-! Copyright (c) 2022 United States Government as represented by the
+! Copyright (c) 2024 United States Government as represented by the
 ! Administrator of the National Aeronautics and Space Administration.
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
@@ -133,10 +133,10 @@ contains
 !
 ! !INTERFACE:    
   subroutine LDT_abort( abort_message )
-
+    use LDT_constantsMod, only: LDT_CONST_PATH_LEN
     implicit none
     
-    character*100  :: abort_message(20)
+    character(len=LDT_CONST_PATH_LEN)  :: abort_message(20)
     
 ! !DESCRIPTION:
 !
@@ -159,7 +159,7 @@ contains
 !
 !EOP
     character*7                :: iofunc
-    character*13               :: message_file
+    character(len=LDT_CONST_PATH_LEN) :: message_file
     integer                    :: i
     integer                    :: ftn 
     integer                    :: istat
@@ -186,7 +186,7 @@ contains
     
     call LDT_releaseUnitNumber(ftn)
     
-    call abort ()
+    call LDT_endrun
       
 !     ----------------------------------------------------------------
 !     format statements.
@@ -208,7 +208,7 @@ contains
 
 9000 write (6, 8000) iofunc, istat
       
-    call abort ()
+    call LDT_endrun
   
   end subroutine LDT_abort
 
@@ -227,7 +227,8 @@ contains
 !
 ! !INTERFACE:    
   subroutine LDT_alert( program_name, alert_number, message )
-!EOP    
+    !EOP
+    use LDT_constantsMod, only: LDT_CONST_PATH_LEN
     implicit none
     
     character(len=*),  intent(in)    :: program_name  
@@ -258,7 +259,7 @@ contains
 !EOP
     character*3                   :: calert_number
     character*7                   :: iofunc
-    character*37                  :: message_file
+    character(len=LDT_CONST_PATH_LEN) :: message_file
     integer                       :: i
     integer                       :: istat
     integer                       :: ftn
@@ -464,7 +465,7 @@ contains
 !    call mpi_abort (MPI_COMM_WORLD, 1)         ! LDT
     call mpi_abort (MPI_COMM_WORLD, 1, ierr)   ! LIS-7
 #else
-    stop
+    error stop 1
 #endif   
    end subroutine LDT_endrun
 

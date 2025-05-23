@@ -1,9 +1,9 @@
 !-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
 ! NASA Goddard Space Flight Center
 ! Land Information System Framework (LISF)
-! Version 7.4
+! Version 7.5
 !
-! Copyright (c) 2022 United States Government as represented by the
+! Copyright (c) 2024 United States Government as represented by the
 ! Administrator of the National Aeronautics and Space Administration.
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
@@ -15,6 +15,7 @@
 ! 13 Dec 2019  Eric Kemp  Changed to USAFSI.
 ! 09 Oct 2020  Eric Kemp  Added legacy SNODEP files.
 ! 14 Jul 2021  Eric Kemp  Fixed bug in creating GRIB output directory.
+! 26 Jul 2022  Eric Kemp  Corrected GRIB2 output name.
 !
 ! DESCRIPTION:
 ! Source code for reading USAFSI netCDF file, writing back out in GRIB,
@@ -27,12 +28,14 @@
 
 module LVT_USAFSIpostMod
 
+   use LVT_constantsMod, only: LVT_CONST_PATH_LEN
+
    implicit none
    private
 
    type, public :: LVT_USAFSIpost_t
       private
-      character(len=255) :: input_nc_file
+      character(len=LVT_CONST_PATH_LEN) :: input_nc_file
       integer :: nc
       integer :: nr
       real, allocatable :: snoanl(:,:)
@@ -383,6 +386,7 @@ contains
 
       ! Imports
       use grib_api
+      use LVT_constantsMod, only: LVT_CONST_PATH_LEN
       use LVT_coreMod, only: LVT_rc
       use LVT_logMod, only: LVT_logunit, LVT_endrun
 
@@ -394,7 +398,7 @@ contains
 
       ! Local variables
       real :: griddesci(50)
-      character(len=255) :: fname
+      character(len=LVT_CONST_PATH_LEN) :: fname
       integer :: ftn, rc, status2
       character(len=255) :: msg
       real, allocatable :: go(:)
@@ -504,6 +508,7 @@ contains
 
       ! Imports
       use grib_api
+      use LVT_constantsMod, only: LVT_CONST_PATH_LEN
       use LVT_coreMod, only: LVT_rc
       use LVT_logMod, only: LVT_logunit, LVT_endrun
 
@@ -535,7 +540,7 @@ contains
       logical*1, allocatable :: li(:), lo(:), lo_bin(:), lo_neighbor(:)
       real, allocatable :: gi(:), go(:), go_bin(:), go_neighbor(:)
       real, allocatable :: go2d(:,:)
-      character(len=255) :: fname
+      character(len=LVT_CONST_PATH_LEN) :: fname
       integer :: ftn, rc, status2, iret
       integer :: c,r
       integer :: igrib
@@ -1195,23 +1200,33 @@ contains
    subroutine build_filename_g2(output_dir, yyyymmddhh, filename)
 
       ! Imports
+      use LVT_constantsMod, only: LVT_CONST_PATH_LEN
       use LVT_coreMod, only: LVT_rc
 
       ! Defaults
       implicit none
 
       ! Arguments
-      character(len=255), intent(in) :: output_dir
+      character(len=LVT_CONST_PATH_LEN), intent(in) :: output_dir
       character(len=10), intent(in) :: yyyymmddhh
-      character(len=255), intent(out) :: filename
+      character(len=LVT_CONST_PATH_LEN), intent(out) :: filename
 
+      ! filename = trim(output_dir)  &
+      !      // '/PS.557WW_SC.' &
+      !      // trim(LVT_rc%security_class)//'_DI.' &
+      !      // trim(LVT_rc%data_category)//'_GP.' &
+      !      // 'LIS-SNOWICE_GR.C0P09DEG_AR.' &
+      !      // trim(LVT_rc%area_of_data)//'_PA.' &
+      !      //'USAFSI_DD.' &
+      !      // yyyymmddhh(1:8)//'_DT.' &
+      !      // yyyymmddhh(9:10)//'00_DF.GR2'
       filename = trim(output_dir)  &
            // '/PS.557WW_SC.' &
            // trim(LVT_rc%security_class)//'_DI.' &
            // trim(LVT_rc%data_category)//'_GP.' &
-           // 'LIS-SNOWICE_GR.C0P09DEG_AR.' &
+           // 'USAFSI_GR.C0P09DEG_AR.' &
            // trim(LVT_rc%area_of_data)//'_PA.' &
-           //'USAFSI_DD.' &
+           // 'SNOW-ICE_DD.' &
            // yyyymmddhh(1:8)//'_DT.' &
            // yyyymmddhh(9:10)//'00_DF.GR2'
 
@@ -1220,14 +1235,17 @@ contains
    ! Build the grib1 filename
    subroutine build_filename_g1(gridID, output_dir, yyyymmddhh, filename)
 
+      ! Imports
+      use LVT_constantsMod, only: LVT_CONST_PATH_LEN
+
       ! Defaults
       implicit none
 
       ! Arguments
       character(len=*), intent(in) :: gridID
-      character(len=255), intent(in) :: output_dir
+      character(len=LVT_CONST_PATH_LEN), intent(in) :: output_dir
       character(len=10), intent(in) :: yyyymmddhh
-      character(len=255), intent(out) :: filename
+      character(len=LVT_CONST_PATH_LEN), intent(out) :: filename
 
       ! Local variables
       character(len=10) :: grid
@@ -1261,14 +1279,17 @@ contains
    subroutine build_filename_g1_snodep(gridID, output_dir, yyyymmddhh, &
         filename)
 
+      ! Imports
+      use LVT_constantsMod, only: LVT_CONST_PATH_LEN
+
       ! Defaults
       implicit none
 
       ! Arguments
       character(len=*), intent(in) :: gridID
-      character(len=255), intent(in) :: output_dir
+      character(len=LVT_CONST_PATH_LEN), intent(in) :: output_dir
       character(len=10), intent(in) :: yyyymmddhh
-      character(len=255), intent(out) :: filename
+      character(len=LVT_CONST_PATH_LEN), intent(out) :: filename
 
       ! Local variables
       character(len=10) :: area
@@ -1863,6 +1884,7 @@ contains
    subroutine write_netcdf_latlon(griddesco, nc_out, nr_out, go)
 
       ! Imports
+      use LVT_constantsMod, only: LVT_CONST_PATH_LEN
       use LVT_coreMod, only: LVT_rc
       use LVT_logMod, only: LVT_logunit, LVT_verify, LVT_endrun
       use netcdf
@@ -1877,7 +1899,7 @@ contains
       real, intent(in) :: go(nc_out*nr_out)
 
       ! Local variables
-      character(len=255) :: outfilename
+      character(len=LVT_CONST_PATH_LEN) :: outfilename
       integer :: shuffle, deflate, deflate_level
       integer :: iret, ncid
       integer :: dim_ids(3)
@@ -2104,6 +2126,7 @@ contains
    subroutine write_netcdf_ps(griddesco, nc_out, nr_out, go)
 
       ! Imports
+      use LVT_constantsMod, only: LVT_CONST_PATH_LEN
       use LVT_coreMod, only: LVT_rc
       use LVT_logMod, only: LVT_logunit, LVT_verify, LVT_endrun
       use netcdf
@@ -2118,7 +2141,7 @@ contains
       real, intent(in) :: go(nc_out*nr_out)
 
       ! Local variables
-      character(len=255) :: outfilename
+      character(len=LVT_CONST_PATH_LEN) :: outfilename
       integer :: shuffle, deflate, deflate_level
       integer :: iret, ncid
       integer :: dim_ids(2)

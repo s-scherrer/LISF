@@ -1,9 +1,9 @@
 !-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
 ! NASA Goddard Space Flight Center
 ! Land Information System Framework (LISF)
-! Version 7.4
+! Version 7.5
 !
-! Copyright (c) 2022 United States Government as represented by the
+! Copyright (c) 2024 United States Government as represented by the
 ! Administrator of the National Aeronautics and Space Administration.
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
@@ -149,6 +149,7 @@ module LIS_histDataMod
   public :: LIS_MOC_LEAFRESP
   public :: LIS_MOC_TOTSOILCARB
   public :: LIS_MOC_TOTLIVBIOM
+
   
   public :: LIS_MOC_WINDFORC  
   public :: LIS_MOC_RAINFFORC 
@@ -433,6 +434,26 @@ module LIS_histDataMod
   public ::   LIS_MOC_CHB2    
   public ::   LIS_MOC_FPICE   
   ! end Noahmp
+
+  ! AquaCrop
+  public :: LIS_MOC_AC_Biomass
+  public :: LIS_MOC_AC_CCiActual
+  public :: LIS_MOC_AC_RootZoneWC_Actual
+  public :: LIS_MOC_AC_RootZoneWC_WP
+  public :: LIS_MOC_AC_RootZoneWC_FC
+  public :: LIS_MOC_AC_Tact
+  public :: LIS_MOC_AC_Eact
+  public :: LIS_MOC_AC_ETo
+  public :: LIS_MOC_AC_Rain
+  public :: LIS_MOC_AC_Irrigation
+  public :: LIS_MOC_AC_Tmin
+  public :: LIS_MOC_AC_Tmax
+  public :: LIS_MOC_AC_RootingDepth
+  public :: LIS_MOC_AC_Yield
+  public :: LIS_MOC_AC_StExp
+  public :: LIS_MOC_AC_StSen
+  public :: LIS_MOC_AC_cycle_complete
+  ! end AquaCrop
  
   ! RUC 
   public :: LIS_MOC_QVG
@@ -492,6 +513,26 @@ module LIS_histDataMod
   public ::   LIS_MOC_SNOWDELTAHEAT
   public ::   LIS_MOC_SNOWSURFACEQ
   !public ::   LIS_MOC_SNOWWIND_DIR
+
+! SnowModel outputs:
+  public ::   LIS_MOC_SWE_SM
+  public ::   LIS_MOC_SNOWDEPTH_SM
+  public ::   LIS_MOC_SNOWDENSITY_SM
+  public ::   LIS_MOC_QSM_SM
+  public ::   LIS_MOC_SUBSNOW_SM
+  public ::   LIS_MOC_QS_SM
+  public ::   LIS_MOC_TOTALPRECIP_SM
+  public ::   LIS_MOC_RAINF_SM
+  public ::   LIS_MOC_SNOWF_SM
+  public ::   LIS_MOC_ALBEDO_SM
+  public ::   LIS_MOC_ELEVATION_SM
+  public ::   LIS_MOC_LANDCOVER_SM
+
+  public ::   LIS_MOC_SWDOWNFORC_SM
+  public ::   LIS_MOC_LWDOWNFORC_SM
+  public ::   LIS_MOC_EWINDFORC_SM
+  public ::   LIS_MOC_NWINDFORC_SM
+! .......
 
   integer :: LIS_MOC_SNOW_SOOT = -9999
   integer :: LIS_MOC_GRND_SNOW = -9999
@@ -637,6 +678,7 @@ module LIS_histDataMod
    ! CLSM FORCING VARIABLES
    integer :: LIS_MOC_PARDRFORC  = -9999
    integer :: LIS_MOC_PARDFFORC  = -9999
+
 
    ! PARAMETER OUTPUT - EXPERIMENTAL (USE W/WRF-WPS)
    integer :: LIS_MOC_LANDMASK   = -9999
@@ -927,6 +969,25 @@ module LIS_histDataMod
     integer ::  LIS_MOC_FPICE   = -9999
 !  <- end Noah MP  ->
 
+!  <- AquaCrop ->
+   integer :: LIS_MOC_AC_Biomass  = -9999
+   integer :: LIS_MOC_AC_CCiActual  = -9999
+   integer :: LIS_MOC_AC_RootZoneWC_Actual  = -9999
+   integer :: LIS_MOC_AC_RootZoneWC_WP  = -9999
+   integer :: LIS_MOC_AC_RootZoneWC_FC  = -9999
+   integer :: LIS_MOC_AC_Tact  = -9999
+   integer :: LIS_MOC_AC_Eact  = -9999
+   integer :: LIS_MOC_AC_ETo  = -9999
+   integer :: LIS_MOC_AC_Rain  = -9999
+   integer :: LIS_MOC_AC_Irrigation  = -9999
+   integer :: LIS_MOC_AC_Tmin  = -9999
+   integer :: LIS_MOC_AC_Tmax  = -9999
+   integer :: LIS_MOC_AC_RootingDepth  = -9999
+   integer :: LIS_MOC_AC_Yield  = -9999
+   integer :: LIS_MOC_AC_StExp  = -9999
+   integer :: LIS_MOC_AC_StSen  = -9999
+   integer :: LIS_MOC_AC_cycle_complete  = -9999
+
 !   <- RUC -> 
    integer :: LIS_MOC_QVG = -9999
    integer :: LIS_MOC_QCG = -9999
@@ -984,6 +1045,25 @@ module LIS_histDataMod
     integer :: LIS_MOC_SNOWHEATDRAG = -9999
     integer :: LIS_MOC_SNOWDELTAHEAT = -9999
     integer :: LIS_MOC_SNOWSURFACEQ = -9999
+
+! SnowModel outputs:
+    integer :: LIS_MOC_SWE_SM = -9999
+    integer :: LIS_MOC_SNOWDEPTH_SM = -9999
+    integer :: LIS_MOC_SNOWDENSITY_SM = -9999
+    integer :: LIS_MOC_QSM_SM = -9999
+    integer :: LIS_MOC_SUBSNOW_SM = -9999
+    integer :: LIS_MOC_QS_SM = -9999
+    integer :: LIS_MOC_TOTALPRECIP_SM = -9999
+    integer :: LIS_MOC_RAINF_SM = -9999
+    integer :: LIS_MOC_SNOWF_SM = -9999
+    integer :: LIS_MOC_ALBEDO_SM = -9999
+    integer :: LIS_MOC_ELEVATION_SM = -9999
+    integer :: LIS_MOC_LANDCOVER_SM = -9999
+    integer :: LIS_MOC_SWDOWNFORC_SM = -9999
+    integer :: LIS_MOC_LWDOWNFORC_SM = -9999
+    integer :: LIS_MOC_EWINDFORC_SM = -9999
+    integer :: LIS_MOC_NWINDFORC_SM = -9999
+! .......
 
 
 #if 0
@@ -1157,8 +1237,8 @@ contains
     call LIS_verify(rc,'Model output attributes file: not specified')
 
     call ESMF_ConfigGetAttribute(LIS_config,LIS_rc%outputSpecFile(n),rc=rc)
-    write(LIS_logunit,*) '[INFO] Opening Model Output Attributes File', &
-                         LIS_rc%outputSpecFile(n)
+    write(LIS_logunit,*) '[INFO] Opening Model Output Attributes File, ', &
+                         trim(LIS_rc%outputSpecFile(n))
 
     inquire(file=LIS_rc%outputSpecFile(n),exist=file_exists)
     if(.not.file_exists) then 
@@ -1496,7 +1576,8 @@ contains
     if ( rc == 1 ) then
        call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_SNOWF,&
             LIS_histData(n)%head_lsm_list,&
-            n,2,ntiles,(/"kg/m2s","kg/m2 "/),&
+!            n,2,ntiles,(/"kg/m2s","kg/m2 "/),&
+            n,3,ntiles,(/"kg/m2s","kg/m2 ","m     "/),&   ! KRA
             2,(/"UP","DN"/),2,1,1,&
             model_patch=.true.)
     endif
@@ -1509,7 +1590,8 @@ contains
     if ( rc == 1 ) then
        call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_RAINF,&
             LIS_histData(n)%head_lsm_list,&
-            n,2,ntiles,(/"kg/m2s","kg/m2 "/),&
+!            n,2,ntiles,(/"kg/m2s","kg/m2 "/),&
+            n,3,ntiles,(/"kg/m2s","kg/m2 ","m     "/),&   ! KRA
             2,(/"UP","DN"/),2,1,1,&
             model_patch=.true.)
     endif
@@ -1548,7 +1630,8 @@ contains
     if ( rc == 1 ) then
        call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_QS,&
             LIS_histData(n)%head_lsm_list,&
-            n,2,ntiles,(/"kg/m2s","kg/m2 "/),&
+!            n,2,ntiles,(/"kg/m2s","kg/m2 "/),&
+            n,3,ntiles,(/"kg/m2s","kg/m2 ","m     "/),&  ! KRA
             2,(/"IN ","OUT"/),2,1,1,&
             model_patch=.true.)
     endif
@@ -1592,7 +1675,8 @@ contains
     if ( rc == 1 ) then
        call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_QSM,&
             LIS_histData(n)%head_lsm_list,&
-            n,2,ntiles,(/"kg/m2s","kg/m2 "/),&
+!            n,2,ntiles,(/"kg/m2s","kg/m2 "/),&
+            n,3,ntiles,(/"kg/m2s","kg/m2 ","m     "/),&   ! KRA
             2,(/"S2L","L2S"/),2,1,1,&
             model_patch=.true.)
     endif
@@ -2199,7 +2283,8 @@ contains
     if ( rc == 1 ) then
        call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_SUBSNOW,&
             LIS_histData(n)%head_lsm_list,n,&
-            5,ntiles,(/"kg/m2s","mm/hr ","W/m2  ","mm    ", "kg/m2 "/),&
+!            5,ntiles,(/"kg/m2s","mm/hr ","W/m2  ","mm    ", "kg/m2 "/),&
+            6,ntiles,(/"kg/m2s","mm/hr ","W/m2  ","mm    ", "kg/m2 ","m     "/),&  ! KRA
             1,(/"-"/),2,1,1,&
             model_patch=.true.)
     endif
@@ -4191,7 +4276,8 @@ contains
     if ( rc == 1 ) then
        call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_TOTALPRECIP,&
             LIS_histData(n)%head_lsm_list,&
-            n,2,ntiles,(/"kg/m2s","kg/m2 "/),&
+!            n,2,ntiles,(/"kg/m2s","kg/m2 "/),&
+            n,3,ntiles,(/"kg/m2s","kg/m2 ","m     "/),&    ! KRA
             2,(/"UP","DN"/),2,1,1,&
             model_patch=.true.)
     endif
@@ -4509,6 +4595,215 @@ contains
             n, 1, ntiles,(/"g/m2"/), 1, (/"-"/),1,1,1,&
             model_patch=.true.)
     endif
+
+    ! AquaCrop
+    call ESMF_ConfigFindLabel(modelSpecConfig,"AC_Biomass:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "AC_Biomass",&
+         "biomass",&
+         "biomass",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_AC_Biomass,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"t/ha"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+    call ESMF_ConfigFindLabel(modelSpecConfig,"AC_CCiActual:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "AC_CCiActual",&
+         "actual_canopy_cover",&
+         "actual canopy cover",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_AC_CCiActual,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"-"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+    call ESMF_ConfigFindLabel(modelSpecConfig,"AC_RootZoneWC_Actual:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "AC_RootZoneWC_Actual",&
+         "actual_rootzone_water_content",&
+         "actual rootzone water content",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_AC_RootZoneWC_Actual,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"mm"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+    call ESMF_ConfigFindLabel(modelSpecConfig,"AC_RootZoneWC_FC:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "AC_RootZoneWC_FC",&
+         "rootzone_water_content_at_fc",&
+         "rootzone water conetn at field capacity",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_AC_RootZoneWC_FC,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"mm"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+    call ESMF_ConfigFindLabel(modelSpecConfig,"AC_RootZoneWC_WP:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "AC_RootZoneWC_WP",&
+         "rootzone_water_content_at_wp",&
+         "rootzone water content at wilting point",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_AC_RootZoneWC_WP,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"mm"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+
+    call ESMF_ConfigFindLabel(modelSpecConfig,"AC_Tact:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "AC_Tact",&
+         "actual_transpiration",&
+         "actual transpiration",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_AC_Tact,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"mm"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+    call ESMF_ConfigFindLabel(modelSpecConfig,"AC_Eact:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "AC_Eact",&
+         "actual_evaporation",&
+         "actual evaporation",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_AC_Eact,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"mm"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+    call ESMF_ConfigFindLabel(modelSpecConfig,"AC_ETo:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "AC_ETo",&
+         "reference_evapotranspiration",&
+         "reference evapotranspiration",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_AC_ETo,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"mm"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+    call ESMF_ConfigFindLabel(modelSpecConfig,"AC_Rain:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "AC_Rain",&
+         "rain",&
+         "rain",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_AC_Rain,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"mm"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+
+    call ESMF_ConfigFindLabel(modelSpecConfig,"AC_Irrigation:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "AC_Irrigation",&
+         "irrigation",&
+         "irrigation",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_AC_Irrigation,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"mm"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+    call ESMF_ConfigFindLabel(modelSpecConfig,"AC_Tmin:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "AC_Tmin",&
+         "daily_minimum_temperature",&
+         "daily minimum temperature",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_AC_Tmin,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"degC"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+    call ESMF_ConfigFindLabel(modelSpecConfig,"AC_Tmax:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "AC_Tmax",&
+         "daily_maximum_temperature",&
+         "daily maximum temperature",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_AC_Tmax,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"degC"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+    call ESMF_ConfigFindLabel(modelSpecConfig,"AC_RootingDepth:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "AC_RootingDepth",&
+         "rooting_depth",&
+         "rooting depth",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_AC_RootingDepth,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"m"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+    call ESMF_ConfigFindLabel(modelSpecConfig,"AC_Yield:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "AC_Yield",&
+         "yield",&
+         "yield",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_AC_Yield,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"t/ha"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+    call ESMF_ConfigFindLabel(modelSpecConfig,"AC_StExp:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "AC_StExp",&
+         "stress leaf expansion",&
+         "stress leaf expansion",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_AC_StExp,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"%"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+    call ESMF_ConfigFindLabel(modelSpecConfig,"AC_StSen:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "StSen",&
+         "stress senescence",&
+         "stress senescence",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_AC_StSen,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"%"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+    call ESMF_ConfigFindLabel(modelSpecConfig,"AC_cycle_complete:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "AC_cycle_complete",&
+         "cycle_complete",&
+         "GDD crop growth cycle completed",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_AC_cycle_complete,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"-"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+    !End AquaCrop
+
     
     Call ESMF_ConfigFindLabel(modelSpecConfig, "StemMass:", rc = rc)
     Call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
@@ -5284,7 +5579,223 @@ contains
             model_patch=.true.)
     endif
 
-!  snow model 
+!<-- SnowModel outputs -->
+!    integer :: LIS_MOC_SWE_SM = -9999
+    call ESMF_ConfigFindLabel(modelSpecConfig,"SM_SWE:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "SM_SWE",&
+         "liquid_water_content_of_surface_snow",&
+         "snow water equivalent",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_SWE_SM,&
+            LIS_histData(n)%head_lsm_list,&
+            n,2,ntiles,(/"kg/m2","m    "/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+!    integer :: LIS_MOC_SNOWDEPTH_SM = -9999
+    call ESMF_ConfigFindLabel(modelSpecConfig,"SM_SnowDepth:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "SM_SnowDepth",&
+         "snow_depth",&
+         "snow depth",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_SNOWDEPTH_SM,&
+            LIS_histData(n)%head_lsm_list,&
+            n,3,ntiles,(/"m ", "cm", "mm"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+       ! cm is added for VIC, Shugong Wang 02/20/2012
+    endif
+
+!    integer :: LIS_MOC_SNOWDENSITY_SM = -9999
+    call ESMF_ConfigFindLabel(modelSpecConfig,"SM_SnowDensity:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "SM_SnowDensity",&
+         "snow_density_for_each_layer",&
+         "snow density for each layer",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_SNOWDENSITY_SM,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"kg/m3"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+!    integer :: LIS_MOC_QSM_SM = -9999
+    call ESMF_ConfigFindLabel(modelSpecConfig,"SM_Qsm:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "SM_Qsm",&
+         "snowmelt",&
+         "snowmelt",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_QSM_SM,&
+            LIS_histData(n)%head_lsm_list,&
+            n,3,ntiles,(/"kg/m2s","kg/m2 ","m     "/),&   ! KRA
+            2,(/"S2L","L2S"/),2,1,1,&
+            model_patch=.true.)
+    endif
+
+!    integer :: LIS_MOC_QS_SM = -9999
+    call ESMF_ConfigFindLabel(modelSpecConfig,"SM_Qs:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "SM_Qs",&
+         "surface_runoff_amount",&
+         "surface runoff",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_QS_SM,&
+            LIS_histData(n)%head_lsm_list,&
+            n,3,ntiles,(/"kg/m2s","kg/m2 ","m     "/),&  ! KRA
+            2,(/"IN ","OUT"/),2,1,1,&
+            model_patch=.true.)
+    endif
+
+!    integer :: LIS_MOC_SUBSNOW_SM = -9999
+    call ESMF_ConfigFindLabel(modelSpecConfig,"SM_SubSnow:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "SM_SubSnow",&
+         "snow_sublimation",&
+         "snow sublimation",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_SUBSNOW,&
+            LIS_histData(n)%head_lsm_list,n,&
+            6,ntiles,(/"kg/m2s","mm/hr ","W/m2  ","mm    ", "kg/m2 ","m     "/),&  ! KRA
+            1,(/"-"/),2,1,1,&
+            model_patch=.true.)
+    endif
+
+!    integer :: LIS_MOC_TOTALPRECIP_SM = -9999
+    call ESMF_ConfigFindLabel(modelSpecConfig,"SM_TotalPrecip:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "SM_TotalPrecip",&
+         "total_precipitation_amount",&
+         "total precipitation amount",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_TOTALPRECIP_SM,&
+            LIS_histData(n)%head_lsm_list,&
+            n,3,ntiles,(/"kg/m2s","kg/m2 ","m     "/),&    ! KRA
+            2,(/"UP","DN"/),2,1,1,&
+            model_patch=.true.)
+    endif
+
+!    integer :: LIS_MOC_RAINF_SM = -9999
+    call ESMF_ConfigFindLabel(modelSpecConfig,"SM_Rainf:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "SM_Rainf",&
+         "precipitation_rate",&
+         "precipitation rate",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_RAINF_SM,&
+            LIS_histData(n)%head_lsm_list,&
+            n,3,ntiles,(/"kg/m2s","kg/m2 ","m     "/),&   ! KRA
+            2,(/"UP","DN"/),2,1,1,&
+            model_patch=.true.)
+    endif
+
+!    integer :: LIS_MOC_SNOWF_SM = -9999
+    call ESMF_ConfigFindLabel(modelSpecConfig,"SM_Snowf:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "SM_Snowf",&
+         "snowfall_rate",&
+         "snowfall rate",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_SNOWF_SM,&
+            LIS_histData(n)%head_lsm_list,&
+            n,3,ntiles,(/"kg/m2s","kg/m2 ","m     "/),&   ! KRA
+            2,(/"UP","DN"/),2,1,1,&
+            model_patch=.true.)
+    endif
+
+!    integer :: LIS_MOC_ALBEDO_SM = -9999
+    call ESMF_ConfigFindLabel(modelSpecConfig,"SM_Albedo:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "SM_Albedo",&
+         "surface_albedo",&
+         "surface albedo",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_ALBEDO_SM,&
+            LIS_histData(n)%head_lsm_list,&
+            n,2,ntiles,(/"-","%"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+!    integer :: LIS_MOC_ELEVATION_SM = -9999
+    call ESMF_ConfigFindLabel(modelSpecConfig,"SM_Elevation:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "SM_Elevation",&
+         "elevation",&
+         "elevation",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_ELEVATION_SM,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"m"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+!    integer :: LIS_MOC_LANDCOVER_SM = -9999
+    call ESMF_ConfigFindLabel(modelSpecConfig,"SM_Landcover:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list,&
+         "SM_Landcover",&
+         "landcover",&
+         "landcover",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_LANDCOVER_SM,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"-"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+!    integer :: LIS_MOC_SWDOWNFORC_SM = -9999
+    call ESMF_ConfigFindLabel(modelSpecConfig,"SM_SWdown:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list,&
+         "SM_SWdown",&
+         "sm_swdown",&
+         "Snowmodel-modified shortwave radiation",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_SWDOWNFORC_SM,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"W/m2"/),2,(/"UP", "DN"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+!    integer :: LIS_MOC_LWDOWNFORC_SM = -9999
+    call ESMF_ConfigFindLabel(modelSpecConfig,"SM_LWdown:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list,&
+         "SM_LWdown",&
+         "sm_lwdown",&
+         "Snowmodel-modified longwave radiation",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_LWDOWNFORC_SM,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"W/m2"/),2,(/"UP", "DN"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+!    integer :: LIS_MOC_NWINDFORC_SM = -9999
+    call ESMF_ConfigFindLabel(modelSpecConfig,"SM_NWind:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list,&
+         "SM_NWind",&
+         "sm_nwind",&
+         "Snowmodel-modified N-S wind direction",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_NWINDFORC_SM,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"m/s"/),2,(/"E", "N"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+!    integer :: LIS_MOC_EWINDFORC_SM = -9999
+    call ESMF_ConfigFindLabel(modelSpecConfig,"SM_EWind:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list,&
+         "SM_EWind",&
+         "sm_ewind",&
+         "Snowmodel-modified E-W wind direction",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_EWINDFORC_SM,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"m/s"/),2,(/"E", "N"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+! .........
 
 
     !<- RUC addition ->
@@ -6201,6 +6712,8 @@ end subroutine get_moc_attributes
        cfunit = "km day-1"
     elseif(unit.eq."J/kg") then 
        cfunit = "J kg-1"
+    elseif(unit.eq."t/ha") then 
+       cfunit = "t ha-1"
     else
        cfunit = unit
     endif
@@ -6639,7 +7152,7 @@ end subroutine LIS_diagnoseIrrigationOutputVar
             ' for field ',trim(dataEntry%standard_name),' is not defined '
        write(LIS_logunit,*) '[ERR] for diagnostic output...'
        write(LIS_logunit,*) '[ERR] supported direction types: ',&
-            dataEntry%dir
+            dataEntry%dirtypes
        write(LIS_logunit,*) '[ERR] Program stopping ..'
        call LIS_endrun()       
     endif

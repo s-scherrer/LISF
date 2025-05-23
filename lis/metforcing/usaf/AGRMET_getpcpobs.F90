@@ -1,9 +1,9 @@
 !-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
 ! NASA Goddard Space Flight Center
 ! Land Information System Framework (LISF)
-! Version 7.4
+! Version 7.5
 !
-! Copyright (c) 2022 United States Government as represented by the
+! Copyright (c) 2024 United States Government as represented by the
 ! Administrator of the National Aeronautics and Space Administration.
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
@@ -32,13 +32,18 @@
 !    7 Feb 11  Enable use of either JMOBS or CDMS obs......Chris Franks/16WS/WXE/SEMS
 !   11 May 11  Store obs from 3,9,15,& 21Z for India and Sri Lanka in a 
 !              new array and pass to processobs............Chris Franks/16WS/WXE/SEMS
-! !INTERFACE:    
+!   29 Aug 23  Call LIS_alert if a preobs file is missing..............Eric Kemp/NASA
+!   23 May 24  Updated calls to AGRMET_storeobs and
+!              AGRMET_storeobs_offhour.......................Eric Kemp/NASA
+!
+! !INTERFACE:
 subroutine AGRMET_getpcpobs(n, j6hr, month, prcpwe, &
      use_twelve, p6, p12, alert_number, precip6, precip12,pcp_src)
 ! !USES:
-  use LIS_coreMod,       only : LIS_rc
+  use LIS_constantsMod, only  : LIS_CONST_PATH_LEN
+  use LIS_coreMod,       only : LIS_rc, LIS_masterproc
   use LIS_timeMgrMod, only    : LIS_tick, LIS_julhr_date
-  use LIS_logMod, only        : LIS_logunit
+  use LIS_logMod, only        : LIS_logunit, LIS_alert
   use AGRMET_forcingMod, only : agrmet_struc
   use USAF_bratsethMod, only: USAF_ObsData, USAF_setbratsethprecipstats
 
@@ -150,8 +155,8 @@ subroutine AGRMET_getpcpobs(n, j6hr, month, prcpwe, &
   integer                   :: cdms_count
   integer                   :: hemi
   integer                   :: i
-  character*100             :: filename
-  real, parameter           :: quad9r = -9999.0   
+  character(len=LIS_CONST_PATH_LEN) :: filename
+  real, parameter           :: quad9r = -9999.0
   integer                   :: j1hr
   integer                   :: j3hr
   integer                   :: startjul
@@ -173,10 +178,9 @@ subroutine AGRMET_getpcpobs(n, j6hr, month, prcpwe, &
   integer                      :: nsize3
   integer                      :: yr,mo,da,hr
   integer                      :: ierr1, ierr2, ierr3
-  integer                      :: k 
+  integer                      :: k
   logical                      :: cdms_flag
-
-
+  character(len=LIS_CONST_PATH_LEN) :: message(20)
 
   type rain_obs
      sequence
@@ -279,9 +283,31 @@ subroutine AGRMET_getpcpobs(n, j6hr, month, prcpwe, &
                  write(LIS_logunit,*)"* OBSERVATIONS BEYOND ARRAY SIZE WILL BE IGNORED."
                  write(LIS_logunit,*)"******************************************************"
                  write(LIS_logunit,*)' '
- 
+
+                 !EMK 20230829...Create alert file.
+                 message(:) = ''
+                 message(1) = '[WARN] Program:  LIS'
+                 message(2) = '  Routine: AGRMET_getpcpobs'
+                 message(3) = '  Too many rain gage reports in '// &
+                      trim(filename)
+!                 message(4) = '  Number of rain gage reports is '// nsize
+                 write(message(5),'(A, I6)') &
+                      '  Number of rain gage reports is ', nsize
+                 !message(5) = '  Array size is '// &
+                 !     agrmet_struc(n)%max_pcpobs
+                 write(message(5),'(A, I6)') '  Array size is ', &
+                      agrmet_struc(n)%max_pcpobs
+                 message(6) = '  Observations beyond array size will be ignored'
+                 message(7) = '  Increase number of AGRMET maximum precip obs in lis.config file!'
+                 if (LIS_masterproc) then
+                    alert_number = alert_number + 1
+                    call LIS_alert('LIS.AGRMET_getpcpobs', &
+                         alert_number, message)
+                 end if
+
                  nsize = agrmet_struc(n)%max_pcpobs
 
+     
               end if
 
               cdms_count = 0
@@ -335,20 +361,20 @@ subroutine AGRMET_getpcpobs(n, j6hr, month, prcpwe, &
                        write(LIS_logunit,*)'- CALLING STOREOBS TO PROCESS RAIN GAUGE DATA', j3hr
                        write(LIS_logunit,*)' '
                        
-                       call AGRMET_storeobs(nsize, nsize3, agrmet_struc(n)%max_pcpobs, &
+                       call AGRMET_storeobs(n, nsize, nsize3, agrmet_struc(n)%max_pcpobs, &
                             obs, obs3, ilat, ilon, &
                             mscprc, sixprc, twfprc, network, plat_id, cdms_flag, bsn, &
-                            duration, j3hr, stncnt)
+                            duration, j3hr, stncnt, alert_number, filename)
                     
                     else
                        
                        write(LIS_logunit,*)'- CALLING STOREOBS_OFFHOUR TO PROCESS 3HOUR RAIN GAUGE DATA', j3hr
                        write(LIS_logunit,*)' '
                        
-                       call AGRMET_storeobs_offhour(nsize, agrmet_struc(n)%max_pcpobs, &
+                       call AGRMET_storeobs_offhour(n, nsize, agrmet_struc(n)%max_pcpobs, &
                             obs3, ilat, ilon, &
                             mscprc, sixprc, twfprc, network, plat_id, cdms_flag, bsn, &
-                            duration, nsize3)
+                            duration, nsize3, alert_number, filename)
                     
                     end if
                  
@@ -367,7 +393,17 @@ subroutine AGRMET_getpcpobs(n, j6hr, month, prcpwe, &
                  write(LIS_logunit,*)'*** ERROR ON DATABASE READ.  ISTAT IS '
                  write(LIS_logunit,*)'**********************************************'
                  write(LIS_logunit,*)' '
-              
+
+                 !EMK 20230829...Create alert file.
+                 message(:) = ''
+                 message(1) = '[WARN] Program:  LIS'
+                 message(2) = '  Routine: AGRMET_getpcpobs'
+                 message(3) = '  Problem reading '// trim(filename)
+                 if (LIS_masterproc) then
+                    alert_number = alert_number + 1
+                    call LIS_alert('LIS.AGRMET_getpcpobs', &
+                         alert_number, message)
+                 end if
               end if
            else
               write(LIS_logunit,*)' '
@@ -376,6 +412,18 @@ subroutine AGRMET_getpcpobs(n, j6hr, month, prcpwe, &
               write(LIS_logunit,*) trim(filename)
               write(LIS_logunit,*)'**********************************************'
               write(LIS_logunit,*)' '
+
+              !EMK 20230829...Create alert file.
+              message(:) = ''
+              message(1) = '[WARN] Program:  LIS'
+              message(2) = '  Routine: AGRMET_getpcpobs'
+              message(3) = '  Missing rain gage file '// trim(filename)
+              if (LIS_masterproc) then
+                 alert_number = alert_number + 1
+                 call LIS_alert('LIS.AGRMET_getpcpobs', &
+                      alert_number, message)
+              end if
+
            endif
         
 !-----------------------------------------------------------------------

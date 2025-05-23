@@ -1,9 +1,9 @@
 !-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
 ! NASA Goddard Space Flight Center
 ! Land Information System Framework (LISF)
-! Version 7.4
+! Version 7.5
 !
-! Copyright (c) 2022 United States Government as represented by the
+! Copyright (c) 2024 United States Government as represented by the
 ! Administrator of the National Aeronautics and Space Administration.
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
@@ -17,6 +17,13 @@
 ! 02 Nov 2020  Eric Kemp  Removed blacklist code at request of 557WW.
 ! 22 Jan 2021  Yeosang Yoon Add subroutine for new 0.1 deg snow climatology
 ! 13 Jan 2022  Eric Kemp Added support for GRIB1 FNMOC SST file.
+! 28 Jul 2023  Eric Kemp Added support for new sfcobs file format (longer
+!              station names.
+! 19 Jul 2024  Eric Kemp Renamed run_seaice_analysis_gofs to
+!                        run_seaice_analysis_navy to reflect use of
+!                        ESPC-D or GOFS data.  Also fixed uninitialized
+!                        variable.
+! 15 Oct 2024  Eric Kemp Updated error_message logic.
 !
 ! DESCRIPTION:
 ! Source code for Air Force snow depth analysis.
@@ -44,7 +51,7 @@ module USAFSI_analysisMod
    public :: run_snow_analysis_noglacier ! EMK
    public :: run_snow_analysis_glacier ! EMK
    public :: run_seaice_analysis_ssmis ! EMK
-   public :: run_seaice_analysis_gofs  ! EMK
+   public :: run_seaice_analysis_navy  ! EMK
    public :: getclimo                  ! Yeosang Yoon
  
    ! Internal constant
@@ -296,6 +303,7 @@ contains
       !*******************************************************************************
 
       ! Imports
+      use LDT_constantsMod, only: LDT_CONST_PATH_LEN
       use LDT_coreMod, only: LDT_rc, LDT_domain
       use LDT_logMod, only: LDT_logunit, LDT_endrun
       use LDT_usafsiMod, only: usafsi_settings
@@ -309,7 +317,7 @@ contains
 
       ! Arguments
       character*10,  intent(in)   :: date10           ! DATE-TIME GROUP OF USAFSI CYCLE
-      character*255, intent(in)   :: fracdir          ! FRACTIONAL SNOW DIRECTORY PATH
+      character(len=LDT_CONST_PATH_LEN), intent(in)   :: fracdir          ! FRACTIONAL SNOW DIRECTORY PATH
       
       ! Local constants
       character*8, parameter :: meshnp05 = '_0p05deg' ! MESH FOR 1/20 DEGREE FILE NAME
@@ -322,10 +330,11 @@ contains
       character*2                 :: cyclhr           ! CYCLE HOUR
 
       character*10                :: datefr           ! DATE-TIME GROUP OF FRACTIONAL SNOW
-      character*255               :: file_path        ! FULLY-QUALIFIED FILE NAME
+      character(len=LDT_CONST_PATH_LEN) :: file_path        ! FULLY-QUALIFIED FILE NAME
       character*7                 :: iofunc           ! ACTION TO BE PERFORMED
-      character*90                :: message (msglns) ! ERROR MESSAGE
-      character*12                :: routine_name     ! NAME OF THIS SUBROUTINE
+      character(len=LDT_CONST_PATH_LEN) :: message (msglns) ! ERROR MESSAGE
+      character*20                :: routine_name     ! NAME OF THIS SUBROUTINE
+      character*10                :: yyyymmddhh
       integer                     :: fracnt           ! NUMBER OF FRACTIONAL POINTS
       integer                     :: i                ! SNODEP I-COORDINATE
       integer                     :: icount           ! LOOP COUNTER
@@ -345,6 +354,8 @@ contains
       allocate (infrac_0p05deg (igridf, jgridf))
       allocate(pntcnt( ldt_rc%lnc(1), ldt_rc%lnr(1)))
       allocate(snocum( ldt_rc%lnc(1), ldt_rc%lnr(1)))
+
+      yyyymmddhh = date10
 
       ! INITIALIZE VARIABLES.
       fracnt  = 0
@@ -434,7 +445,8 @@ contains
          usafsi_settings%usefrac = .false.
          message(1) = '[WARN]  FRACTIONAL SNOW FILE NOT FOUND'
          message(2) = '[WARN]  PATH = ' // trim(file_path)
-         call error_message (program_name, routine_name, message)
+         call error_message (program_name, routine_name, yyyymmddhh, &
+              message)
          write (LDT_logunit, 6400) routine_name, file_path
 
       end if
@@ -520,6 +532,7 @@ contains
       !*******************************************************************************
 
       ! Imports
+      use LDT_constantsMod, only:  LDT_CONST_PATH_LEN
       use LDT_coreMod, only: LDT_domain, LDT_rc
       use LDT_logMod, only: LDT_endrun, ldt_logunit
       use map_utils
@@ -532,7 +545,7 @@ contains
 
       ! Arguments
       integer,       intent(in)   :: month            ! MONTH OF YEAR (1-12)
-      character*255, intent(in)   :: static           ! STATIC FILE DIRECTORY PATH
+      character(len=LDT_CONST_PATH_LEN), intent(in)   :: static           ! STATIC FILE DIRECTORY PATH
       integer, intent(in) :: nc
       integer, intent(in) :: nr
       real, intent(in) :: elevations(nc,nr)
@@ -540,9 +553,9 @@ contains
       ! Local variables
       character*4                 :: cmonth  (12)     ! MONTH OF YEAR
       character*4                 :: file_ext         ! LAST PORTION OF FILE NAME
-      character*255               :: file_path        ! FULLY-QUALIFIED FILE NAME
-      character*90                :: message (msglns) ! ERROR MESSAGE
-      character*12                :: routine_name     ! NAME OF THIS SUBROUTINE
+      character(len=LDT_CONST_PATH_LEN) :: file_path        ! FULLY-QUALIFIED FILE NAME
+      character(len=LDT_CONST_PATH_LEN) :: message (msglns) ! ERROR MESSAGE
+      character*20                :: routine_name     ! NAME OF THIS SUBROUTINE
       real, allocatable :: climo_0p25deg(:,:)
       integer*1, allocatable :: snow_poss_0p25deg(:,:)
       type(proj_info) :: snodep_0p25deg_proj
@@ -676,7 +689,7 @@ contains
    end subroutine getgeo
 
    subroutine getobs (date10, month,  sfcobs, netid,  staid, stacnt, &
-        stalat, stalon, staelv, stadep)
+        stalat, stalon, staelv, stadep, sfcobsfmt)
 
       !*******************************************************************************
       !*******************************************************************************
@@ -741,11 +754,14 @@ contains
       !**  21 Mar 19  Ported to LDT...Eric Kemp, NASA GSFC/SSAI
       !**  09 May 19  Renamed LDTSI...Eric Kemp, NASA GSFC/SSAI
       !**  13 Dec 19  Renamed USAFSI...Eric Kemp, NASA GSFC/SSAI
+      !**  27 Jul 23  Added new sfcobs file format...Eric Kemp, SSAI
+      !**  24 Aug 23  New global sfcsno file format...Eric Kemp, SSAI
       !**
       !*******************************************************************************
       !*******************************************************************************
 
       ! Imports
+      use LDT_constantsMod, only: LDT_CONST_PATH_LEN
       use LDT_logMod, only: LDT_logunit
       use LDT_usafsiMod, only: usafsi_settings
       use map_utils ! EMK
@@ -758,14 +774,16 @@ contains
       ! Arguments
       character*10,  intent(in)   :: date10                ! DATE-TIME GROUP OF CYCLE
       integer, intent(in)         :: month                 ! CURRENT MONTH (1-12)
-      character*255, intent(in)   :: sfcobs                ! PATH TO DBPULL SNOW OBS DIRECTORY
+      character(len=LDT_CONST_PATH_LEN), intent(in)   :: sfcobs                ! PATH TO DBPULL SNOW OBS DIRECTORY
       character*5,   intent(out)  :: netid       (:)       ! NETWORK ID OF AN OBSERVATION
-      character*9,   intent(out)  :: staid       (:)       ! STATION ID OF AN OBSERVATION
+      character*32,   intent(out)  :: staid       (:)       ! STATION ID OF AN OBSERVATION
+
       integer, intent(out)        :: stacnt                ! TOTAL NUMBER OF OBSERVATIONS USED
       integer, intent(out)        :: stalat      (:)       ! LATITUDE OF A STATION OBSERVATION
       integer, intent(out)        :: stalon      (:)       ! LONGITUDE OF A STATION OBSERVATION
       integer, intent(out)        :: staelv      (:)       ! ELEVATION OF A STATION OBSERVATION (METERS)
       real, intent(out)           :: stadep      (:)       ! SNOW DEPTH REPORTED AT A STATION (METERS)
+      integer, intent(in) :: sfcobsfmt ! Format of sfcobs file
 
       ! Local variables
       character*7                 :: access_type           ! FILE ACCESS TYPE
@@ -776,13 +794,15 @@ contains
       character*10                :: date10_prev           ! DATE-TIME GROUP OF LAST HOUR READ
       character*6                 :: interval              ! TIME INTERVAL FOR FILENAME
       character*4                 :: msgval                ! ERROR MESSAGE VALUE
-      character*90                :: message     (msglns)  ! ERROR MESSAGE
-      character*255               :: obsfile               ! NAME OF OBSERVATION TEXT FILE
+      character(len=LDT_CONST_PATH_LEN) :: message     (msglns)  ! ERROR MESSAGE
+      character(len=LDT_CONST_PATH_LEN) :: obsfile               ! NAME OF OBSERVATION TEXT FILE
       character*5                 :: obsnet                ! RETURNED OBS STATION NETWORK
-      character*9                 :: obssta                ! RETURNED OBS STATION ID
+      character*32                 :: obssta                ! RETURNED OBS STATION ID
       character*5,   allocatable  :: oldnet      (:)       ! ARRAY OF NETWORKS FOR OLDSTA
-      character*9,   allocatable  :: oldsta      (:)       ! ARRAY OF PROCESSED STATIONS WITH SNOW DEPTHS
-      character*12                :: routine_name          ! NAME OF THIS SUBROUTINE
+      character*32,   allocatable  :: oldsta      (:)       ! ARRAY OF PROCESSED STATIONS WITH SNOW DEPTHS
+
+      character*20                :: routine_name          ! NAME OF THIS SUBROUTINE
+      character*10 :: yyyymmddhh
       integer                     :: ctrgrd                ! TEMP HOLDER FOR GROUND OBS INFO
       integer                     :: ctrtmp                ! TEMP HOLDER FOR TOO WARM TEMPERATURE OBS
       integer                     :: ctrtrs                ! TEMP HOLDER FOR TEMP THRES OBS
@@ -822,6 +842,8 @@ contains
       allocate (oldnet (usafsi_settings%maxsobs))
       allocate (oldsta (usafsi_settings%maxsobs))
 
+      yyyymmddhh = date10
+      
       ! INITIALIZE VARIABLES.
       depth        = missing
       istat        = 0
@@ -855,13 +877,18 @@ contains
          message      = ' '
 
          ! OPEN INPUT FILE.
-         obsfile = trim(sfcobs) // 'sfcsno_' // chemi(hemi) //           &
-              interval // date10 // '.txt'
+         if (sfcobsfmt == 1) then
+            obsfile = trim(sfcobs) // 'sfcsno_' // chemi(hemi) //      &
+                 interval // date10 // '.txt'
+         else if (sfcobsfmt == 2) then ! Global file
+            obsfile = trim(sfcobs) // 'sfcsno_' //      &
+                 '06hr_' // date10 // '.txt'
+         end if
          inquire (file=obsfile, exist=isfile)
          file_check : if (isfile) then
 
             access_type = 'OPENING'
-            open (lunsrc(hemi), file=obsfile, iostat=istat, err=5000,     &
+            open (lunsrc(hemi), file=obsfile, iostat=istat, err=5000,  &
                  form='formatted')
             isopen = .true.
 
@@ -873,17 +900,33 @@ contains
             ! LOOP THROUGH ALL OBSERVATIONS RETRIEVED FROM THE DATABASE.
             read_loop : do while (istat .eq. 0)
 
-               read (lunsrc(hemi), 6400, iostat=istat, end=3000, err=5000) &
-                    date10_hourly, obsnet, obssta, oblat, oblon, obelev,   &
-                    itemp, depth, ground
-
+               if (sfcobsfmt == 1) then
+                  read (lunsrc(hemi), 6400, iostat=istat, end=3000, &
+                       err=5000) &
+                       date10_hourly, obsnet, obssta, oblat, oblon, &
+                       obelev,   &
+                       itemp, depth, ground
+               else if (sfcobsfmt == 2) then
+                  ! New format with longer station IDs
+                  read (lunsrc(hemi), 6401, iostat=istat, end=3000, &
+                       err=5000) &
+                       date10_hourly, obsnet, obssta, oblat, oblon, &
+                       obelev,   &
+                       itemp, depth, ground
+               end if
                good_read : if (istat == 0) then
 
                   if (date10_hourly .ne. date10_prev) then
                      if (totalobs > 1) then
-                        write(ldt_logunit,6500) &
-                             trim(routine_name), chemicap(hemi),     &
-                             date10_prev, obsrtn
+                        if (sfcobsfmt == 1) then
+                           write(ldt_logunit,6500) &
+                                trim(routine_name), chemicap(hemi),     &
+                                date10_prev, obsrtn
+                        else
+                           write(ldt_logunit,6501) &
+                                trim(routine_name),  &
+                                date10_prev, obsrtn
+                        end if
                         obsrtn = 0
                      end if
                   end if
@@ -924,7 +967,6 @@ contains
 
                            NETID(STCTP1)  = OBSNET
                            staid(stctp1)  = obssta
-
                            stadep(stctp1) = (float (depth) / 1000.0) ! convert from mm to meters
 
                            if (depth >= 1 .and. stadep(stctp1) < 0.001) then
@@ -1057,30 +1099,58 @@ contains
             if (totalobs > 0) then
 
                stacnt_h = stacnt - stacnt_h
-               write (ldt_logunit,6500) trim(routine_name), chemicap(hemi), &
-                    date10_prev, obsrtn
-
-               write (ldt_logunit,6800) trim(routine_name), chemicap(hemi), &
-                    totalobs, &
-                    stacnt_h, obwsno, ctrgrd, ctrtmp, ctrtrs
-
+               if (sfcobsfmt == 1) then
+                  write (ldt_logunit,6500) trim(routine_name), &
+                       chemicap(hemi), &
+                       date10_prev, obsrtn
+                  write (ldt_logunit,6800) trim(routine_name), &
+                       chemicap(hemi), &
+                       totalobs, &
+                       stacnt_h, obwsno, ctrgrd, ctrtmp, ctrtrs
+               else if (sfcobsfmt == 2) then
+                  write (ldt_logunit,6501) trim(routine_name), &
+                       date10_prev, obsrtn
+                  write (ldt_logunit,6801) trim(routine_name), &
+                       totalobs, &
+                       stacnt_h, obwsno, ctrgrd, ctrtmp, ctrtrs
+               end if
             else
 
-               message(1) = &
-                    '[WARN] NO SURFACE OBSERVATIONS READ FOR ' // date10 // &
-                    ' ' // chemicap(hemi)
-               call error_message (program_name, routine_name, message)
+               if (sfcobsfmt == 1) then
+                  message(1) = &
+                       '[WARN] NO SURFACE OBSERVATIONS READ FOR ' // &
+                       date10 // &
+                       ' ' // chemicap(hemi)
+               else if (sfcobsfmt == 2) then
+                  message(1) = &
+                       '[WARN] NO SURFACE OBSERVATIONS READ FOR ' // &
+                       date10
+               end if
+               call error_message (program_name, routine_name, &
+                    yyyymmddhh, message)
 
             end if
 
          else file_check
 
-            message(1) = &
-                 '[WARN] NO SURFACE OBSERVATIONS FILE FOR ' // date10 // &
-                 ' ' // chemicap(hemi)
-            call error_message (program_name, routine_name, message)
+            if (sfcobsfmt == 1) then
+               message(1) = &
+                    '[WARN] NO SURFACE OBSERVATIONS FILE FOR ' // &
+                    date10 // &
+                    ' ' // chemicap(hemi)
+            else if (sfcobsfmt == 2) then
+               message(1) = &
+                    '[WARN] NO SURFACE OBSERVATIONS FILE FOR ' &
+                    // date10
+            end if
+            message(2) = '[WARN] Looked for ' // trim(obsfile)
+            call error_message (program_name, routine_name, &
+                 yyyymmddhh, message)
 
          end if file_check
+
+         ! New file format is global, so we don't need to loop again
+         if (sfcobsfmt == 2) exit
 
       end do hemi_loop
 
@@ -1088,7 +1158,7 @@ contains
       deallocate (oldsta)
 
       return
-      
+
       ! ERROR-HANDLING SECTION.
 
 5000  continue
@@ -1103,16 +1173,29 @@ contains
 6000  format (/, '[INFO] ', A, ': READING ', A)
 !6200  format (I)
 6400  format (A10, 1X, A5, 1X, A10, 6(I10))
+!6401  format (A10, 1X, A5, 1X, A31, 1X, 6(I10))
+6401  format (A10, 1X, A5, 1X, A32, 6(I10))
 6500  format (/, '[INFO] ', A6, ': SURFACE OBS READ FOR ', A2, ' DTG ',     &
            A10, ' = ', I6)
+6501  format (/, '[INFO] ', A6, ': SURFACE OBS READ FOR DTG ',     &
+           A10, ' = ', I6)
 6600  format (1X, '**', A6, ':  DEPTH = ', I6, '   STADEP = ', I6)
-6700  format (/, 1X, '[INFO] HIGH POLAR TEMP: NETW= ', A5, 1X, 'STN= ', A9,  &
+6700  format (/, 1X, '[INFO] HIGH POLAR TEMP: NETW= ', A5, 1X, 'STN= ', A31,  &
            1X, 'LAT= ', F8.2, 1X, 'LON= ', F8.2,                  &
            1X, 'ELEV= ', I5, /, 6X, 'TEMP= ', F7.1,               &
            2X, 'ST OF GRND= ', I9, 2X, 'DEPTH(CM)= ', I6)
 6800  format (/, 1X, 55('-'),                                           &
            /, 3X, '[INFO] SUBROUTINE:  ', A6,                               &
            /, 5X, '[INFO] TOTAL SURFACE OBS READ FOR ', A2, 9X,' = ',   I6, &
+           /, 5X, '[INFO] TOTAL NON-DUPLICATE OBS PROCESSED      = ',   I6, &
+           /, 5X, '[INFO] STATIONS WITH A FOUR-THREE GROUP       =   ', I4, &
+           /, 5X, '[INFO] OBS NOT USED FOR STATE OF GROUND       =   ', I4, &
+           /, 5X, '[INFO] OBS NOT USED FOR SEASON AND ELEVATION  =   ', I4, &
+           /, 5X, '[INFO] OBS NOT USED FOR EXCEEDED TEMP THRESH  = ',   I6, &
+           /, 1X, 55('-'))
+6801  format (/, 1X, 55('-'),                                           &
+           /, 3X, '[INFO] SUBROUTINE:  ', A6,                               &
+           /, 5X, '[INFO] TOTAL SURFACE OBS READ                 = ',   I6, &
            /, 5X, '[INFO] TOTAL NON-DUPLICATE OBS PROCESSED      = ',   I6, &
            /, 5X, '[INFO] STATIONS WITH A FOUR-THREE GROUP       =   ', I4, &
            /, 5X, '[INFO] OBS NOT USED FOR STATE OF GROUND       =   ', I4, &
@@ -1161,6 +1244,7 @@ contains
       !*****************************************************************************************
 
       ! Imports
+      use LDT_constantsMod, only: LDT_CONST_PATH_LEN
       use LDT_coreMod, only: LDT_domain, LDT_rc
       use LDT_logMod, only: LDT_logunit, LDT_endrun
       use map_utils
@@ -1172,7 +1256,7 @@ contains
 
       ! Arguments
       character*10,  intent(in)   :: date10                ! SNODEP DATE-TIME GROUP
-      character*255, intent(in)   :: stmpdir               ! SFC TEMP DIRECTORY PATH
+      character(len=LDT_CONST_PATH_LEN), intent(in)   :: stmpdir               ! SFC TEMP DIRECTORY PATH
       logical,       intent(out)  :: sfctmp_found          ! FLAG FOR SFC TEMP FILE FOUND
       real,          intent(out)  :: sfctmp_lis  ( : , : ) ! LIS SURFACE TEMPERATURE DATA
 
@@ -1181,11 +1265,12 @@ contains
 
       ! Local variables
       character*10                :: dtglis                ! LIS DATE-TIME GROUP
-      character*255               :: file_stmp             ! FULLY-QUALIFIED SFCTMP FILE NAME
+      character(len=LDT_CONST_PATH_LEN) :: file_stmp             ! FULLY-QUALIFIED SFCTMP FILE NAME
       character*7                 :: iofunc                ! ACTION TO BE PERFORMED
-      character*90                :: message     (msglns)  ! ERROR MESSAGE
+      character(len=LDT_CONST_PATH_LEN) :: message     (msglns)  ! ERROR MESSAGE
 
-      character*12                :: routine_name          ! NAME OF THIS ROUTINE
+      character*20                :: routine_name          ! NAME OF THIS ROUTINE
+      character*10 :: yyyymmddhh
       integer                     :: icount                ! LOOP COUNTER
       integer                     :: julhr                 ! AFWA JULIAN HOUR
       logical                     :: isfile                ! FLAG FOR INPUT FILE FOUND
@@ -1198,6 +1283,8 @@ contains
       data routine_name / 'GETSFC      ' /
 
       allocate(sfctmp_lis_0p25deg(igrid, jgrid_lis))
+
+      yyyymmddhh = date10
 
       ! GET LATEST LIS SHELTER TEMPERATURES.
       dtglis       = date10
@@ -1239,7 +1326,8 @@ contains
       ! IF NOT FOUND FOR PAST 24 HOURS, SEND ERROR MESSAGE.
       if (.not. sfctmp_found) then
          message(1) = '[WARN] LIS DATA NOT FOUND FOR PAST 24 HOURS'
-         call error_message (program_name, routine_name, message)
+         call error_message (program_name, routine_name, yyyymmddhh, &
+              message)
          write (ldt_logunit, 6400) routine_name
       end if
 
@@ -1364,6 +1452,7 @@ contains
       !*******************************************************************************
 
       ! Imports
+      use LDT_constantsMod, only: LDT_CONST_PATH_LEN
       use LDT_coreMod, only: LDT_rc, LDT_domain
       use LDT_logMod, only: LDT_logunit, LDT_endrun
       use map_utils ! EMK
@@ -1376,7 +1465,7 @@ contains
 
       ! Arguments
       character*10,  intent(in)   :: date10                ! DATE-TIME GROUP OF CYCLE
-      character*255, intent(in)   :: ssmis                 ! SSMIS FILE DIRECTORY PATH
+      character(len=LDT_CONST_PATH_LEN), intent(in)   :: ssmis                 ! SSMIS FILE DIRECTORY PATH
 
       ! Local variables
       character*7                 :: access_type           ! FILE ACCESS TYPE
@@ -1384,11 +1473,12 @@ contains
       character*2                 :: chemifile   ( 2)      ! HEMISPHERE FOR FILENAME ('nh', 'sh')
       character*10                :: date10_hourly         ! DATE-TIME GROUP OF HOURLY DATA
       character*10                :: date10_prev           ! DATE-TIME GROUP OF LAST HOUR READ
-      character*255               :: file_path             ! SSMIS SNOW OR ICE EDR TEXT FILE
+      character(len=LDT_CONST_PATH_LEN) :: file_path             ! SSMIS SNOW OR ICE EDR TEXT FILE
       character*6                 :: interval              ! TIME INTERVAL FOR FILENAME
-      character*90                :: message     (msglns)  ! ERROR MESSAGE
+      character(len=LDT_CONST_PATH_LEN) :: message     (msglns)  ! ERROR MESSAGE
       character*4                 :: msgval                ! PLACEHOLDER FOR ERROR MESSAGE VALUES
-      character*12                :: routine_name          ! NAME OF THIS SUBROUTINE
+      character*20                :: routine_name          ! NAME OF THIS SUBROUTINE
+      character*10 :: yyyymmddhh
       integer                     :: edri16                ! EDR 16TH MESH I-COORDINATE
       integer                     :: edrj16                ! EDR 16TH MESH J-COORDINATE
       integer                     :: edrlat                ! EDR LATITUDE (100THS OF DEGREES)
@@ -1430,6 +1520,8 @@ contains
       data interval     / '.06hr.' /
       data lunsrc       /  43,  44 /
       data routine_name / 'GETSMI      '/
+
+      yyyymmddhh = date10
 
       ! ALLOCATE ARRAYS.
       allocate (icecount_0p25deg (igrid , jgrid))
@@ -1588,7 +1680,7 @@ contains
                end if
             end do
          end do
-         
+
          ! Interpolate the 0.25deg data to the LDT grid
          nr = LDT_rc%lnr(1)
          nc = LDT_rc%lnc(1)
@@ -1632,7 +1724,8 @@ contains
 
       if (msgline > 1) then
 
-         call error_message (program_name, routine_name, message)
+         call error_message (program_name, routine_name, yyyymmddhh, &
+              message)
 
       end if
 
@@ -1718,6 +1811,7 @@ contains
       !*******************************************************************************
 
       ! Imports
+      use LDT_constantsMod, only: LDT_CONST_PATH_LEN
       use LDT_coreMod, only: LDT_domain, LDT_rc
       use LDT_logMod, only: LDT_logunit, LDT_endrun
       use map_utils
@@ -1730,8 +1824,8 @@ contains
 
       ! Arguments
       character*10,  intent(in)  :: date10           ! CURRENT CYCLE DATE-TIME GROUP
-      character*255, intent(in)  :: modif            ! PATH TO MODIFIED DATA DIRECTORY
-      character*255, intent(in)  :: unmod            ! PATH TO UNMODIFIED DATA DIRECTORY
+      character(len=LDT_CONST_PATH_LEN), intent(in)  :: modif            ! PATH TO MODIFIED DATA DIRECTORY
+      character(len=LDT_CONST_PATH_LEN), intent(in)  :: unmod            ! PATH TO UNMODIFIED DATA DIRECTORY
       integer, intent(in) :: nc
       integer, intent(in) :: nr
       real, intent(in) :: landice(nc,nr)
@@ -1740,10 +1834,10 @@ contains
 
       ! Local variables
       character*10               :: date10_prev      ! PREVIOUS CYCLE DATE-TIME GROUP
-      character*255              :: file_path        ! INPUT FILE PATH AND NAME
-      character*90               :: message (msglns) ! ERROR MESSAGE
-      character*12               :: routine_name     ! NAME OF THIS SUBROUTINE
-      character*255              :: prevdir          ! PATH TO PREVIOUS CYCLE'S DATA
+      character(len=LDT_CONST_PATH_LEN) :: file_path        ! INPUT FILE PATH AND NAME
+      character(len=LDT_CONST_PATH_LEN) :: message (msglns) ! ERROR MESSAGE
+      character*20               :: routine_name     ! NAME OF THIS SUBROUTINE
+      character(len=LDT_CONST_PATH_LEN) :: prevdir          ! PATH TO PREVIOUS CYCLE'S DATA
       integer                    :: runcycle         ! CYCLE HOUR
       integer                    :: julhr            ! AFWA JULIAN HOUR
       integer                    :: limit            ! LIMIT ON NUMBER OF CYCLES TO SEARCH
@@ -2041,7 +2135,7 @@ contains
 4200  continue
       message(1) = '[ERR] ERROR CONVERTING DATA FROM CHARACTER TO INTEGER'
       message(2) = '[ERR] DATE10 = ' // date10
-      call abort_message (program_name, program_name, message)
+      call abort_message (program_name, routine_name, message)
       call LDT_endrun()
 
       ! FORMAT STATEMENTS.
@@ -2055,6 +2149,7 @@ contains
    subroutine getsno_nc(date10, julhr_beg, ierr)
 
       ! Imports
+      use LDT_constantsMod, only: LDT_CONST_PATH_LEN
       use LDT_logMod, only: LDT_logunit, LDT_endrun
       use USAFSI_netcdfMod, only: USAFSI_read_netcdf, &
            USAFSI_read_netcdf_12z
@@ -2075,9 +2170,9 @@ contains
       integer :: limit, tries
       integer :: runcycle
       integer :: julhr
-      character*12 :: routine_name
+      character*20 :: routine_name
       character*10 :: date10_prev
-      character*90 :: message(msglns)
+      character(len=LDT_CONST_PATH_LEN) :: message(msglns)
 
       data routine_name / 'GETSNO_NC   '/
 
@@ -2144,7 +2239,7 @@ contains
 4200  continue
       message(1) = '[ERR] ERROR CONVERTING DATA FROM CHARACTER TO INTEGER'
       message(2) = '[ERR] DATE10 = ' // date10
-      call abort_message (program_name, program_name, message)
+      call abort_message (program_name, routine_name, message)
       call LDT_endrun()
 
       ! Other format statements
@@ -2198,6 +2293,7 @@ contains
       !*******************************************************************************
 
       ! Imports
+      use LDT_constantsMod, only: LDT_CONST_PATH_LEN
       use LDT_coreMod, only: LDT_rc, LDT_domain
       use LDT_logMod, only: LDT_logunit, LDT_endrun
       use map_utils
@@ -2210,19 +2306,20 @@ contains
 
       ! Arguments
       character*10,  intent(in)   :: date10           ! SNODEP DATE-TIME GROUP
-      character*255, intent(in)   :: stmpdir          ! SFC TEMPERATURE DIRECTORY PATH
-      character*255, intent(in)   :: sstdir
+      character(len=LDT_CONST_PATH_LEN), intent(in)   :: stmpdir          ! SFC TEMPERATURE DIRECTORY PATH
+      character(len=LDT_CONST_PATH_LEN), intent(in)   :: sstdir
 
       ! Local constants
       integer, parameter          :: sst_size = sst_igrid * sst_jgrid  ! SST ARRAY SIZE
 
       ! Local variables
       character*10                :: date10_sst       ! SST DATE-TIME GROUP
-      character*255               :: file_binary      ! FULLY-QUALIFIED BINARY NAME
+      character(len=LDT_CONST_PATH_LEN) :: file_binary      ! FULLY-QUALIFIED BINARY NAME
       character*7                 :: iofunc           ! ACTION TO BE PERFORMED
       !character*90                :: message (msglns) ! ERROR MESSAGE
-      character*255                :: message (msglns) ! ERROR MESSAGE
-      character*12                :: routine_name     ! NAME OF THIS SUBROUTINE
+      character(len=LDT_CONST_PATH_LEN) :: message (msglns) ! ERROR MESSAGE
+      character*20                :: routine_name     ! NAME OF THIS SUBROUTINE
+      character*10 :: yyyymmddhh
       integer                     :: runcycle         ! CYCLE TIME
       integer                     :: hrdiff           ! DIFFERENCE BETWEEN HOURS
       integer                     :: julsno           ! JULIAN HOUR OF SNODEP CYCLE
@@ -2237,10 +2334,12 @@ contains
       integer :: gindex,c,r
       real :: rlat,rlon,ri,rj
       integer :: nc,nr
-      character*255 :: file_grib
+      character(len=LDT_CONST_PATH_LEN) :: file_grib
       integer :: grstat
 
       data routine_name           / 'GETSST      '/
+
+      yyyymmddhh = date10
 
       ! FIND THE DATE/TIME GROUP OF THE PREVIOUS CYCLE.
       ! GET SEA SURFACE TEMPERATURE DATA.
@@ -2250,6 +2349,7 @@ contains
       found   = .false.
       limit   = 3
       tries   = 1
+      grstat  = 0
 
       call date10_julhr (date10, julsst, program_name, routine_name)
 
@@ -2316,14 +2416,16 @@ contains
                else
                   message(1) = '[ERR] ERROR READING FILE'
                   message(2) = '[ERR] PATH = ' // file_grib
-                  call error_message(program_name, routine_name, message)
+                  call error_message(program_name, routine_name, &
+                       yyyymmddhh, message)
                   write(ldt_logunit, 6400) routine_name, iofunc, file_grib, &
                        grstat
                end if
             else
                message(1) = '[ERR] ERROR OPENING FILE'
                message(2) = '[ERR] PATH = ' // file_grib
-               call error_message(program_name, routine_name, message)
+               call error_message(program_name, routine_name, &
+                    yyyymmddhh, message)
                write(ldt_logunit, 6400) routine_name, iofunc, file_grib, grstat
             end if
          end if
@@ -2343,7 +2445,8 @@ contains
                message(1) = '  SST DATA IS MORE THAN 24 HOURS OLD'
                message(2) = '  USAFSI CYCLE = ' // date10
                message(3) = '  SEA SFC TEMP = ' // date10_sst
-               call error_message (program_name, routine_name, message)
+               call error_message (program_name, routine_name, &
+                    yyyymmddhh, message)
 
             end if
 
@@ -2352,7 +2455,8 @@ contains
       else
 
          message(1) = '[WARN] SEA SURFACE TEMPERATURE DATA NOT FOUND'
-         call error_message (program_name, routine_name, message)
+         call error_message (program_name, routine_name, &
+              yyyymmddhh, message)
          write (ldt_logunit, 6600) routine_name
 
       end if
@@ -2463,6 +2567,7 @@ contains
       !*******************************************************************************
 
       ! Imports
+      use LDT_constantsMod, only: LDT_CONST_PATH_LEN
       use LDT_coreMod, only: LDT_rc, LDT_domain
       use LDT_logMod, only: LDT_logunit, LDT_endrun
       use LDT_usafsiMod, only: usafsi_settings
@@ -2476,17 +2581,18 @@ contains
 
       ! Argments
       character(10), intent(in)   :: date10           ! DATE-TIME GROUP OF SNODEP CYCLE
-      character(255), intent(in)  :: viirsdir         ! FRACTIONAL SNOW DIRECTORY PATH
+      character(len=LDT_CONST_PATH_LEN), intent(in)  :: viirsdir         ! FRACTIONAL SNOW DIRECTORY PATH
 
       ! Local variables
       character(2)                :: cyclhr           ! CYCLE HOUR
 
       character(10)               :: datefr           ! DATE-TIME GROUP OF SNOW COVER
-      character(255)              :: snomap_path      ! FULLY-QUALIFIED SNOMAP FILE NAME
-      character(255)              :: snoage_path      ! FULLY-QUALIFIED SNOAGE FILE NAME
+      character(LDT_CONST_PATH_LEN) :: snomap_path      ! FULLY-QUALIFIED SNOMAP FILE NAME
+      character(LDT_CONST_PATH_LEN) :: snoage_path      ! FULLY-QUALIFIED SNOAGE FILE NAME
       character(7)                :: iofunc           ! ACTION TO BE PERFORMED
-      character(90)               :: message (msglns) ! ERROR MESSAGE
-      character(12)               :: routine_name     ! NAME OF THIS SUBROUTINE
+      character(len=LDT_CONST_PATH_LEN) :: message (msglns) ! ERROR MESSAGE
+      character(20)               :: routine_name     ! NAME OF THIS SUBROUTINE
+      character(10)               :: yyyymmddhh
       integer                     :: i                ! SNODEP I-COORDINATE
       integer                     :: icount           ! LOOP COUNTER
       integer                     :: julhr            ! AFWA JULIAN HOUR
@@ -2512,11 +2618,13 @@ contains
       write(LDT_logunit,*)&
            '[ERR] Recompile with LIBGEOTIFF support and try again!'
       call LDT_endrun()
-      
+
 #else
       external :: ztif_frac_slice ! EMK 20220113
 
       data routine_name  / 'GETVIIRS    ' /
+
+      yyyymmddhh = date10
 
       ! ALLOCATE DATA ARRAYS.
       nc = LDT_rc%lnc(1)
@@ -2540,7 +2648,7 @@ contains
            idim = igrid_viirs, &
            jdim = jgrid_viirs, &
            proj=viirs_0p005deg_proj)
-      
+
       ! INITIALIZE VARIABLES.
       icount = 0
       iofunc   = 'READING'
@@ -2623,7 +2731,7 @@ contains
 
                   ! No error for this slice, so process
                   do i_viirs = 1, igrid_viirs
-               
+
                      ! Find lat/lon of VIIRS pixel, and then determine which
                      ! LDT grid box this falls in.
                      ri_viirs = real(i_viirs)
@@ -2649,13 +2757,13 @@ contains
                         j = 1
                      else if (j > nr) then
                         j = nr
-                     end if                     
+                     end if
                      pixels(i,j) = pixels(i,j) + 1
 
                      ! Skip if the pixel age is too old.
                      if (agebuf_slice(i_viirs) > &
                           usafsi_settings%maxpixage) cycle
-               
+
                      ! Increment the appropriate snow/bare counter
                      if (mapbuf_slice(i_viirs) .eq. 0) then
                         bare(i,j) = bare(i,j) + 1
@@ -2683,7 +2791,7 @@ contains
 
       end do file_search
 
-      if (map_exists .and. age_exists .and. ierr .eq. 0) then         
+      if (map_exists .and. age_exists .and. ierr .eq. 0) then
 
          ! From the geolocated data, create the final VIIRS snow cover map
          do j = 1, nr
@@ -2709,7 +2817,8 @@ contains
             usafsi_settings%useviirs = .false.
             message(1) = '[WARN] VIIRS SNOW MAP FILE NOT FOUND'
             !message(2) = '[WARN] PATH = ' // trim(snomap_path)
-            call error_message (program_name, routine_name, message)
+            call error_message (program_name, routine_name, &
+                 yyyymmddhh, message)
             write (ldt_logunit, 6400) routine_name, snomap_path
          end if
 
@@ -2717,7 +2826,8 @@ contains
             usafsi_settings%useviirs = .false.
             message(1) = '[WARN] VIIRS SNOW AGE FILE NOT FOUND'
             !message(2) = '[WARN] PATH = ' // trim(snoage_path)
-            call error_message (program_name, routine_name, message)
+            call error_message (program_name, routine_name, &
+                 yyyymmddhh, message)
             write (ldt_logunit, 6400) routine_name, snoage_path
          end if
 
@@ -2780,7 +2890,7 @@ contains
       integer :: snomask_reject_count
       integer :: bad_back_count, glacier_zone_count
       real :: ob_value
-      character*10 :: new_name
+      character*32 :: new_name
       integer :: gindex
       real :: rlat
 
@@ -3357,8 +3467,8 @@ contains
 
    end subroutine run_seaice_analysis_ssmis
 
-   ! Update sea ice based on remapped US Navy GOFS data
-   subroutine run_seaice_analysis_gofs(month, runcycle, nc, nr, landmask)
+   ! Update sea ice based on remapped US Navy GOFS/ESPC-D data
+   subroutine run_seaice_analysis_navy(month, runcycle, nc, nr, landmask)
 
       ! Imports
       use LDT_usafsiMod, only: usafsi_settings
@@ -3402,10 +3512,10 @@ contains
 
             ! Use the GOFS data if available.  Otherwise, try to fall back
             ! on prior analysis subject to certain constraints.
-            if (USAFSI_arrays%gofs_icecon(c,r) >= 0) then
+            if (USAFSI_arrays%navy_icecon(c,r) >= 0) then
                ! We have valid GOFS data
                USAFSI_arrays%icecon(c,r) = &
-                    nint(USAFSI_arrays%gofs_icecon(c,r))
+                    nint(USAFSI_arrays%navy_icecon(c,r))
                if (USAFSI_arrays%icecon(c,r) > usafsi_settings%minice) then
                   USAFSI_arrays%icemask(c,r) = icepnt
                else
@@ -3482,7 +3592,7 @@ contains
          end do ! c
       end do ! r
          
-   end subroutine run_seaice_analysis_gofs
+    end subroutine run_seaice_analysis_navy
 
    ! Private subroutine
    subroutine summer (obelev, hemi, oblat, month, towarm)
@@ -3596,6 +3706,7 @@ contains
    subroutine getclimo (month, static)
 
       ! Imports
+      use LDT_constantsMod, only: LDT_CONST_PATH_LEN
       use LDT_logMod, only: LDT_verify, ldt_logunit
       use USAFSI_arraysMod, only: USAFSI_arrays
       use netcdf
@@ -3605,11 +3716,11 @@ contains
 
       ! Arguments
       integer,       intent(in)   :: month            ! MONTH OF YEAR (1-12)
-      character*255, intent(in)   :: static           ! STATIC FILE DIRECTORY PATH
+      character(len=LDT_CONST_PATH_LEN), intent(in)   :: static           ! STATIC FILE DIRECTORY PATH
 
       ! Local variables
       character*4                 :: cmonth  (12)     ! MONTH OF YEAR
-      character*255               :: file_path        ! FULLY-QUALIFIED FILE NAME
+      character(len=LDT_CONST_PATH_LEN) :: file_path        ! FULLY-QUALIFIED FILE NAME
 
       data cmonth        / '_jan', '_feb', '_mar', '_apr', '_may', '_jun', &
           '_jul', '_aug', '_sep', '_oct', '_nov', '_dec' /

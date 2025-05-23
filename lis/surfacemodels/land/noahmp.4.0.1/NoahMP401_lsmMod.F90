@@ -1,9 +1,9 @@
 !-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
 ! NASA Goddard Space Flight Center
 ! Land Information System Framework (LISF)
-! Version 7.4
+! Version 7.5
 !
-! Copyright (c) 2022 United States Government as represented by the
+! Copyright (c) 2024 United States Government as represented by the
 ! Administrator of the National Aeronautics and Space Administration.
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
@@ -188,9 +188,9 @@ module NoahMP401_lsmMod
         real, pointer      :: sldpth(:)
         integer            :: nsoil
         integer            :: nsnow
-        character(len=256) :: soil_tbl_name
-        character(len=256) :: gen_tbl_name
-        character(len=256) :: noahmp_tbl_name
+        character(len=LIS_CONST_PATH_LEN) :: soil_tbl_name
+        character(len=LIS_CONST_PATH_LEN) :: gen_tbl_name
+        character(len=LIS_CONST_PATH_LEN) :: noahmp_tbl_name
         character(len=256) :: landuse_scheme_name
         integer            :: dveg_opt
         integer            :: crs_opt
@@ -310,18 +310,18 @@ contains
 
             call LIS_update_timestep(LIS_rc, n, NOAHMP401_struc(n)%ts)
 
-            call LIS_registerAlarm("NoahMP401 model alarm",&
+            write(fnest,'(i3.3)') n
+            call LIS_registerAlarm("NoahMP401 model alarm "//trim(fnest),&
                                    NOAHMP401_struc(n)%ts, &
                                    NOAHMP401_struc(n)%ts)
 
-            call LIS_registerAlarm("NoahMP401 restart alarm", &
+            call LIS_registerAlarm("NoahMP401 restart alarm "//trim(fnest), &
                                    NOAHMP401_struc(n)%ts,&
                                    NOAHMP401_struc(n)%rstInterval)
             
             ! EMK Add alarm to reset tair_agl_min for RHMin.  This should 
             ! match the output interval, since that is used for calculating 
             ! Tair_F_min.            
-            write(fnest,'(i3.3)') n
             call LIS_registerAlarm("NoahMP401 RHMin alarm "//trim(fnest),&
                  NOAHMP401_struc(n)%ts,&
                  LIS_sfmodel_struc(n)%outInterval)

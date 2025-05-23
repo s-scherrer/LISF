@@ -1,9 +1,9 @@
 !-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
 ! NASA Goddard Space Flight Center
 ! Land Information System Framework (LISF)
-! Version 7.4
+! Version 7.5
 !
-! Copyright (c) 2022 United States Government as represented by the
+! Copyright (c) 2024 United States Government as represented by the
 ! Administrator of the National Aeronautics and Space Administration.
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
@@ -67,6 +67,8 @@ module LIS_PRIV_rcMod
 !  Total number of land tiles in the catchment-based parameter files per nest.
 !  \item[lis\_map\_proj]
 !   Choice of map projection used in LIS. 
+!  \item[nlatlon\_dimensions]
+!   Choice of the dimension for output lat/lon variables ('1D' or '2D') 
 !  \item[lsm]
 !   Choice of the land surface model in LIS. 
 !  \item[param\_proj]
@@ -613,6 +615,7 @@ module LIS_PRIV_rcMod
 !  14 Oct 2003; Sujay Kumar; Removed LSM specific variables. 
 !  19 Jan 2007; Chuck Alonge; Added Flag to output parameters
 !  17 Jan 2011: David Mocko, added max/min greenness & slope type
+!  02 May 2023: Sujay Kumar; Add lat/lon dimension variable
 !
 !EOP
   use LIS_constantsMod, only : LIS_CONST_PATH_LEN
@@ -675,6 +678,7 @@ module LIS_PRIV_rcMod
      integer, allocatable       :: obs_haloy(:)
 
      character*50               :: lis_map_proj
+     character*50               :: nlatlon_dimensions
      character*50, allocatable  :: lis_obs_map_proj(:)
      character*50               :: lsm
      character*50               :: lakemodel
@@ -837,7 +841,7 @@ module LIS_PRIV_rcMod
      character*50           :: startcode
      integer                :: plevel
      character(len=LIS_CONST_PATH_LEN) :: odir
-     character*100          :: dfile      
+     character(len=LIS_CONST_PATH_LEN) :: dfile      
      integer                :: sdoy        
      integer                :: sss         
      integer                :: smn         
@@ -888,7 +892,7 @@ module LIS_PRIV_rcMod
      character*50, allocatable  :: daalg(:)
      
      integer, allocatable       :: useANNinDA(:)
-     character*100, allocatable :: ANNdaFile(:)
+     character(len=LIS_CONST_PATH_LEN), allocatable :: ANNdaFile(:)
 
      character*50, allocatable  :: biasalg(:)
      character*50, allocatable  :: biasrst(:)
@@ -934,7 +938,7 @@ module LIS_PRIV_rcMod
      character*20           :: distribution_class
      character*20           :: data_category
      character*20           :: area_of_data
-     character*255          :: lis_config_file='lis.config'
+     character(len=LIS_CONST_PATH_LEN) :: lis_config_file='lis.config'
      character*100          :: institution = 'NASA GSFC'
 !RTM related variables
      character*50           :: rtm

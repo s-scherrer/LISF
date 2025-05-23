@@ -1,9 +1,9 @@
 !-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
 ! NASA Goddard Space Flight Center
 ! Land Information System Framework (LISF)
-! Version 7.4
+! Version 7.5
 !
-! Copyright (c) 2022 United States Government as represented by the
+! Copyright (c) 2024 United States Government as represented by the
 ! Administrator of the National Aeronautics and Space Administration.
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
@@ -35,6 +35,7 @@ subroutine AGRMET_smiest( n,j3hr, quad9r, ra, razero,alert_number,imax,jmax)
                                                 ! in previous versions 
 ! !USES:
   use AGRMET_forcingMod, only : agrmet_struc
+  use LIS_constantsMod, only: LIS_CONST_PATH_LEN
   use LIS_coreMod,   only : LIS_rc, LIS_masterproc
   use LIS_fileIOMod, only : LIS_putget
   use LIS_timeMgrMod, only : LIS_julhr_date
@@ -91,8 +92,8 @@ subroutine AGRMET_smiest( n,j3hr, quad9r, ra, razero,alert_number,imax,jmax)
 !  \end{description}
 !EOP
   real            :: ra_tmp(2,imax,jmax)
-  character*100   :: ifil
-  character*100   :: message(20)
+  character(len=LIS_CONST_PATH_LEN) :: ifil
+  character(len=LIS_CONST_PATH_LEN) :: message(20)
   character*30    :: routine_name
   logical         :: exists
   logical         :: use_zeros
@@ -136,9 +137,9 @@ subroutine AGRMET_smiest( n,j3hr, quad9r, ra, razero,alert_number,imax,jmax)
      inquire(file = trim(ifil), exist = exists)
      if (.not. exists) then
         write(LIS_logunit,*) ' '
-        write(LIS_logunit,*)'precip/smiedr:  error opening file'
-        write(LIS_logunit,*)'  SSMI data file ', trim(ifil),' does not exist.'
-        write(LIS_logunit,*)'  SSMI estimates will not be used in ',&
+        write(LIS_logunit,*)'[WARN] precip/smiedr:  error opening file'
+        write(LIS_logunit,*)'[WARN]  SSMI data file ', trim(ifil),' does not exist.'
+        write(LIS_logunit,*)'[WARN]  SSMI estimates will not be used in ',&
              'precip analysis.'
         write(LIS_logunit,*) ' '
         message   =' '
@@ -153,7 +154,7 @@ subroutine AGRMET_smiest( n,j3hr, quad9r, ra, razero,alert_number,imax,jmax)
 
         ra_tmp(hemi,:,:) = udef
      else
-        write(LIS_logunit,*) '- READING ',trim(ifil)
+        write(LIS_logunit,*) '[INFO] READING ',trim(ifil)
         call LIS_putget( ra_tmp(hemi,:,:), 'r', ifil, routine_name, &
              imax, jmax)
      endif
@@ -161,7 +162,7 @@ subroutine AGRMET_smiest( n,j3hr, quad9r, ra, razero,alert_number,imax,jmax)
   enddo
 
   if ( .not. use_zeros ) then
-     write(LIS_logunit,*)'- SSMI ZEROS NOT USED'
+     write(LIS_logunit,*)'[INFO] SSMI ZEROS NOT USED'
      where ( ra_tmp .eq. 0.0 ) ra_tmp = udef 
   endif
 

@@ -1,9 +1,9 @@
 !-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
 ! NASA Goddard Space Flight Center
 ! Land Information System Framework (LISF)
-! Version 7.4
+! Version 7.5
 !
-! Copyright (c) 2022 United States Government as represented by the
+! Copyright (c) 2024 United States Government as represented by the
 ! Administrator of the National Aeronautics and Space Administration.
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
@@ -69,11 +69,18 @@ subroutine USAFSI_run(n)
   !**  28 Jan 21  Updated messages for PMW snow retrievals
   !**             and cleaned some unused codes..................Yeosang Yoon/NASA GSFC/SAIC
   !**  13 Jan 22  Added support for FNMOC SST GRIB1 file.........Eric Kemp/NASA GSFC/SSAI
+  !**  27 Jun 23  Removed LDT_endrun for normal termination, to avoid error
+  !               code 1.........................................Eric Kemp/SSAI
+  !**  28 Jun 23  Extended station names to 31 characters........Eric Kemp/SSAI
+  !**  24 Aug 23  Changed station names to 32 characters.........Eric Kemp/SSAI
+
+  !**  19 Jul 24  Added ESPC-D support...........................Eric Kemp/SSAI
   !*****************************************************************************************
   !*****************************************************************************************
 
   ! Imports
   use LDT_bratsethMod
+  use LDT_constantsMod, only: LDT_CONST_PATH_LEN
   use LDT_coreMod, only: LDT_masterproc, LDT_rc
   use LDT_logMod, only: LDT_logunit, LDT_endrun
   use LDT_pluginIndices
@@ -84,6 +91,7 @@ subroutine USAFSI_run(n)
 #endif
   use USAFSI_analysisMod
   use USAFSI_arraysMod, only: USAFSI_arrays
+  use USAFSI_espcdMod
   use USAFSI_galwemMod, only: USAFSI_get_galwem_t2m
   use USAFSI_gofsMod
   use USAFSI_lisMod, only:  read_gr2_t2
@@ -102,18 +110,20 @@ subroutine USAFSI_run(n)
 
   ! Local variables
   character*10               ::  date10               ! DATE-TIME GROUP OF CYCLE
-  character*255              ::  fracdir              ! FRACTIONAL SNOW DIRECTORY PATH
-  character*90               ::  message    (msglns)  ! ERROR MESSAGE
+  character(len=LDT_CONST_PATH_LEN) ::  fracdir              ! FRACTIONAL SNOW DIRECTORY PATH
+  character(len=LDT_CONST_PATH_LEN) ::  message    (msglns)  ! ERROR MESSAGE
   character*5,  allocatable  ::  netid      (:)       ! NETWORK ID OF AN OBSERVATION
-  character*255              ::  modif                ! PATH TO MODIFIED DATA DIRECTORY
-  character*255              ::  sfcobs               ! PATH TO DBPULL SNOW OBS DIRECTORY
-  character*255              ::  TB_product_path      ! TB_based retrivals path          !kyh20201118
-  character*9,  allocatable  ::  staid      (:)       ! STATION ID OF AN OBSERVATION
-  character*255              ::  static               ! STATIC FILE DIRECTORY PATH
-  character*255              ::  stmpdir              ! SFC TEMP DIRECTORY PATH
-  character*255 :: sstdir ! EMK 20220113
-  character*255              ::  unmod                ! PATH TO UNMODIFIED DATA DIRECTORY
-  character*255              ::  viirsdir             ! PATH TO VIIRS DATA DIRECTORY
+  character(len=LDT_CONST_PATH_LEN) ::  modif                ! PATH TO MODIFIED DATA DIRECTORY
+  character(len=LDT_CONST_PATH_LEN) ::  sfcobs               ! PATH TO DBPULL SNOW OBS DIRECTORY
+  integer :: sfcobsfmt ! Format of sfcobs file
+  character(len=LDT_CONST_PATH_LEN) ::  TB_product_path      ! TB_based retrivals path          !kyh20201118
+  !character*9,  allocatable  ::  staid      (:)       ! STATION ID OF AN OBSERVATION
+  character*32,  allocatable  ::  staid      (:)       ! STATION ID OF AN OBSERVATION
+  character(len=LDT_CONST_PATH_LEN) :: static               ! STATIC FILE DIRECTORY PATH
+  character(len=LDT_CONST_PATH_LEN) :: stmpdir              ! SFC TEMP DIRECTORY PATH
+  character(len=LDT_CONST_PATH_LEN) :: sstdir ! EMK 20220113
+  character(len=LDT_CONST_PATH_LEN) :: unmod                ! PATH TO UNMODIFIED DATA DIRECTORY
+  character(len=LDT_CONST_PATH_LEN) :: viirsdir             ! PATH TO VIIRS DATA DIRECTORY
   integer                    ::  runcycle             ! CYCLE HOUR
   integer                    ::  hemi                 ! HEMISPHERE (1 = NH, 2 = SH, 3 = GLOBAL)
   integer                    ::  julhr                ! AFWA JULIAN HOUR BEING PROCESSED
@@ -127,29 +137,27 @@ subroutine USAFSI_run(n)
   logical                    ::  sfctmp_found         ! FLAG FOR SFC TEMP FILE FOUND
   real,       allocatable    ::  sfctmp (:, :)        ! GALWEM OR LIS SHELTER TEMPERATURE DATA
   real,       allocatable    ::  stadep     (:)       ! OBSERVATION SNOW DEPTH (METERS)
-  character*12 :: routine_name
+  character*20 :: routine_name
   type(LDT_bratseth_t) :: bratseth
-  character*10 :: network10, platform10
+  character*10 :: network10
+  character*32 :: platform32
   real :: rob, rlat, rlon, relev
   integer :: nc,nr
   real, allocatable :: landmask(:,:)
   real, allocatable :: elevations(:,:)
   real, allocatable :: landice(:,:)
   integer :: j
-  character*120 :: line
-  integer :: icount
   integer :: c, r
   real :: arctlatr
   real, allocatable :: climo_tmp(:,:)
   integer :: maxsobs
   integer :: yyyy, mm, dd, hh, fh
   integer :: ierr
-  logical :: found_gofs_cice
+  logical :: found_navy_cice
   logical :: just_12z
 
   ! PMW snow depth retrievals, Yeosang Yoon
-  character*255              ::  TB_raw_dir          ! Brightness temperature raw file directory path  !kyh20201118
-  integer                    ::  ssmis_option        ! option for snow depth retrieval algorithm
+  character(len=LDT_CONST_PATH_LEN) ::  TB_raw_dir          ! Brightness temperature raw file directory path  !kyh20201118
 
   maxsobs = usafsi_settings%maxsobs
 
@@ -176,6 +184,8 @@ subroutine USAFSI_run(n)
      fracdir = trim(usafsi_settings%fracdir)
      modif = trim(usafsi_settings%modif)
      sfcobs = trim(usafsi_settings%sfcobs)
+     sfcobsfmt = usafsi_settings%sfcobsfmt ! EMK test
+
 !---------------------------------------------------------kyh20201118
      if (usafsi_settings%TB_option == 1) then             !SSMIS
         TB_product_path = trim(usafsi_settings%ssmis)
@@ -228,7 +238,7 @@ subroutine USAFSI_run(n)
      allocate (USAFSI_arrays%ssmis_icecon     (nc,     nr))
      allocate (USAFSI_arrays%sst              (nc,     nr))
      allocate (USAFSI_arrays%viirsmap         (nc,     nr))
-     allocate (USAFSI_arrays%gofs_icecon(nc,nr))
+     allocate (USAFSI_arrays%navy_icecon(nc,nr))
 
      ! RETRIEVE STATIC DATA SETS.
      write (LDT_logunit,*) '[INFO] CALLING GETGEO TO GET STATIC FIELDS'
@@ -331,17 +341,25 @@ subroutine USAFSI_run(n)
         end if
 
         ! RETRIEVE NAVY SEA SURFACE TEMPERATURE (SST) DATA.
-        ! First try the US Navy 0.08 deg GOFS data
+        ! EMK 20240718...Try GOFS or ESPC-D
         read (date10(1: 4), '(i4)', err=4200) yyyy
         read (date10(5: 6), '(i2)', err=4200) mm
         read (date10(7: 8), '(i2)', err=4200) dd
         read (date10(9:10), '(i2)', err=4200) hh
         fh = 0 ! Dummy value
-        write (LDT_logunit,*) &
-             '[INFO] CALLING PROCESS_GOFS_SST TO GET SEA SURFACE TEMPERATURES'
-        call process_gofs_sst(usafsi_settings%gofs_sst_dir, &
-             nc, nr, landmask, usafSI_arrays%sst, &
-             yyyy, mm, dd, hh, fh, ierr)
+        if (usafsi_settings%source_of_ocean_data == "ESPC-D") then
+           write (LDT_logunit,*) &
+                '[INFO] CALLING PROCESS_ESPCD_SST TO GET SEA SURFACE TEMPERATURES'
+           call process_espcd_sst(usafsi_settings%espcd_sst_dir, &
+                nc, nr, landmask, usafSI_arrays%sst, &
+                yyyy, mm, dd, hh, ierr)
+        else if (usafsi_settings%source_of_ocean_data == "GOFS") then
+           write (LDT_logunit,*) &
+                '[INFO] CALLING PROCESS_GOFS_SST TO GET SEA SURFACE TEMPERATURES'
+           call process_gofs_sst(usafsi_settings%gofs_sst_dir, &
+                nc, nr, landmask, usafSI_arrays%sst, &
+                yyyy, mm, dd, hh, fh, ierr)
+        end if
         if (ierr .ne. 0) then
            ! Fall back on legacy GETSST for 0.25 deg data.
            write (LDT_logunit,*) &
@@ -367,8 +385,16 @@ subroutine USAFSI_run(n)
         allocate (stalat           (maxsobs))
         allocate (stalon           (maxsobs))
 
-        call getobs (date10, month, sfcobs, netid, staid, stacnt, &
-             stalat, stalon, staelv, stadep)
+        if (sfcobsfmt == 1 .or. sfcobsfmt == 2) then
+           call getobs (date10, month, sfcobs, netid, staid, stacnt, &
+                stalat, stalon, staelv, stadep, sfcobsfmt)
+        else
+           write(LDT_logunit,*)'[ERR] Invalid sfcobs file format!'
+           write(LDT_logunit,*)'[ERR] Expected 1 (old) or 2 (new)'
+           write(LDT_logunit,*)'[ERR] Received ', sfcobsfmt
+           call LDT_endrun()
+        end if
+
         write(LDT_logunit,*) &
              '[INFO] TOTAL OBSERVATIONS RETURNED FROM GETOBS: ', &
              stacnt
@@ -376,12 +402,13 @@ subroutine USAFSI_run(n)
         ! EMK Copy observations to bratseth object
         do j = 1, stacnt
            network10 = trim(netid(j))
-           platform10 = trim(staid(j))
+           platform32 = trim(staid(j))
            rob = stadep(j)
            rlat = real(stalat(j)) * 0.01
            rlon = real(stalon(j)) * 0.01
            relev = real(staelv(j))
-           call bratseth%append_ob(network10, platform10, rob, rlat, rlon,&
+           call bratseth%append_ob(network10, platform32, rob, &
+                rlat, rlon,&
                 relev, &
                 usafsi_settings%ob_err_var, back=-1.)
         end do
@@ -394,23 +421,29 @@ subroutine USAFSI_run(n)
         deallocate(staelv)
         deallocate(stadep)
 
-        ! Try to get the GOFS sea ice data
-        write(LDT_logunit,*) &
-             '[INFO] CALLING PROCESS_GOFS_CICE TO GET GOFS SEA ICE DATA'
+        ! EMK 20240718...Choose between ESPC-D and GOFS.
         read (date10(1: 4), '(i4)', err=4200) yyyy
         read (date10(5: 6), '(i2)', err=4200) mm
         read (date10(7: 8), '(i2)', err=4200) dd
         read (date10(9:10), '(i2)', err=4200) hh
         fh = 0 ! Dummy value
-        call process_gofs_cice(usafsi_settings%gofs_cice_dir, &
-             nc, nr, landmask, USAFSI_arrays%gofs_icecon, &
-             yyyy, mm, dd, hh, fh, ierr)
-        if (ierr == 0) then
-           found_gofs_cice = .true.
-        else
-           found_gofs_cice = .false.
+        found_navy_cice = .false.
+        if (usafsi_settings%source_of_ocean_data == "ESPC-D") then
+           write(LDT_logunit,*) &
+                '[INFO] CALLING PROCESS_ESPCD_CICE TO GET GOFS SEA ICE DATA'
+           call process_espcd_cice(usafsi_settings%espcd_cice_dir, &
+                nc, nr, landmask, USAFSI_arrays%navy_icecon, &
+                yyyy, mm, dd, hh, ierr)
+           if (ierr == 0) found_navy_cice = .true.
+        else if (usafsi_settings%source_of_ocean_data == "GOFS") then
+           ! Try to get the GOFS sea ice data
+           write(LDT_logunit,*) &
+                '[INFO] CALLING PROCESS_GOFS_CICE TO GET GOFS SEA ICE DATA'
+           call process_gofs_cice(usafsi_settings%gofs_cice_dir, &
+                nc, nr, landmask, USAFSI_arrays%navy_icecon, &
+                yyyy, mm, dd, hh, fh, ierr)
+           if (ierr == 0) found_navy_cice = .true.
         end if
-
 !---------------------------------------------------------------------kyh20201118
         ! Estimates TB-based snow depth
         if (usafsi_settings%TB_option == 1) then       !SSMIS
@@ -456,12 +489,13 @@ subroutine USAFSI_run(n)
              '[INFO] CALLING RUN_SNOW_ANALYSIS_GLACIER'
         call run_snow_analysis_glacier(runcycle, nc, nr, landmask, landice)
 
-        ! FIXME...Try using GOFS data first, and if unsuccessful, then run
-        ! the old SSMIS analysis.
-        if (found_gofs_cice) then
+        ! FIXME...Try using ESPC-D or GOFS data first, and if
+        ! unsuccessful, then run the old SSMIS analysis.
+        if (found_navy_cice) then
            write(LDT_logunit,*) &
-                '[INFO] CALLING RUN_SEAICE_ANALYSIS_GOFS'
-           call run_seaice_analysis_gofs(month, runcycle, nc, nr, landmask)
+                '[INFO] CALLING RUN_SEAICE_ANALYSIS_NAVY'
+           call run_seaice_analysis_navy(month, runcycle, nc, nr, &
+                landmask)
         else
            write(LDT_logunit,*) &
                 '[INFO] CALLING RUN_SEAICE_ANALYSIS_SSMIS'
@@ -506,7 +540,7 @@ subroutine USAFSI_run(n)
      deallocate (usafsi_arrays%ssmis_icecon)
      deallocate (usafsi_arrays%sst)
      deallocate (usafsi_arrays%viirsmap)
-     deallocate (usafsi_arrays%gofs_icecon)
+     deallocate (usafsi_arrays%navy_icecon)
      deallocate(landmask)
      deallocate(elevations)
      deallocate(landice)
@@ -517,14 +551,15 @@ subroutine USAFSI_run(n)
 #endif
 
   write (LDT_logunit,*) '[INFO] NORMAL TERMINATION'
-  call LDT_endrun()
+  !call LDT_endrun() ! EMK...Avoid error code 1
+  return
 
   ! ERROR HANDLING SECTION.
 4200 continue
 
   message(1) = ' [ERR] ERROR CONVERTING DATA FROM CHARACTER TO INTEGER'
   message(2) = ' [ERR] DATE10 = ' // date10
-  call abort_message (program_name, program_name, message)
+  call abort_message (program_name, routine_name, message)
   call LDT_endrun()
 
   ! FORMAT STATEMENTS.
@@ -544,6 +579,7 @@ contains
   subroutine read_params(nc, nr, landmask, elevation, landice)
 
     ! Imports
+    use LDT_constantsMod, only: LDT_CONST_PATH_LEN
     use LDT_coreMod, only: LDT_rc
     use LDT_logMod, only: LDT_logunit, LDT_verify
     use LDT_paramDataMod, only: LDT_LSMparam_struc
@@ -560,7 +596,7 @@ contains
     real, allocatable, intent(out) :: landice(:,:)
 
     ! Local variables
-    character*255 :: filename
+    character(len=LDT_CONST_PATH_LEN) :: filename
     integer :: ncid
     integer :: dimids(3)
     integer :: landmask_varid, elevation_varid, surfacetype_varid

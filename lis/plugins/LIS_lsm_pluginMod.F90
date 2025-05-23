@@ -1,9 +1,9 @@
 !-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
 ! NASA Goddard Space Flight Center
 ! Land Information System Framework (LISF)
-! Version 7.4
+! Version 7.5
 !
-! Copyright (c) 2022 United States Government as represented by the
+! Copyright (c) 2024 United States Government as represented by the
 ! Administrator of the National Aeronautics and Space Administration.
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
@@ -234,6 +234,10 @@ subroutine LIS_lsm_plugin
 
 #if ( defined SM_SUMMA_1_0 )
    use summa1_lsmMod,  only : summa1_lsm_ini
+#endif
+
+#if ( defined SM_AC_7_2 )
+   use ac72_lsmMod, only : ac72_ini
 #endif
 
 #if ( defined SM_LSM_TEMPLATE )
@@ -523,6 +527,16 @@ subroutine LIS_lsm_plugin
    external summa1_finalize
 #endif
 
+#if ( defined SM_AC_7_2 )
+   external ac72_main
+   external ac72_setup
+   external ac72_readrst
+   external ac72_dynsetup
+   external ac72_f2t
+   external ac72_writerst
+   external ac72_finalize
+#endif
+
 #if ( defined SM_LSM_TEMPLATE )
    call registerlsminit(trim(LIS_templateLSMId)//char(0),template_lsm_ini)
    call registerlsmsetup(trim(LIS_templateLSMId)//char(0),template_setup)
@@ -706,6 +720,8 @@ subroutine LIS_lsm_plugin
         trim(LIS_agrmetrunId)//char(0),noahmp401_f2t)
    call registerlsmf2t(trim(LIS_noahmp401Id)//"+"//&
         trim(LIS_smootherDAId)//char(0),noahmp401_f2t)
+   call registerlsmf2t(trim(LIS_noahmp401Id)//"+"//&
+        trim(LIS_forecastrunId)//char(0),noahmp401_f2t)
    call registerlsmrun(trim(LIS_noahmp401Id)//char(0),noahmp401_main)
    call registerlsmrestart(trim(LIS_noahmp401Id)//char(0),noahmp401_readrst)
    call registerlsmdynsetup(trim(LIS_noahmp401Id)//char(0),noahmp401_dynsetup)
@@ -954,6 +970,26 @@ subroutine LIS_lsm_plugin
         trim(LIS_retroId)//char(0),summa1_f2t)
    call registerlsmf2t(trim(LIS_summa1Id)//"+"//&
         trim(LIS_nuopccplId)//char(0),summa1_f2t)
+#endif
+
+#if ( defined SM_AC_7_2 )
+   call registerlsminit(trim(LIS_ac72Id)//char(0),ac72_ini)
+   call registerlsmsetup(trim(LIS_ac72Id)//char(0),ac72_setup)
+   call registerlsmf2t(trim(LIS_ac72Id)//"+"//trim(LIS_retroId)//char(0),&
+        ac72_f2t)
+   call registerlsmf2t(trim(LIS_ac72Id)//"+"//trim(LIS_nuopccplId)//char(0),&
+        ac72_f2t)
+   call registerlsmf2t(trim(LIS_ac72Id)//"+"//&
+        trim(LIS_smootherDAId)//char(0), ac72_f2t)
+   call registerlsmf2t(trim(LIS_ac72Id)//"+"//&
+        trim(LIS_agrmetrunId)//char(0),ac72_f2t)
+   call registerlsmf2t(trim(LIS_ac72Id)//"+"//&
+        trim(LIS_forecastrunId)//char(0),ac72_f2t)
+   call registerlsmrun(trim(LIS_ac72Id)//char(0),ac72_main)
+   call registerlsmrestart(trim(LIS_ac72Id)//char(0),ac72_readrst)
+   call registerlsmdynsetup(trim(LIS_ac72Id)//char(0),ac72_dynsetup)
+   call registerlsmwrst(trim(LIS_ac72Id)//char(0),ac72_writerst)
+   call registerlsmfinalize(trim(LIS_ac72Id)//char(0),ac72_finalize)
 #endif
 
 end subroutine LIS_lsm_plugin

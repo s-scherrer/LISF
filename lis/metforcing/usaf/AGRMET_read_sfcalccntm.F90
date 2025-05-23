@@ -1,9 +1,9 @@
 !-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
 ! NASA Goddard Space Flight Center
 ! Land Information System Framework (LISF)
-! Version 7.4
+! Version 7.5
 !
-! Copyright (c) 2022 United States Government as represented by the
+! Copyright (c) 2024 United States Government as represented by the
 ! Administrator of the National Aeronautics and Space Administration.
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
@@ -18,7 +18,8 @@
 !
 ! !INTERFACE:
 subroutine AGRMET_read_sfcalccntm(n)
-! !USES: 
+  ! !USES:
+  use LIS_constantsMod,  only : LIS_CONST_PATH_LEN
   use LIS_coreMod,       only : LIS_rc, LIS_ews_halo_ind, LIS_ewe_halo_ind,&
                                 LIS_nss_halo_ind, LIS_nse_halo_ind, LIS_localPet
   use LIS_logMod,        only : LIS_logunit, LIS_abort, LIS_endrun, &
@@ -49,15 +50,15 @@ subroutine AGRMET_read_sfcalccntm(n)
 !EOP
 
   logical       :: exists
-  character*100 :: message(20)
+  character(len=LIS_CONST_PATH_LEN) :: message(20)
   integer       :: ftn
   real          :: data_in(LIS_rc%gnc(n), LIS_rc%gnr(n))
   integer       :: istat
   
   inquire( file = trim(agrmet_struc(n)%sfcntmfile), exist = exists)
   if ( exists ) then
-     write(LIS_logunit,*)' '
-     write(LIS_logunit,*)'- READING ', trim(agrmet_struc(n)%sfcntmfile)
+     !write(LIS_logunit,*)' '
+     write(LIS_logunit,*)'[INFO] READING ', trim(agrmet_struc(n)%sfcntmfile)
      ftn= LIS_getNextUnitNumber()
      open(ftn, file=trim(agrmet_struc(n)%sfcntmfile), access='direct',&
           status='old', form="unformatted", recl=LIS_rc%gnr(n)*LIS_rc%gnc(n)*4)
@@ -73,10 +74,10 @@ subroutine AGRMET_read_sfcalccntm(n)
   else
      write(LIS_logunit,*)
      write(LIS_logunit,*) "*****************************************************"
-     write(LIS_logunit,*) "* LIS: ERROR OPENING FILE:" 
-     write(LIS_logunit,*) "* ", trim(agrmet_struc(n)%sfcntmfile)
-     write(LIS_logunit,*) "* FILE DOES NOT EXIST."
-     write(LIS_logunit,*) "* LIS WILL ABORT."
+     write(LIS_logunit,*) "[ERR] LIS: ERROR OPENING FILE:" 
+     write(LIS_logunit,*) "[ERR] ", trim(agrmet_struc(n)%sfcntmfile)
+     write(LIS_logunit,*) "[ERR] FILE DOES NOT EXIST."
+     write(LIS_logunit,*) "[ERR] LIS WILL ABORT."
      write(LIS_logunit,*) "*****************************************************"
      message    = ' '
      message(1) = 'program:  LIS'

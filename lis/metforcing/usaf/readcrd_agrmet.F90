@@ -1,9 +1,9 @@
 !-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
 ! NASA Goddard Space Flight Center
 ! Land Information System Framework (LISF)
-! Version 7.4
+! Version 7.5
 !
-! Copyright (c) 2022 United States Government as represented by the
+! Copyright (c) 2024 United States Government as represented by the
 ! Administrator of the National Aeronautics and Space Administration.
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
@@ -31,16 +31,18 @@
 ! 28 Aug 2018 Added IMERG...........................Eric Kemp/NASA/SSAI
 ! 21 Feb 2020 added support for 10-km GALWEM........Eric Kemp/NASA/SSAI
 ! 05 Mar 2020 added support for new GFS filename version...Eric Kemp/NASA/SSAI
+! 28 May 2024 added list of gauge networks to use..........Eric Kemp/NASA/SSAI
 !
 ! !INTERFACE:    
 subroutine readcrd_agrmet()
 ! !USES:
   use ESMF
+  use LIS_constantsMod, only: LIS_CONST_PATH_LEN
   use LIS_coreMod,    only : LIS_rc, LIS_config, LIS_masterproc
   use LIS_logMod,     only : LIS_logunit, LIS_verify, LIS_abort, &
        LIS_endrun
 #if (defined SPMD)
-  use LIS_mpiMod, only: LIS_MPI_COMM
+  use LIS_mpiMod
 #endif
   use LIS_pluginIndices, only : LIS_agrmetrunId
   use AGRMET_forcingMod, only : agrmet_struc
@@ -53,21 +55,22 @@ subroutine readcrd_agrmet()
 !  the LIS configuration file. 
 !  
 !EOP
-  integer:: n,rc
+  integer:: n,rc,j
   character(len=10)       :: cdate
-  character(len=100) :: message(20) ! EMK
+  character(len=LIS_CONST_PATH_LEN) :: message(20) ! EMK
   real :: tmp_max_dist ! EMK
-  character(len=201) :: c_string ! EMK
+  character(len=LIS_CONST_PATH_LEN) :: c_string ! EMK
   integer :: ios ! EMK
   integer, external :: LIS_create_subdirs
   integer :: tmp_imerg_plp_thresh
   integer :: ierr
+  logical :: use_nrt_bias_files ! EMK
 
   call ESMF_ConfigFindLabel(LIS_config,"AGRMET forcing directory:",rc=rc)
   do n=1,LIS_rc%nnest
      call ESMF_ConfigGetAttribute(LIS_config,agrmet_struc(n)%agrmetdir,rc=rc)
-     write(LIS_logunit,*)'Using AGRMET forcing'
-     write(LIS_logunit,*) 'AGRMET forcing directory :',agrmet_struc(n)%agrmetdir
+     write(LIS_logunit,*)'[INFO] Using AGRMET forcing'
+     write(LIS_logunit,*) '[INFO] AGRMET forcing directory: ', trim(agrmet_struc(n)%agrmetdir)
   enddo
 
   call ESMF_ConfigFindLabel(LIS_config,"AGRMET first guess source:",rc=rc)
@@ -194,6 +197,65 @@ subroutine readcrd_agrmet()
   do n=1,LIS_rc%nnest
      call ESMF_ConfigGetAttribute(LIS_config,agrmet_struc(n)%pcpobswch,rc=rc)
   enddo
+
+  ! EMK...Precip observation file formats
+  call ESMF_ConfigFindLabel(LIS_config,"AGRMET precip obs file format:", &
+       rc=rc)
+  do n=1,LIS_rc%nnest
+     call ESMF_ConfigGetAttribute(LIS_config, &
+          agrmet_struc(n)%pcpobsfmt, rc=rc)
+     if (agrmet_struc(n)%pcpobsfmt .ne. 1 .and. &
+          agrmet_struc(n)%pcpobsfmt .ne. 2) then
+        write(LIS_logunit,*) &
+             "[ERR] Bad 'AGRMET precip obs file format:' option"
+        write(LIS_logunit,*) &
+             '[ERR] Expected 1 or 2, found ', agrmet_struc(n)%pcpobsfmt
+        write(LIS_logunit,*) '[ERR] Aborting...'
+
+        flush(LIS_logunit)
+        message(1) = &
+             '[ERR] Illegal value for AGRMET precip obs file format'
+#if (defined SPMD)
+        call MPI_Barrier(LIS_MPI_COMM, ierr)
+#endif
+        if (LIS_masterproc) then
+           call LIS_abort(message)
+        else
+           call sleep(10)
+           call LIS_endrun()
+        end if
+     end if
+  enddo
+
+  ! EMK...Sfc observation file formats
+  call ESMF_ConfigFindLabel(LIS_config,"AGRMET sfc obs file format:", &
+       rc=rc)
+  do n=1,LIS_rc%nnest
+     call ESMF_ConfigGetAttribute(LIS_config, &
+          agrmet_struc(n)%sfcobsfmt, rc=rc)
+     if (agrmet_struc(n)%sfcobsfmt .ne. 1 .and. &
+          agrmet_struc(n)%sfcobsfmt .ne. 2) then
+        write(LIS_logunit,*) &
+             "[ERR] Bad 'AGRMET sfc obs file format:' option"
+        write(LIS_logunit,*) &
+             '[ERR] Expected 1 or 2, found ', agrmet_struc(n)%sfcobsfmt
+        write(LIS_logunit,*) '[ERR] Aborting...'
+
+        flush(LIS_logunit)
+        message(1) = &
+             '[ERR] Illegal value for AGRMET sfc obs file format'
+#if (defined SPMD)
+        call MPI_Barrier(LIS_MPI_COMM, ierr)
+#endif
+        if (LIS_masterproc) then
+           call LIS_abort(message)
+        else
+           call sleep(10)
+           call LIS_endrun()
+        end if
+     end if
+  enddo
+
   call ESMF_ConfigFindLabel(LIS_config,"AGRMET native imax:",rc=rc)
   do n=1,LIS_rc%nnest
      call ESMF_ConfigGetAttribute(LIS_config,agrmet_struc(n)%imaxnative,rc=rc)
@@ -448,10 +510,30 @@ subroutine readcrd_agrmet()
      call ESMF_ConfigGetAttribute(LIS_config,agrmet_struc(n)%retroFileRoot,rc=rc)
   enddo
 
+  ! KRA/EMK 4 Jun 2024 New AGRMET radiation option
   call ESMF_ConfigFindLabel(LIS_config,"AGRMET radiation derived from:",rc=rc)
+  call LIS_verify(rc, &
+          '[ERR] AGRMET radiation derived from: option not specified in the config file')
   do n=1,LIS_rc%nnest
-     call ESMF_ConfigGetAttribute(LIS_config,agrmet_struc(n)%compute_radiation,default="cloud types", rc=rc)
+     call ESMF_ConfigGetAttribute(LIS_config, &
+          agrmet_struc(n)%compute_radiation, rc=rc)
+     call LIS_verify(rc, &
+          '[ERR] AGRMET radiation derived from: option not specified in the config file')
+     if (agrmet_struc(n)%compute_radiation .ne. "cloud types" .and. &
+          agrmet_struc(n)%compute_radiation .ne. "cod properties" .and. &
+          agrmet_struc(n)%compute_radiation .ne. "GALWEM_RAD") then
+        call LIS_verify(1, &
+             '[ERR] AGRMET radiation derived from: invalid option, must be "cloud types", "cod properties", or "GALWEM_RAD"')
+     end if
   enddo
+
+! KRA/EMK 4 Jun 2024 GALWEM RADIATION FILE READER:
+  call ESMF_ConfigFindLabel(LIS_config,"AGRMET GALWEM radiation data directory:",rc=rc)
+  do n=1,LIS_rc%nnest
+     call ESMF_ConfigGetAttribute(LIS_config,agrmet_struc(n)%galwemraddir,rc=rc)
+  enddo
+
+
 
   call ESMF_ConfigGetAttribute(LIS_config,LIS_rc%security_class,&
        label="AGRMET security classification:",rc=rc)
@@ -562,6 +644,18 @@ subroutine readcrd_agrmet()
 
   ! EMK NEW...Error statistics for Bratseth precip analysis using GALWEM
   ! background.
+  ! EMK 29 Aug 2024...Specify correlation function type.
+  call ESMF_ConfigFindLabel(LIS_config,&
+       "AGRMET GALWEM Precip correlation function type:",rc=rc)
+  call LIS_verify(rc, &
+       '[ERR] AGRMET GALWEM Precip correlation function type: option not specified in the config file')
+  do n=1,LIS_rc%nnest
+     call ESMF_ConfigGetAttribute(LIS_config,&
+          agrmet_struc(n)%galwem_precip_corr_func_type,rc=rc)
+     call LIS_verify(rc, &
+          '[ERR] AGRMET GALWEM Precip correlation function type: value not specified in the config file')
+  enddo ! n
+  
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GALWEM Precip background error scale length (m):",rc=rc)
   call LIS_verify(rc, &
@@ -571,6 +665,8 @@ subroutine readcrd_agrmet()
           agrmet_struc(n)%galwem_precip_back_err_scale_length,rc=rc)
      call LIS_verify(rc, &
           '[ERR] AGRMET GALWEM Precip background error scale length (m): value not specified in the config file')
+     agrmet_struc(n)%galwem_precip_back_err_inv_scale_length = &
+          1. / agrmet_struc(n)%galwem_precip_back_err_scale_length
   enddo ! n
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GALWEM Precip background error variance:",rc=rc)
@@ -600,7 +696,9 @@ subroutine readcrd_agrmet()
      call ESMF_ConfigGetAttribute(LIS_config,&
           agrmet_struc(n)%galwem_precip_geoprecip_err_scale_length,rc=rc)
      call LIS_verify(rc, &
-          '[ERR] AGRMET GALWEM Precip GEOPRECIP observation error scale length (m): value not specified in the config file') 
+          '[ERR] AGRMET GALWEM Precip GEOPRECIP observation error scale length (m): value not specified in the config file')
+     agrmet_struc(n)%galwem_precip_geoprecip_err_inv_scale_length = &
+          1. / agrmet_struc(n)%galwem_precip_geoprecip_err_scale_length
   enddo ! n
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GALWEM Precip GEOPRECIP observation error variance:",rc=rc)
@@ -620,7 +718,9 @@ subroutine readcrd_agrmet()
      call ESMF_ConfigGetAttribute(LIS_config,&
           agrmet_struc(n)%galwem_precip_ssmi_err_scale_length,rc=rc)
      call LIS_verify(rc, &
-       '[ERR] AGRMET GALWEM Precip SSMI observation error scale length (m): value not specified in the config file') 
+          '[ERR] AGRMET GALWEM Precip SSMI observation error scale length (m): value not specified in the config file')
+     agrmet_struc(n)%galwem_precip_ssmi_err_inv_scale_length = &
+          1. / agrmet_struc(n)%galwem_precip_ssmi_err_scale_length
   enddo ! n
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GALWEM Precip SSMI observation error variance:",rc=rc)
@@ -640,7 +740,9 @@ subroutine readcrd_agrmet()
      call ESMF_ConfigGetAttribute(LIS_config,&
           agrmet_struc(n)%galwem_precip_cmorph_err_scale_length,rc=rc)
      call LIS_verify(rc, &
-       '[ERR] AGRMET GALWEM Precip CMORPH observation error scale length (m): value not specified in the config file') 
+          '[ERR] AGRMET GALWEM Precip CMORPH observation error scale length (m): value not specified in the config file')
+     agrmet_struc(n)%galwem_precip_cmorph_err_inv_scale_length = &
+          1. / agrmet_struc(n)%galwem_precip_cmorph_err_scale_length
   enddo ! n
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GALWEM Precip CMORPH observation error variance:",rc=rc)
@@ -662,7 +764,9 @@ subroutine readcrd_agrmet()
      call ESMF_ConfigGetAttribute(LIS_config,&
           agrmet_struc(n)%galwem_precip_imerg_err_scale_length,rc=rc)
      call LIS_verify(rc, &
-       '[ERR] AGRMET GALWEM Precip IMERG observation error scale length (m): value not specified in the config file') 
+          '[ERR] AGRMET GALWEM Precip IMERG observation error scale length (m): value not specified in the config file')
+     agrmet_struc(n)%galwem_precip_imerg_err_inv_scale_length = &
+          1. / agrmet_struc(n)%galwem_precip_imerg_err_scale_length
   enddo ! n
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GALWEM Precip IMERG observation error variance:",rc=rc)
@@ -677,7 +781,8 @@ subroutine readcrd_agrmet()
 
   ! EMK...Need to calculate maximum distance to compare or spread precip
   ! differences.  When using Gaussian function, this is 2 * largest scale 
-  ! length (for correlation of ~0.02)
+  ! length (for correlation of ~0.02). When using inverse exponential,
+  ! this is 4 * the largest scale length (for correlation of ~0.02).
   do n=1,LIS_rc%nnest
      tmp_max_dist = max( &
           agrmet_struc(n)%galwem_precip_back_err_scale_length, &
@@ -685,11 +790,34 @@ subroutine readcrd_agrmet()
           agrmet_struc(n)%galwem_precip_ssmi_err_scale_length, &
           agrmet_struc(n)%galwem_precip_cmorph_err_scale_length, &
           agrmet_struc(n)%galwem_precip_imerg_err_scale_length)
-     agrmet_struc(n)%galwem_precip_max_dist = 2*tmp_max_dist
+     if (agrmet_struc(n)%galwem_precip_corr_func_type == 1) then
+        agrmet_struc(n)%galwem_precip_max_dist = 2*tmp_max_dist
+     else if (agrmet_struc(n)%galwem_precip_corr_func_type == 2) then
+        agrmet_struc(n)%galwem_precip_max_dist = 4*tmp_max_dist
+     else
+        write(LIS_logunit,*) '[ERR] Invalid correlation option!'
+        write(LIS_logunit,*) &
+             '[ERR] Expected 1 (Gaussian) or 2 (Inverse Exponential)'
+        write(LIS_logunit,*) '[ERR] Received ', &
+             agrmet_struc(n)%galwem_precip_corr_func_type
+        call LIS_endrun()
+     end if
   end do ! n
 
   ! EMK NEW...Error statistics for Bratseth 2-m temperature analysis using 
   ! GALWEM background.
+  ! EMK 29 Aug 2024...Added correlation function type
+  call ESMF_ConfigFindLabel(LIS_config,&
+       "AGRMET GALWEM T2M correlation function type:",rc=rc)
+  call LIS_verify(rc, &
+       '[ERR] AGRMET GALWEM T2M correlation function type: option not specified in the config file')
+  do n=1,LIS_rc%nnest
+     call ESMF_ConfigGetAttribute(LIS_config,&
+          agrmet_struc(n)%galwem_t2m_corr_func_type,rc=rc)
+     call LIS_verify(rc, &
+          '[ERR] AGRMET GALWEM T2M correlation function type: value not specified in the config file')
+  enddo ! n
+
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GALWEM T2M background error scale length (m):",rc=rc)
   call LIS_verify(rc, &
@@ -698,11 +826,27 @@ subroutine readcrd_agrmet()
      call ESMF_ConfigGetAttribute(LIS_config,&
           agrmet_struc(n)%galwem_t2m_back_err_scale_length,rc=rc)
      call LIS_verify(rc, &
-          '[ERR] AGRMET GALWEM T2M background error scale length (m): value not specified in the config file') 
+          '[ERR] AGRMET GALWEM T2M background error scale length (m): value not specified in the config file')
+     agrmet_struc(n)%galwem_t2m_back_err_inv_scale_length = &
+          1. / agrmet_struc(n)%galwem_t2m_back_err_scale_length
      ! Maximum distance for spreading data for Gaussian function correlation
-     ! is 2 * scale length (for ~0.02 correlation).
-     agrmet_struc(n)%galwem_t2m_max_dist = &
-          2*agrmet_struc(n)%galwem_t2m_back_err_scale_length
+     ! is 2 * scale length (for ~0.02 correlation).  For inverse exponential
+     !, max distance is 4 * scale length (for ~0.02 correlation).
+     if (agrmet_struc(n)%galwem_t2m_corr_func_type == 1) then
+        agrmet_struc(n)%galwem_t2m_max_dist = &
+             2 * agrmet_struc(n)%galwem_t2m_back_err_scale_length
+     else if (agrmet_struc(n)%galwem_t2m_corr_func_type == 2) then
+        agrmet_struc(n)%galwem_t2m_max_dist = &
+             4 * agrmet_struc(n)%galwem_t2m_back_err_scale_length
+     else
+        write(LIS_logunit,*) '[ERR] Invalid correlation option!'
+        write(LIS_logunit,*) &
+             '[ERR] Expected 1 (Gaussian) or 2 (Inverse Exponential)'
+        write(LIS_logunit,*) '[ERR] Received ', &
+             agrmet_struc(n)%galwem_t2m_corr_func_type
+        call LIS_endrun()
+     end if
+
   enddo ! n
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GALWEM T2M background error variance:",rc=rc)
@@ -727,6 +871,18 @@ subroutine readcrd_agrmet()
 
   ! EMK NEW...Error statistics for Bratseth 2-m relative humidity analysis 
   ! using GALWEM background.
+  ! EMK 29 Aug 2024...Set correlation function type.
+  call ESMF_ConfigFindLabel(LIS_config,&
+       "AGRMET GALWEM RH2M correlation function type:",rc=rc)
+  call LIS_verify(rc, &
+       '[ERR] AGRMET GALWEM RH2M correlation function type: option not specified in the config file')
+  do n=1,LIS_rc%nnest
+     call ESMF_ConfigGetAttribute(LIS_config,&
+          agrmet_struc(n)%galwem_rh2m_corr_func_type,rc=rc)
+     call LIS_verify(rc, &
+          '[ERR] AGRMET GALWEM RH2M correlation function type: value not specified in the config file')
+  enddo ! n
+
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GALWEM RH2M background error scale length (m):",rc=rc)
   call LIS_verify(rc, &
@@ -735,11 +891,28 @@ subroutine readcrd_agrmet()
      call ESMF_ConfigGetAttribute(LIS_config,&
           agrmet_struc(n)%galwem_rh2m_back_err_scale_length,rc=rc)
      call LIS_verify(rc, &
-          '[ERR] AGRMET GALWEM RH2M background error scale length (m): value not specified in the config file') 
+          '[ERR] AGRMET GALWEM RH2M background error scale length (m): value not specified in the config file')
+     agrmet_struc(n)%galwem_rh2m_back_err_inv_scale_length = &
+          1. / agrmet_struc(n)%galwem_rh2m_back_err_scale_length
      ! Maximum distance for spreading data for Gaussian function correlation
-     ! is 2 * scale length (for ~0.02 correlation).
-     agrmet_struc(n)%galwem_rh2m_max_dist = &
-          2*agrmet_struc(n)%galwem_rh2m_back_err_scale_length
+     ! is 2 * scale length (for ~0.02 correlation).  For inverse
+     ! exponential correlation, max distance is 4 * scale length (for
+     ! ~0.02 correlation).
+     if (agrmet_struc(n)%galwem_rh2m_corr_func_type == 1) then
+        agrmet_struc(n)%galwem_rh2m_max_dist = &
+             2 * agrmet_struc(n)%galwem_rh2m_back_err_scale_length
+     else if (agrmet_struc(n)%galwem_rh2m_corr_func_type == 2) then
+        agrmet_struc(n)%galwem_rh2m_max_dist = &
+             4 * agrmet_struc(n)%galwem_rh2m_back_err_scale_length
+     else
+        write(LIS_logunit,*) '[ERR] Invalid correlation option!'
+        write(LIS_logunit,*) &
+             '[ERR] Expected 1 (Gaussian) or 2 (Inverse Exponential)'
+        write(LIS_logunit,*) '[ERR] Received ', &
+             agrmet_struc(n)%galwem_rh2m_corr_func_type
+        call LIS_endrun()
+     end if
+
   enddo ! n
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GALWEM RH2M background error variance:",rc=rc)
@@ -764,6 +937,18 @@ subroutine readcrd_agrmet()
 
   ! EMK NEW...Error statistics for Bratseth 10-m wind speed analysis 
   ! using GALWEM background.
+  ! EMK 29 Aug 2024...Set correlation function type.
+  call ESMF_ConfigFindLabel(LIS_config,&
+       "AGRMET GALWEM SPD10M correlation function type:",rc=rc)
+  call LIS_verify(rc, &
+       '[ERR] AGRMET GALWEM SPD10M correlation function type: option not specified in the config file')
+  do n=1,LIS_rc%nnest
+     call ESMF_ConfigGetAttribute(LIS_config,&
+          agrmet_struc(n)%galwem_spd10m_corr_func_type,rc=rc)
+     call LIS_verify(rc, &
+          '[ERR] AGRMET GALWEM SPD10M correlation function type: value not specified in the config file')
+  enddo ! n
+
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GALWEM SPD10M background error scale length (m):",rc=rc)
   call LIS_verify(rc, &
@@ -772,11 +957,27 @@ subroutine readcrd_agrmet()
      call ESMF_ConfigGetAttribute(LIS_config,&
           agrmet_struc(n)%galwem_spd10m_back_err_scale_length,rc=rc)
      call LIS_verify(rc, &
-          '[ERR] AGRMET GALWEM SPD10M background error scale length (m): value not specified in the config file') 
+          '[ERR] AGRMET GALWEM SPD10M background error scale length (m): value not specified in the config file')
+     agrmet_struc(n)%galwem_spd10m_back_err_inv_scale_length = &
+          1. / agrmet_struc(n)%galwem_spd10m_back_err_scale_length
      ! Maximum distance for spreading data for Gaussian function correlation
-     ! is 2 * scale length (for ~0.02 correlation).
-     agrmet_struc(n)%galwem_spd10m_max_dist = &
-          2*agrmet_struc(n)%galwem_spd10m_back_err_scale_length
+     ! is 2 * scale length (for ~0.02 correlation).  For Inverse Exponential
+     ! function, max distance is 4 * scale length (for ~0.02 correlation)
+     if (agrmet_struc(n)%galwem_spd10m_corr_func_type == 1) then
+        agrmet_struc(n)%galwem_spd10m_max_dist = &
+             2 * agrmet_struc(n)%galwem_spd10m_back_err_scale_length
+     else if (agrmet_struc(n)%galwem_spd10m_corr_func_type == 2) then
+        agrmet_struc(n)%galwem_spd10m_max_dist = &
+             4 * agrmet_struc(n)%galwem_spd10m_back_err_scale_length
+     else
+        write(LIS_logunit,*) '[ERR] Invalid correlation option!'
+        write(LIS_logunit,*) &
+             '[ERR] Expected 1 (Gaussian) or 2 (Inverse Exponential)'
+        write(LIS_logunit,*) '[ERR] Received ', &
+             agrmet_struc(n)%galwem_spd10m_corr_func_type
+        call LIS_endrun()
+     end if
+
   enddo ! n
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GALWEM SPD10M background error variance:",rc=rc)
@@ -802,6 +1003,19 @@ subroutine readcrd_agrmet()
   ! EMK NEW...Error statistics for Bratseth precip analysis using GFS
   ! background. Note that GFS is used as emergency backup if GALWEM is
   ! not available.
+
+  ! EMK 29 Aug 2024...Set correlation function type.
+  call ESMF_ConfigFindLabel(LIS_config,&
+       "AGRMET GFS Precip correlation function type:",rc=rc)
+  call LIS_verify(rc, &
+       '[ERR] AGRMET GFS Precip correlation function type: option not specified in the config file')
+  do n=1,LIS_rc%nnest
+     call ESMF_ConfigGetAttribute(LIS_config,&
+          agrmet_struc(n)%gfs_precip_corr_func_type,rc=rc)
+     call LIS_verify(rc, &
+          '[ERR] AGRMET GFS Precip correlation function type: value not specified in the config file')
+  enddo ! n
+
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GFS Precip background error scale length (m):",rc=rc)
   call LIS_verify(rc, &
@@ -810,7 +1024,9 @@ subroutine readcrd_agrmet()
      call ESMF_ConfigGetAttribute(LIS_config,&
           agrmet_struc(n)%gfs_precip_back_err_scale_length,rc=rc)
      call LIS_verify(rc, &
-       '[ERR] AGRMET GFS Precip background error scale length (m): value not specified in the config file') 
+          '[ERR] AGRMET GFS Precip background error scale length (m): value not specified in the config file')
+     agrmet_struc(n)%gfs_precip_back_err_inv_scale_length = &
+          1. / agrmet_struc(n)%gfs_precip_back_err_scale_length
   enddo ! n
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GFS Precip background error variance:",rc=rc)
@@ -840,7 +1056,9 @@ subroutine readcrd_agrmet()
      call ESMF_ConfigGetAttribute(LIS_config,&
           agrmet_struc(n)%gfs_precip_geoprecip_err_scale_length,rc=rc)
      call LIS_verify(rc, &
-          '[ERR] AGRMET GFS Precip GEOPRECIP observation error scale length (m): value not specified in the config file') 
+          '[ERR] AGRMET GFS Precip GEOPRECIP observation error scale length (m): value not specified in the config file')
+     agrmet_struc(n)%gfs_precip_geoprecip_err_inv_scale_length = &
+          1. / agrmet_struc(n)%gfs_precip_geoprecip_err_scale_length
   enddo ! n
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GFS Precip GEOPRECIP observation error variance:",rc=rc)
@@ -860,7 +1078,9 @@ subroutine readcrd_agrmet()
      call ESMF_ConfigGetAttribute(LIS_config,&
           agrmet_struc(n)%gfs_precip_ssmi_err_scale_length,rc=rc)
      call LIS_verify(rc, &
-          '[ERR] AGRMET GFS Precip SSMI observation error scale length (m): value not specified in the config file') 
+          '[ERR] AGRMET GFS Precip SSMI observation error scale length (m): value not specified in the config file')
+     agrmet_struc(n)%gfs_precip_ssmi_err_inv_scale_length = &
+          1. / agrmet_struc(n)%gfs_precip_ssmi_err_scale_length
   enddo ! n
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GFS Precip SSMI observation error variance:",rc=rc)
@@ -880,7 +1100,9 @@ subroutine readcrd_agrmet()
      call ESMF_ConfigGetAttribute(LIS_config,&
           agrmet_struc(n)%gfs_precip_cmorph_err_scale_length,rc=rc)
      call LIS_verify(rc, &
-          '[ERR] AGRMET GFS Precip CMORPH observation error scale length (m): value not specified in the config file') 
+          '[ERR] AGRMET GFS Precip CMORPH observation error scale length (m): value not specified in the config file')
+     agrmet_struc(n)%gfs_precip_cmorph_err_inv_scale_length = &
+          1. / agrmet_struc(n)%gfs_precip_cmorph_err_scale_length
   enddo ! n
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GFS Precip CMORPH observation error variance:",rc=rc)
@@ -902,7 +1124,9 @@ subroutine readcrd_agrmet()
      call ESMF_ConfigGetAttribute(LIS_config,&
           agrmet_struc(n)%gfs_precip_imerg_err_scale_length,rc=rc)
      call LIS_verify(rc, &
-       '[ERR] AGRMET GFS Precip IMERG observation error scale length (m): value not specified in the config file') 
+          '[ERR] AGRMET GFS Precip IMERG observation error scale length (m): value not specified in the config file')
+     agrmet_struc(n)%gfs_precip_imerg_err_inv_scale_length = &
+          1. / agrmet_struc(n)%gfs_precip_imerg_err_scale_length
   enddo ! n
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GFS Precip IMERG observation error variance:",rc=rc)
@@ -917,7 +1141,8 @@ subroutine readcrd_agrmet()
 
   ! EMK...Need to calculate maximum distance to compare or spread precip
   ! differences.  When using Gaussian function, this is 2 * largest scale 
-  ! length (for correlation of ~0.02)
+  ! length (for correlation of ~0.02). For Inverse Exponential function,
+  ! max distance is 4 * largest scale length (correlation ~ 0.02)
   do n=1,LIS_rc%nnest
      tmp_max_dist = max( &
           agrmet_struc(n)%gfs_precip_back_err_scale_length, &
@@ -925,12 +1150,35 @@ subroutine readcrd_agrmet()
           agrmet_struc(n)%gfs_precip_ssmi_err_scale_length, &
           agrmet_struc(n)%gfs_precip_cmorph_err_scale_length, &
           agrmet_struc(n)%gfs_precip_imerg_err_scale_length)
-     agrmet_struc(n)%gfs_precip_max_dist = 2*tmp_max_dist
+     if (agrmet_struc(n)%gfs_precip_corr_func_type == 1) then
+        agrmet_struc(n)%gfs_precip_max_dist = 2*tmp_max_dist
+     else if (agrmet_struc(n)%gfs_precip_corr_func_type == 2) then
+        agrmet_struc(n)%gfs_precip_max_dist = 4*tmp_max_dist
+     else
+        write(LIS_logunit,*) '[ERR] Invalid correlation option!'
+        write(LIS_logunit,*) &
+             '[ERR] Expected 1 (Gaussian) or 2 (Inverse Exponential)'
+        write(LIS_logunit,*) '[ERR] Received ', &
+             agrmet_struc(n)%gfs_precip_corr_func_type
+        call LIS_endrun()
+     end if
   end do ! n
 
   ! EMK NEW...Error statistics for Bratseth 2-m temperature analysis using 
   ! GFS background. Note that GFS is used as emergency backup if GALWEM is
   ! not available.
+  ! EMK 29 Aug 2024...Set correlation function type.
+  call ESMF_ConfigFindLabel(LIS_config,&
+       "AGRMET GFS T2M correlation function type:",rc=rc)
+  call LIS_verify(rc, &
+       '[ERR] AGRMET GFS T2M correlation function type: option not specified in the config file')
+  do n=1,LIS_rc%nnest
+     call ESMF_ConfigGetAttribute(LIS_config,&
+          agrmet_struc(n)%gfs_t2m_corr_func_type,rc=rc)
+     call LIS_verify(rc, &
+          '[ERR] AGRMET GFS T2M correlation function type: value not specified in the config file')
+  enddo ! n
+
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GFS T2M background error scale length (m):",rc=rc)
   call LIS_verify(rc, &
@@ -939,11 +1187,27 @@ subroutine readcrd_agrmet()
      call ESMF_ConfigGetAttribute(LIS_config,&
           agrmet_struc(n)%gfs_t2m_back_err_scale_length,rc=rc)
      call LIS_verify(rc, &
-          '[ERR] AGRMET GFS T2M background error scale length (m): value not specified in the config file') 
+          '[ERR] AGRMET GFS T2M background error scale length (m): value not specified in the config file')
+     agrmet_struc(n)%gfs_t2m_back_err_inv_scale_length = &
+          1. / agrmet_struc(n)%gfs_t2m_back_err_scale_length
      ! Maximum distance for spreading data for Gaussian function correlation
-     ! is 2 * scale length (for ~0.02 correlation).
-     agrmet_struc(n)%gfs_t2m_max_dist = &
-          2*agrmet_struc(n)%gfs_t2m_back_err_scale_length
+     ! is 2 * scale length (for ~0.02 correlation). For Inverse Exponential
+     ! function, max distance is 4 * scale length (for ~0.02 correlation)
+     if (agrmet_struc(n)%gfs_t2m_corr_func_type == 1) then
+        agrmet_struc(n)%gfs_t2m_max_dist = &
+             2 * agrmet_struc(n)%gfs_t2m_back_err_scale_length
+     else if (agrmet_struc(n)%gfs_t2m_corr_func_type == 2) then
+        agrmet_struc(n)%gfs_t2m_max_dist = &
+             4 * agrmet_struc(n)%gfs_t2m_back_err_scale_length
+     else
+        write(LIS_logunit,*) '[ERR] Invalid correlation option!'
+        write(LIS_logunit,*) &
+             '[ERR] Expected 1 (Gaussian) or 2 (Inverse Exponential)'
+        write(LIS_logunit,*) '[ERR] Received ', &
+             agrmet_struc(n)%gfs_t2m_corr_func_type
+        call LIS_endrun()
+     end if
+
   enddo ! n
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GFS T2M background error variance:",rc=rc)
@@ -969,6 +1233,19 @@ subroutine readcrd_agrmet()
   ! EMK NEW...Error statistics for Bratseth 2-m relative humidity analysis 
   ! using GFS background.  Note that GFS is used as emergency backup if
   ! GALWEM is not available.
+
+  ! EMK 29 Aug 2024...Set correlation function type.
+  call ESMF_ConfigFindLabel(LIS_config,&
+       "AGRMET GFS RH2M correlation function type:",rc=rc)
+  call LIS_verify(rc, &
+       '[ERR] AGRMET GFS RH2M correlation function type: option not specified in the config file')
+  do n=1,LIS_rc%nnest
+     call ESMF_ConfigGetAttribute(LIS_config,&
+          agrmet_struc(n)%gfs_rh2m_corr_func_type,rc=rc)
+     call LIS_verify(rc, &
+          '[ERR] AGRMET GFS RH2M correlation function type: value not specified in the config file')
+  enddo ! n
+
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GFS RH2M background error scale length (m):",rc=rc)
   call LIS_verify(rc, &
@@ -977,11 +1254,27 @@ subroutine readcrd_agrmet()
      call ESMF_ConfigGetAttribute(LIS_config,&
           agrmet_struc(n)%gfs_rh2m_back_err_scale_length,rc=rc)
      call LIS_verify(rc, &
-          '[ERR] AGRMET GFS RH2M background error scale length (m): value not specified in the config file') 
+          '[ERR] AGRMET GFS RH2M background error scale length (m): value not specified in the config file')
+     agrmet_struc(n)%gfs_rh2m_back_err_inv_scale_length = &
+          1. / agrmet_struc(n)%gfs_rh2m_back_err_scale_length
      ! Maximum distance for spreading data for Gaussian function correlation
-     ! is 2 * scale length (for ~0.02 correlation).
-     agrmet_struc(n)%gfs_rh2m_max_dist = &
-          2*agrmet_struc(n)%gfs_rh2m_back_err_scale_length
+     ! is 2 * scale length (for ~0.02 correlation). For Inverse Exponential
+     ! function, max distance is 4 * scale length (for ~0.02 correlation)
+     if (agrmet_struc(n)%gfs_rh2m_corr_func_type == 1) then
+        agrmet_struc(n)%gfs_rh2m_max_dist = &
+             2 * agrmet_struc(n)%gfs_rh2m_back_err_scale_length
+     else if (agrmet_struc(n)%gfs_rh2m_corr_func_type == 2) then
+        agrmet_struc(n)%gfs_rh2m_max_dist = &
+             4 * agrmet_struc(n)%gfs_rh2m_back_err_scale_length
+     else
+        write(LIS_logunit,*) '[ERR] Invalid correlation option!'
+        write(LIS_logunit,*) &
+             '[ERR] Expected 1 (Gaussian) or 2 (Inverse Exponential)'
+        write(LIS_logunit,*) '[ERR] Received ', &
+             agrmet_struc(n)%gfs_rh2m_corr_func_type
+        call LIS_endrun()
+     end if
+
   enddo ! n
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GFS RH2M background error variance:",rc=rc)
@@ -1007,6 +1300,19 @@ subroutine readcrd_agrmet()
   ! EMK NEW...Error statistics for Bratseth 10-m wind speed analysis 
   ! using GFS background.  Note that GFS is used as emergency backup if
   ! GALWEM is not available
+
+  ! EMK 29 Aug 2024...Set correlation function type.
+  call ESMF_ConfigFindLabel(LIS_config,&
+       "AGRMET GFS SPD10M correlation function type:",rc=rc)
+  call LIS_verify(rc, &
+       '[ERR] AGRMET GFS SPD10M correlation function type: option not specified in the config file')
+  do n=1,LIS_rc%nnest
+     call ESMF_ConfigGetAttribute(LIS_config,&
+          agrmet_struc(n)%gfs_spd10m_corr_func_type,rc=rc)
+     call LIS_verify(rc, &
+          '[ERR] AGRMET GFS SPD10M correlation function type: value not specified in the config file')
+  enddo ! n
+
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GFS SPD10M background error scale length (m):",rc=rc)
   call LIS_verify(rc, &
@@ -1015,11 +1321,27 @@ subroutine readcrd_agrmet()
      call ESMF_ConfigGetAttribute(LIS_config,&
           agrmet_struc(n)%gfs_spd10m_back_err_scale_length,rc=rc)
      call LIS_verify(rc, &
-          '[ERR] AGRMET GFS SPD10M background error scale length (m): value not specified in the config file') 
+          '[ERR] AGRMET GFS SPD10M background error scale length (m): value not specified in the config file')
+     agrmet_struc(n)%gfs_spd10m_back_err_inv_scale_length = &
+          1. / agrmet_struc(n)%gfs_spd10m_back_err_scale_length
      ! Maximum distance for spreading data for Gaussian function correlation
-     ! is 2 * scale length (for ~0.02 correlation).
-     agrmet_struc(n)%gfs_spd10m_max_dist = &
-          2*agrmet_struc(n)%gfs_spd10m_back_err_scale_length
+     ! is 2 * scale length (for ~0.02 correlation).  For Inverse Exponential
+     ! function, max distance is 4 * scale length (for ~0.02 correlation)
+     if (agrmet_struc(n)%gfs_spd10m_corr_func_type == 1) then
+        agrmet_struc(n)%gfs_spd10m_max_dist = &
+             2 * agrmet_struc(n)%gfs_spd10m_back_err_scale_length
+     else if (agrmet_struc(n)%gfs_spd10m_corr_func_type == 2) then
+        agrmet_struc(n)%gfs_spd10m_max_dist = &
+             4 * agrmet_struc(n)%gfs_spd10m_back_err_scale_length
+     else
+        write(LIS_logunit,*) '[ERR] Invalid correlation option!'
+        write(LIS_logunit,*) &
+             '[ERR] Expected 1 (Gaussian) or 2 (Inverse Exponential)'
+        write(LIS_logunit,*) '[ERR] Received ', &
+             agrmet_struc(n)%gfs_spd10m_corr_func_type
+        call LIS_endrun()
+     end if
+
   enddo ! n
   call ESMF_ConfigFindLabel(LIS_config,&
        "AGRMET GFS SPD10M background error variance:",rc=rc)
@@ -1091,16 +1413,102 @@ subroutine readcrd_agrmet()
      call LIS_verify(rc, &
           "[ERR] AGRMET PPT Background bias correction option: not specified in config file")
      if (agrmet_struc(n)%back_bias_corr .lt. 0 .or. &
-          agrmet_struc(n)%back_bias_corr .gt. 1) then
+          agrmet_struc(n)%back_bias_corr .gt. 2) then
         call LIS_verify(rc, &
-             "[ERR] AGRMET PPT Background bias correction option: bad value in config file, set 0 or 1")
+             "[ERR] AGRMET PPT Background bias correction option: bad value in config file, set 0, 1, or 2")
      end if
      if (agrmet_struc(n)%back_bias_corr .eq. 1) then
         allocate(agrmet_struc(n)%pcp_back_bias_ratio(LIS_rc%gnc(n),LIS_rc%gnr(n)))
         agrmet_struc(n)%pcp_back_bias_ratio = 1.
         agrmet_struc(n)%pcp_back_bias_ratio_month = 0
+     else if (agrmet_struc(n)%back_bias_corr .eq. 2) then
+
+        allocate(agrmet_struc(n)%gfs_nrt_bias_ratio( &
+             LIS_rc%gnc(n),LIS_rc%gnr(n)))
+        allocate(agrmet_struc(n)%galwem_nrt_bias_ratio( &
+             LIS_rc%gnc(n),LIS_rc%gnr(n)))
+        agrmet_struc(n)%gfs_nrt_bias_ratio = 1.
+        agrmet_struc(n)%galwem_nrt_bias_ratio = 1.
+        agrmet_struc(n)%pcp_back_bias_ratio_month = 0
      end if
-  enddo ! n
+  end do
+
+  ! EMK Add support for NRT bias files for GFS and GALWEM
+  use_nrt_bias_files = .false.
+  do n = 1, LIS_rc%nnest
+     if (agrmet_struc(n)%back_bias_corr .eq. 2) then
+        use_nrt_bias_files = .true.
+        exit
+     end if
+  end do
+
+  if (use_nrt_bias_files) then
+     call ESMF_ConfigFindLabel(LIS_config, &
+          "AGRMET PPT GFS NRT bias file:", rc=rc)
+     call LIS_verify(rc, &
+          "[ERR] AGRMET PPT GFS NRT bias file: not specified in config file")
+
+     do n = 1, LIS_rc%nnest
+        call ESMF_ConfigGetAttribute(LIS_config, &
+             agrmet_struc(n)%gfs_nrt_bias_ratio_file, rc=rc)
+        call LIS_verify(rc, &
+             "[ERR] AGRMET PPT GFS NRT bias file: not specified in config file")
+     end do
+
+     call ESMF_ConfigFindLabel(LIS_config, &
+          "AGRMET PPT GALWEM NRT bias file:", rc=rc)
+     call LIS_verify(rc, &
+          "[ERR] AGRMET PPT GALWEM NRT bias file: not specified in config file")
+     do n = 1, LIS_rc%nnest
+        call ESMF_ConfigGetAttribute(LIS_config, &
+             agrmet_struc(n)%galwem_nrt_bias_ratio_file, rc=rc)
+        call LIS_verify(rc, &
+             "[ERR] AGRMET PPT GALWEM NRT bias file: not specified in config file")
+     end do
+  end if
+
+  ! EMK Get list of gage networks to use
+  call ESMF_ConfigFindLabel(LIS_config, &
+       "AGRMET number of gauge networks to use:", rc=rc)
+  call LIS_verify(rc, &
+       "[ERR] AGRMET number of gauge networks to use: not specified in config file")
+  do n=1, LIS_rc%nnest
+     call ESMF_ConfigGetAttribute(LIS_config, &
+          agrmet_struc(n)%num_gage_networks, rc=rc)
+     call LIS_verify(rc, &
+             "[ERR] AGRMET number of gauge networks to use: not specified in config file")
+     if (agrmet_struc(n)%num_gage_networks < 0) then
+        write(LIS_logunit,*) &
+             '[ERR] AGRMET number of gauge networks to use: must be nonnegative!'
+        write(LIS_logunit,*) &
+             '[ERR] Found ', agrmet_struc(n)%num_gage_networks
+        write(LIS_logunit, *) &
+             '[ERR] LIS will end!'
+        call LIS_verify(1, &
+             '[ERR] AGRMET number of gauge networks to use: must be nonnegative!')
+     end if
+     allocate(agrmet_struc(n)%gage_networks(agrmet_struc(n)%num_gage_networks))
+  end do
+  call ESMF_ConfigFindLabel(LIS_config, &
+       'AGRMET gauge networks to use::', rc=rc)
+  call LIS_verify(rc, &
+       "[ERR] AGRMET gauge networks to use:: not specified in config file")
+  do n=1, LIS_rc%nnest
+     call ESMF_ConfigNextLine(LIS_config, rc=rc)
+     call LIS_verify(rc, &
+          '[ERR] AGRMET gauge networks to use:: problem reading next line')
+     do j = 1, agrmet_struc(n)%num_gage_networks
+        call ESMF_ConfigGetAttribute(LIS_config, &
+             agrmet_struc(n)%gage_networks(j), rc=rc)
+        call LIS_verify(rc, &
+             '[ERR] AGRMET gauge networks to use:: problem reading entry')
+     end do
+     write(LIS_logunit,*) &
+          '[INFO] Will use following gauge networks for domain ', n
+     do j = 1, agrmet_struc(n)%num_gage_networks
+        write(LIS_logunit,*) trim(agrmet_struc(n)%gage_networks(j))
+     end do
+  end do
 
   do n=1,LIS_rc%nnest
      agrmet_struc(n)%radProcessInterval = 1
@@ -1126,7 +1534,7 @@ subroutine readcrd_agrmet()
      if (LIS_masterproc) then
         ios = LIS_create_subdirs(len_trim(c_string),trim(c_string))
         if (ios .ne. 0) then
-           write(LIS_logunit,*)'ERR creating directory ', &
+           write(LIS_logunit,*)'[ERR] Cannot create directory ', &
                 trim(agrmet_struc(n)%analysisdir)
            flush(LIS_logunit)
         end if

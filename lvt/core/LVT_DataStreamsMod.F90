@@ -1,9 +1,9 @@
 !-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
 ! NASA Goddard Space Flight Center
 ! Land Information System Framework (LISF)
-! Version 7.4
+! Version 7.5
 !
-! Copyright (c) 2022 United States Government as represented by the
+! Copyright (c) 2024 United States Government as represented by the
 ! Administrator of the National Aeronautics and Space Administration.
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
@@ -359,7 +359,8 @@ contains
 ! !INTERFACE:
   subroutine LVT_writeDataStreams
 !
-! !USES:
+    ! !USES:
+    use LVT_constantsMod, only: LVT_CONST_PATH_LEN
     use LVT_logMod
     use LVT_coreMod, only: LVT_LIS_rc ! EMK
     use LVT_557post_ps41_snowMod ! EMK
@@ -377,7 +378,7 @@ contains
 
 
     integer, parameter                   :: nsoillayers = 4
-    character*200                        :: fname_mean,fname_ssdev
+    character(len=LVT_CONST_PATH_LEN)    :: fname_mean,fname_ssdev
     character(len=8)                     :: cdate2
     character(len=4)                     :: cdate3
     integer                              :: ftn_mean,ftn_ssdev
@@ -439,6 +440,8 @@ contains
     type(LVT_lismetadataEntry), target :: SnowDensity
     type(LVT_lismetadataEntry), target :: SnowGrain
     type(LVT_lismetadataEntry), target :: SurftSnow
+
+    character*20 :: model_name ! EMK
 
     ! EMK...This is only used when LVT is run in "557 post" mode.
     if (trim(LVT_rc%runmode) .ne. "557 post") return
@@ -563,55 +566,74 @@ contains
           write(unit=cdate3, fmt='(i2.2,i2.2)') &
                LVT_rc%hr, LVT_rc%mn
 
+          ! EMK...Include LSM in GP section
+          if (trim(LVT_LIS_rc(1)%model_name) == "NOAH.3.9") then
+             model_name = "LIS-NOAH"
+          else if (trim(LVT_LIS_rc(1)%model_name) == "NOAHMP.4.0.1") then
+             model_name = "LIS-NOAHMP"
+          else if (trim(LVT_LIS_rc(1)%model_name) == "JULES.5.0") then
+             model_name = "LIS-JULES"
+          else
+             write(LVT_logunit,*)'[ERR] Unknown LSM selected'
+             write(LVT_logunit,*)&
+                  '[ERR] Must be NOAH.3.9, NOAHMP.4.0.1, or JULES.5.0'
+             write(LVT_logunit,*) &
+                  "[ERR] Update 'LIS output model name:' in lis.config" // &
+                  " and try again!"
+             call LVT_endrun()
+          end if
+
           ! EMK...Different file name convention for 24-hr data
           if (LVT_rc%tavgInterval == 86400) then
-             fname_mean = trim(LVT_rc%statsodir)// &
-                  '/PS.557WW_SC.' &
-                  //trim(LVT_rc%security_class)//'_DI.' &
-                  //trim(LVT_rc%data_category)//'_GP.' &
-                  //'LIS_GR.C0P09DEG_AR.'// &
-                  trim(LVT_rc%area_of_data)//'_PA.'&
-                  //'LIS24_DD.'// &
-                  trim(cdate2)//'_DT.' &
-                  //trim(cdate3)//'_DF.GR1'
 
-             fname_ssdev = trim(LVT_rc%statsodir)// &
-                  '/PS.557WW_SC.' &
-                  //trim(LVT_rc%security_class)//'_DI.' &
-                  //trim(LVT_rc%data_category)//'_GP.' &
-                  //'LIS_GR.C0P09DEG_AR.'// &
-                  trim(LVT_rc%area_of_data)//'_PA.' &
-                  //'LIS24_DD.'// &
-                  trim(cdate2)//'_DT.'//trim(cdate3)//'_DF_SSDEV.GR1'
+             fname_mean = trim(LVT_rc%statsodir) &
+                  //'/PS.557WW' &
+                  //'_SC.'//trim(LVT_rc%security_class) &
+                  //'_DI.'//trim(LVT_rc%data_category) &
+                  //'_GP.'//trim(model_name) &
+                  //'_GR.C0P09DEG' &
+                  //'_AR.'//trim(LVT_rc%area_of_data) &
+                  //'_PA.LIS24' &
+                  //'_DD.'//trim(cdate2) &
+                  //'_DT.'//trim(cdate3) &
+                  //'_DF.GR1'
+
+             fname_ssdev = trim(LVT_rc%statsodir) &
+                  //'/PS.557WW' &
+                  //'_SC.'//trim(LVT_rc%security_class) &
+                  //'_DI.'//trim(LVT_rc%data_category) &
+                  //'_GP.'//trim(model_name) &
+                  //'_GR.C0P09DEG' &
+                  //'_AR.'//trim(LVT_rc%area_of_data) &
+                  //'_PA.LIS24-SSDEV' &
+                  //'_DD.'//trim(cdate2) &
+                  //'_DT.'//trim(cdate3) &
+                  //'_DF.GR1'
           else
 
-             fname_mean = trim(LVT_rc%statsodir)// &
-                  ! '/PS.AFWA_SC.'//trim(LVT_rc%security_class)//&
-                  ! '_DI.'//trim(LVT_rc%distribution_class)//&
-                  ! '_DC.'//trim(LVT_rc%data_category)//&
-                  ! '_GP.LIS_GR.C0P25DEG_AR.'//&
-                  ! EMK...Update name convention
-                  '/PS.557WW_SC.'//trim(LVT_rc%security_class)// &
-                  '_DI.'//trim(LVT_rc%data_category)// &
-                  '_GP.LIS_GR.C0P09DEG_AR.'// &
-                  trim(LVT_rc%area_of_data)// &
-                  ! '_PA.03-HR-SUM_DD.'//&
-                  '_PA.LIS_DD.'// &
-                  trim(cdate2)//'_DT.'//trim(cdate3)//'_DF.GR1'
+             fname_mean = trim(LVT_rc%statsodir) &
+                  //'/PS.557WW' &
+                  //'_SC.'//trim(LVT_rc%security_class) &
+                  //'_DI.'//trim(LVT_rc%data_category) &
+                  //'_GP.'//trim(model_name) &
+                  //'_GR.C0P09DEG' &
+                  //'_AR.'//trim(LVT_rc%area_of_data) &
+                  //'_PA.LIS' &
+                  //'_DD.'//trim(cdate2) &
+                  //'_DT.'//trim(cdate3) &
+                  //'_DF.GR1'
 
-             fname_ssdev = trim(LVT_rc%statsodir)//&
-                  ! '/PS.AFWA_SC.'//trim(LVT_rc%security_class)//&
-                  ! '_DI.'//trim(LVT_rc%distribution_class)//&
-                  ! '_DC.'//trim(LVT_rc%data_category)//&
-                  ! '_GP.LIS_GR.C0P25DEG_AR.'//&
-                  ! EMK...Update name convention
-                  '/PS.557WW_SC.'//trim(LVT_rc%security_class)// &
-                  '_DI.'//trim(LVT_rc%data_category)// &
-                  '_GP.LIS_GR.C0P09DEG_AR.'// &
-                  trim(LVT_rc%area_of_data)// &
-                  ! '_PA.03-HR-SUM_DD.'// &
-                  '_PA.LIS_DD.'// &
-                  trim(cdate2)//'_DT.'//trim(cdate3)//'_DF_SSDEV.GR1'
+             fname_ssdev = trim(LVT_rc%statsodir) &
+                  //'/PS.557WW' &
+                  //'_SC.'//trim(LVT_rc%security_class) &
+                  //'_DI.'//trim(LVT_rc%data_category) &
+                  //'_GP.'//trim(model_name) &
+                  //'_GR.C0P09DEG' &
+                  //'_AR.'//trim(LVT_rc%area_of_data) &
+                  //'_PA.SSDEV' &
+                  //'_DD.'//trim(cdate2) &
+                  //'_DT.'//trim(cdate3) &
+                  //'_DF.GR1'
 
           end if
 
@@ -689,58 +711,76 @@ contains
           write(unit=cdate3, fmt='(i2.2,i2.2)') &
                LVT_rc%hr, LVT_rc%mn
 
+          ! EMK...Include LSM in GP section
+          if (trim(LVT_LIS_rc(1)%model_name) == "NOAH.3.9") then
+             model_name = "LIS-NOAH"
+          else if (trim(LVT_LIS_rc(1)%model_name) == "NOAHMP.4.0.1") then
+             model_name = "LIS-NOAHMP"
+          else if (trim(LVT_LIS_rc(1)%model_name) == "JULES.5.0") then
+             model_name = "LIS-JULES"
+          else
+             write(LVT_logunit,*)'[ERR] Unknown LSM selected'
+             write(LVT_logunit,*)&
+                  '[ERR] Must be NOAH.3.9, NOAHMP.4.0.1, or JULES.5.0'
+             write(LVT_logunit,*) &
+                  "[ERR] Update 'LIS output model name:' in lis.config" // &
+                  " and try again!"
+             call LVT_endrun()
+          end if
+
           ! EMK...Different file name convention for 24-hr data
           if (LVT_rc%tavgInterval == 86400) then
-             fname_mean = trim(LVT_rc%statsodir)// &
-                  '/PS.557WW_SC.' &
-                  //trim(LVT_rc%security_class)//'_DI.' &
-                  //trim(LVT_rc%data_category)//'_GP.' &
-                  //'LIS_GR.C0P09DEG_AR.'// &
-                  trim(LVT_rc%area_of_data)//'_PA.' &
-                  //'LIS24_DD.'// &
-                  trim(cdate2)//'_DT.' &
-                  //trim(cdate3)//'_DF.GR2'
+             fname_mean = trim(LVT_rc%statsodir) &
+                  //'/PS.557WW' &
+                  //'_SC.'//trim(LVT_rc%security_class) &
+                  //'_DI.'//trim(LVT_rc%data_category) &
+                  //'_GP.'//trim(model_name) &
+                  //'_GR.C0P09DEG' &
+                  //'_AR.'//trim(LVT_rc%area_of_data) &
+                  //'_PA.LIS24' &
+                  //'_DD.'//trim(cdate2) &
+                  //'_DT.'//trim(cdate3) &
+                  //'_DF.GR2'
 
              if (LVT_rc%nensem > 1) then
-                fname_ssdev = trim(LVT_rc%statsodir)// &
-                     '/PS.557WW_SC.' &
-                     //trim(LVT_rc%security_class)//'_DI.' &
-                     //trim(LVT_rc%data_category)//'_GP.' &
-                     //'LIS_GR.C0P09DEG_AR.'// &
-                     trim(LVT_rc%area_of_data)//'_PA.' &
-                     //'LIS24_DD.'// &
-                     trim(cdate2)//'_DT.'//trim(cdate3)//'_DF_SSDEV.GR2'
+                fname_ssdev = trim(LVT_rc%statsodir) &
+                     //'/PS.557WW' &
+                     //'_SC.'//trim(LVT_rc%security_class) &
+                     //'_DI.'//trim(LVT_rc%data_category) &
+                     //'_GP.'//trim(model_name) &
+                     //'_GR.C0P09DEG' &
+                     //'_AR.'//trim(LVT_rc%area_of_data) &
+                     //'_PA.LIS24-SSDEV' &
+                     //'_DD.'//trim(cdate2) &
+                     //'_DT.'//trim(cdate3) &
+                     //'_DF.GR2'
              end if
           else
              ! EMK...Assume 3-hr
-             fname_mean = trim(LVT_rc%statsodir)// &
-                  ! '/PS.AFWA_SC.'//trim(LVT_rc%security_class)//&
-                  ! '_DI.'//trim(LVT_rc%distribution_class)//&
-                  ! '_DC.'//trim(LVT_rc%data_category)//&
-                  ! '_GP.LIS_GR.C0P25DEG_AR.'//&
-                  ! EMK...Update name convention
-                  '/PS.557WW_SC.'//trim(LVT_rc%security_class)// &
-                  '_DI.'//trim(LVT_rc%data_category)// &
-                  '_GP.LIS_GR.C0P09DEG_AR.'// &
-                  trim(LVT_rc%area_of_data)// &
-                  ! '_PA.03-HR-SUM_DD.'//&
-                  '_PA.LIS_DD.'// &
-                  trim(cdate2)//'_DT.'//trim(cdate3)//'_DF.GR2'
+             fname_mean = trim(LVT_rc%statsodir) &
+                  //'/PS.557WW' &
+                  //'_SC.'//trim(LVT_rc%security_class) &
+                  //'_DI.'//trim(LVT_rc%data_category) &
+                  //'_GP.'//trim(model_name) &
+                  //'_GR.C0P09DEG' &
+                  //'_AR.'//trim(LVT_rc%area_of_data) &
+                  //'_PA.LIS' &
+                  //'_DD.'//trim(cdate2) &
+                  //'_DT.'//trim(cdate3) &
+                  //'_DF.GR2'
 
              if (LVT_rc%nensem > 1) then
-                fname_ssdev = trim(LVT_rc%statsodir)// &
-                     ! '/PS.AFWA_SC.'//trim(LVT_rc%security_class)//&
-                     ! '_DI.'//trim(LVT_rc%distribution_class)//&
-                     ! '_DC.'//trim(LVT_rc%data_category)//&
-                     ! '_GP.LIS_GR.C0P25DEG_AR.'//&
-                     ! EMK...Update name convention
-                     '/PS.557WW_SC.'//trim(LVT_rc%security_class)// &
-                     '_DI.'//trim(LVT_rc%data_category)// &
-                     '_GP.LIS_GR.C0P09DEG_AR.'// &
-                     trim(LVT_rc%area_of_data)// &
-                     ! '_PA.03-HR-SUM_DD.'//&
-                     '_PA.LIS_DD.'// &
-                     trim(cdate2)//'_DT.'//trim(cdate3)//'_DF_SSDEV.GR2'
+                fname_ssdev = trim(LVT_rc%statsodir) &
+                     //'/PS.557WW' &
+                     //'_SC.'//trim(LVT_rc%security_class) &
+                     //'_DI.'//trim(LVT_rc%data_category) &
+                     //'_GP.'//trim(model_name) &
+                     //'_GR.C0P09DEG' &
+                     //'_AR.'//trim(LVT_rc%area_of_data) &
+                     //'_PA.SSDEV' &
+                     //'_DD.'//trim(cdate2) &
+                     //'_DT.'//trim(cdate3) &
+                     //'_DF.GR2'
              end if
           end if
           ! Setup of GRIB-1 and GRIB-2 Metadata Section
@@ -821,58 +861,76 @@ contains
           write(unit=cdate3, fmt='(i2.2,i2.2)') &
                LVT_rc%hr, LVT_rc%mn
 
+          ! EMK...Include LSM in GP section
+          if (trim(LVT_LIS_rc(1)%model_name) == "NOAH.3.9") then
+             model_name = "LIS-NOAH"
+          else if (trim(LVT_LIS_rc(1)%model_name) == "NOAHMP.4.0.1") then
+             model_name = "LIS-NOAHMP"
+          else if (trim(LVT_LIS_rc(1)%model_name) == "JULES.5.0") then
+             model_name = "LIS-JULES"
+          else
+             write(LVT_logunit,*)'[ERR] Unknown LSM selected'
+             write(LVT_logunit,*)&
+                  '[ERR] Must be NOAH.3.9, NOAHMP.4.0.1, or JULES.5.0'
+             write(LVT_logunit,*) &
+                  "[ERR] Update 'LIS output model name:' in lis.config" // &
+                  " and try again!"
+             call LVT_endrun()
+          end if
+
           ! EMK...Different file name convention for 24-hr data
           if (LVT_rc%tavgInterval == 86400) then
-             fname_mean = trim(LVT_rc%statsodir)// &
-                  '/PS.557WW_SC.' &
-                  //trim(LVT_rc%security_class)//'_DI.' &
-                  //trim(LVT_rc%data_category)//'_GP.' &
-                  //'LIS_GR.C0P09DEG_AR.'// &
-                  trim(LVT_rc%area_of_data)//'_PA.' &
-                  //'LIS24_DD.'// &
-                  trim(cdate2)//'_DT.' &
-                  //trim(cdate3)//'_DF.nc'
+             fname_mean = trim(LVT_rc%statsodir) &
+                  //'/PS.557WW' &
+                  //'_SC.'//trim(LVT_rc%security_class) &
+                  //'_DI.'//trim(LVT_rc%data_category) &
+                  //'_GP.'//trim(model_name) &
+                  //'_GR.C0P09DEG' &
+                  //'_AR.'//trim(LVT_rc%area_of_data) &
+                  //'_PA.LIS24' &
+                  //'_DD.'//trim(cdate2) &
+                  //'_DT.'//trim(cdate3) &
+                  //'_DF.nc'
 
              if (LVT_rc%nensem > 1) then
-                fname_ssdev = trim(LVT_rc%statsodir)// &
-                     '/PS.557WW_SC.' &
-                     //trim(LVT_rc%security_class)//'_DI.' &
-                     //trim(LVT_rc%data_category)//'_GP.' &
-                     //'LIS_GR.C0P09DEG_AR.'// &
-                     trim(LVT_rc%area_of_data)//'_PA.' &
-                     //'LIS24_DD.'// &
-                     trim(cdate2)//'_DT.'//trim(cdate3)//'_DF_SSDEV.nc'
+                fname_ssdev = trim(LVT_rc%statsodir) &
+                     //'/PS.557WW' &
+                     //'_SC.'//trim(LVT_rc%security_class) &
+                     //'_DI.'//trim(LVT_rc%data_category) &
+                     //'_GP.'//trim(model_name) &
+                     //'_GR.C0P09DEG' &
+                     //'_AR.'//trim(LVT_rc%area_of_data) &
+                     //'_PA.LIS24-SSDEV' &
+                     //'_DD.'//trim(cdate2) &
+                     //'_DT.'//trim(cdate3) &
+                     //'_DF.nc'
              end if
           else
 
-             fname_mean = trim(LVT_rc%statsodir)// &
-                  ! '/PS.AFWA_SC.'//trim(LVT_rc%security_class)//&
-                  ! '_DI.'//trim(LVT_rc%distribution_class)//&
-                  ! '_DC.'//trim(LVT_rc%data_category)//&
-                  ! '_GP.LIS_GR.C0P25DEG_AR.'//&
-                  ! EMK...Update name convention
-                  '/PS.557WW_SC.'//trim(LVT_rc%security_class)// &
-                  '_DI.'//trim(LVT_rc%data_category)// &
-                  '_GP.LIS_GR.C0P09DEG_AR.'// &
-                  trim(LVT_rc%area_of_data)// &
-                  ! '_PA.03-HR-SUM_DD.'//&
-                  '_PA.LIS_DD.'// &
-                  trim(cdate2)//'_DT.'//trim(cdate3)//'_DF.nc'
+             fname_mean = trim(LVT_rc%statsodir) &
+                  //'/PS.557WW' &
+                  //'_SC.'//trim(LVT_rc%security_class) &
+                  //'_DI.'//trim(LVT_rc%data_category) &
+                  //'_GP.'//trim(model_name) &
+                  //'_GR.C0P09DEG' &
+                  //'_AR.'//trim(LVT_rc%area_of_data) &
+                  //'_PA.LIS' &
+                  //'_DD.'//trim(cdate2) &
+                  //'_DT.'//trim(cdate3) &
+                  //'_DF.nc'
 
              if (LVT_rc%nensem > 1) then
-                fname_ssdev = trim(LVT_rc%statsodir)// &
-                     ! '/PS.AFWA_SC.'//trim(LVT_rc%security_class)//&
-                     ! '_DI.'//trim(LVT_rc%distribution_class)//&
-                     ! '_DC.'//trim(LVT_rc%data_category)//&
-                     ! '_GP.LIS_GR.C0P25DEG_AR.'//&
-                     ! EMK...Update name convention
-                     '/PS.557WW_SC.'//trim(LVT_rc%security_class)// &
-                     '_DI.'//trim(LVT_rc%data_category)// &
-                     '_GP.LIS_GR.C0P09DEG_AR.'// &
-                     trim(LVT_rc%area_of_data)// &
-                     ! '_PA.03-HR-SUM_DD.'//&
-                     '_PA.LIS_DD.'// &
-                     trim(cdate2)//'_DT.'//trim(cdate3)//'_DF_SSDEV.nc'
+                fname_ssdev = trim(LVT_rc%statsodir) &
+                     //'/PS.557WW' &
+                     //'_SC.'//trim(LVT_rc%security_class) &
+                     //'_DI.'//trim(LVT_rc%data_category) &
+                     //'_GP.'//trim(model_name) &
+                     //'_GR.C0P09DEG' &
+                     //'_AR.'//trim(LVT_rc%area_of_data) &
+                     //'_PA.SSDEV' &
+                     //'_DD.'//trim(cdate2) &
+                     //'_DT.'//trim(cdate3) &
+                     //'_DF.nc'
              end if
           end if
           ! Setup of GRIB-1 and GRIB-2 Metadata Section
@@ -2129,6 +2187,9 @@ contains
   subroutine LVT_append_navgem_sst_field(ftn_mean, time_unit, time_past, &
        time_curr, timeRange, toplev, botlev)
 
+    ! Imports
+    use LVT_constantsMod, only: LVT_CONST_PATH_LEN
+    
     ! Defaults
     implicit none
 
@@ -2142,7 +2203,7 @@ contains
     real, intent(in) :: botlev(1)
 
     ! Locals
-    character(250) :: navgem_sst_fname
+    character(len=LVT_CONST_PATH_LEN) :: navgem_sst_fname
     real :: gridDesci(50) ! Full NAVGEM grid
     character(10) :: cdate
     logical :: file_exists
@@ -2306,6 +2367,7 @@ contains
 #if (defined USE_NETCDF3 || defined USE_NETCDF4)
     use netcdf
 #endif
+    use LVT_constantsMod, only: LVT_CONST_PATH_LEN
 
     integer                 :: ftn_mean
     integer                 :: time_unit
@@ -2317,7 +2379,7 @@ contains
     real, intent(in) :: lat(LVT_rc%lnc,LVT_rc%lnr)
     real, intent(in) :: lon(LVT_rc%lnc,LVT_rc%lnr)
 
-    character*100           :: hycom_fname
+    character(len=LVT_CONST_PATH_LEN) :: hycom_fname
     character*10            :: cdate
     logical                 :: file_exists
     integer                 :: nid,ios
@@ -3122,6 +3184,7 @@ contains
 !  This subroutine writes a single variable to a grib file
 !
 !EOP
+    use LVT_constantsMod, only: LVT_CONST_PATH_LEN
 
     integer                       :: ftn
     real                          :: gtmp(LVT_rc%lnc*LVT_rc%lnr)
@@ -3146,7 +3209,7 @@ contains
     real                          :: lat_ll, lon_ll
     integer                       :: igrib,iret
     integer                       :: decimalPrecision,gribSFtemp
-    character*100                 :: message(20)
+    character(len=LVT_CONST_PATH_LEN) :: message(20)
 
     ! Note passing string of defined points only to output
     ! because bitmap in GRIB-1 file will fill in the rest
@@ -3354,6 +3417,7 @@ contains
 !
 !
 !EOP
+    use LVT_constantsMod, only: LVT_CONST_PATH_LEN
 
     integer                       :: ftn
     real                          :: gtmp(LVT_rc%lnc*LVT_rc%lnr)
@@ -3390,7 +3454,7 @@ contains
     real                          :: lat_ll, lon_ll
     integer                       :: igrib,iret
     integer                       :: decimalPrecision,gribSFtemp
-    character*100                 :: message(20)
+    character(len=LVT_CONST_PATH_LEN) :: message(20)
     logical :: ensembleSpread_local
     integer :: typeOfGeneratingProcess_local
     integer :: typeOfProcessedData_local
@@ -4596,10 +4660,12 @@ contains
   subroutine get_hycom_sst_filename(sst_filename, sst_year, sst_month, &
        sst_day, sst_hour, sst_fcst_hr)
 
+     use LVT_constantsMod, only: LVT_CONST_PATH_LEN
+
      implicit none
 
      ! Arguments
-     character(len=100), intent(inout) :: sst_filename
+     character(len=LVT_CONST_PATH_LEN), intent(inout) :: sst_filename
      integer, intent(out) :: sst_year
      integer, intent(out) :: sst_month
      integer, intent(out) :: sst_day
@@ -4705,11 +4771,12 @@ contains
   subroutine get_hycom_cice_filename(region, cice_filename, &
        cice_year, cice_month, cice_day, cice_hour, cice_fcst_hr)
 
+     use LVT_constantsMod, only: LVT_CONST_PATH_LEN
      implicit none
 
      ! Arguments
      character(len=3), intent(in) :: region
-     character(len=100), intent(inout) :: cice_filename
+     character(len=LVT_CONST_PATH_LEN), intent(inout) :: cice_filename
      integer, intent(out) :: cice_year
      integer, intent(out) :: cice_month
      integer, intent(out) :: cice_day

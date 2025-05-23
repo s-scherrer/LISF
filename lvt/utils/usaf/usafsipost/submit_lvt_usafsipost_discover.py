@@ -3,9 +3,9 @@
 #-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
 # NASA Goddard Space Flight Center
 # Land Information System Framework (LISF)
-# Version 7.4
+# Version 7.5
 #
-# Copyright (c) 2022 United States Government as represented by the
+# Copyright (c) 2024 United States Government as represented by the
 # Administrator of the National Aeronautics and Space Administration.
 # All Rights Reserved.
 #-------------------------END NOTICE -- DO NOT EDIT-----------------------
@@ -24,6 +24,8 @@
 # REVISION HISTORY:
 # 15 Jul 2021: Eric Kemp (SSAI), first version.
 # 19 Jan 2022: Eric Kemp (SSAI), Discover updates.
+# 08 Dec 2022: Eric Kemp (SSAI), refactored to increase pylint score.
+# 18 Oct 2024: Eric Kemp (SSAI), updated for Milan nodes.
 #
 #------------------------------------------------------------------------------
 """
@@ -35,13 +37,13 @@ import sys
 
 def _usage():
     """Prints usage statement for script."""
-    print("Usage: %s chargecode qos" %(sys.argv[0]))
+    print(f"Usage: {sys.argv[0]} chargecode qos")
     print("  where:")
     print("    chargecode is SLURM account")
     print("    qos is the SLURM quality-of-service")
 
-# Main driver
-if __name__ == "__main__":
+def _main():
+    """Main driver"""
 
     # Check command-line arguments
     if len(sys.argv) != 3:
@@ -58,15 +60,15 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # Create a batch script.
-    SCRIPTNAME = "run_lvt.usafsipost.sh"
-    f = open(SCRIPTNAME, "w")
-    line = """#!/bin/sh
-#SBATCH --account %s
-#SBATCH --constraint="hasw|sky|cas"
+    scriptname = "run_lvt.usafsipost.sh"
+    with open(scriptname, "w", encoding="ascii") as file:
+        line = f"""#!/bin/sh
+#SBATCH --account {account}
+#SBATCH --constraint="[mil]"
 #SBATCH --job-name=usafsipost
 #SBATCH --ntasks=1
 #SBATCH --output usafsipost.slurm.out
-#SBATCH --qos=%s
+#SBATCH --qos={qos}
 #SBATCH --time=0:05:00
 
 if [ ! -z $SLURM_SUBMIT_DIR ] ; then
@@ -75,31 +77,34 @@ fi
 
 # NOTE: This privatemodule can be found in LISF/env/discover
 module purge
-module use --append ~/privatemodules
-module load lisf_7_intel_2021.4.0_s2s
+module use --append /home/emkemp/privatemodules/sles15
+module load lisf_7.6_intel_2023.2.1_emk
 
 if [ ! -e ./LVT ] ; then
    echo "ERROR, LVT does not exist!" && exit 1
 fi
 
-if [ ! -e lvt.config.usafsipost ] ; then
-   echo "ERROR, lvt.config.usafsipost does not exist!" && exit 1
+lvtconfig=lvt.config.foc.usafsipost.76
+
+if [ ! -e $lvtconfig ] ; then
+   echo "ERROR, $lvtconfig does not exist!" && exit 1
 fi
 
-mpirun -np 1 ./LVT lvt.config.usafsipost || exit 1
+mpirun -np 1 ./LVT $lvtconfig || exit 1
 
 exit 0
 
-""" %(account, qos)
-    f.write(line)
-    f.close()
+"""
+        file.write(line)
 
     # Submit the batch job to SLURM
-    # NOTE: pylint is insistent on treating CMD and RC as constants, and
-    # thus requiring UPPER_CASE naming style.
-    CMD = "sbatch %s" %(SCRIPTNAME)
-    print(CMD)
-    RC = subprocess.call(CMD, shell=True)
-    if RC != 0:
+    cmd = f"sbatch {scriptname}"
+    print(cmd)
+    err = subprocess.call(cmd, shell=True)
+    if err != 0:
         print("[ERR] Problem with sbatch!")
         sys.exit(1)
+
+# Main driver
+if __name__ == "__main__":
+    _main()

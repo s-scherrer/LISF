@@ -1,3 +1,14 @@
+/*
+-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
+ NASA Goddard Space Flight Center
+ Land Information System Framework (LISF)
+ Version 7.5
+
+ Copyright (c) 2024 United States Government as represented by the
+ Administrator of the National Aeronautics and Space Administration.
+ All Rights Reserved.
+-------------------------END NOTICE -- DO NOT EDIT-----------------------
+*/
 var json_MissRiverBasin0 = {
 "type": "FeatureCollection",
 "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
