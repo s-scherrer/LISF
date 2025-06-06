@@ -42,7 +42,7 @@ CONTAINS
 	        T2MVXY,   T2MBXY,    Q2MVXY,   Q2MBXY, RELSMCXY,            & ! OUT Noah MP only
 	        TRADXY,    NEEXY,    GPPXY,     NPPXY,   FVEGXY,   RUNSFXY, & ! OUT Noah MP only
 	       RUNSBXY,   ECANXY,   EDIRXY,   ETRANXY,    FSAXY,    FIRAXY, & ! OUT Noah MP only
-	        APARXY,    PSNXY,    SAVXY,     SAGXY,  RSSUNXY,   RSSHAXY, & ! OUT Noah MP only
+	        APARXY,    PSNXY,    SAVXY,     SAGXY,   PSAVXY,   RSSUNXY,   RSSHAXY, & ! OUT Noah MP only
 		BGAPXY,   WGAPXY,    TGVXY,     TGBXY,    CHVXY,     CHBXY, & ! OUT Noah MP only
 		 SHGXY,    SHCXY,    SHBXY,     EVGXY,    EVBXY,     GHVXY, & ! OUT Noah MP only
 		 GHBXY,    IRGXY,    IRCXY,     IRBXY,     TRXY,     EVCXY, & ! OUT Noah MP only
@@ -257,6 +257,7 @@ CONTAINS
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  PSNXY     ! total photosynthesis (umol co2/m2/s) [+]
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  SAVXY     ! solar rad absorbed by veg. (w/m2)
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  SAGXY     ! solar rad absorbed by ground (w/m2)
+    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  PSAVXY    ! photosyn. active solar rad absorbed by veg. (w/m2)
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  RSSUNXY   ! sunlit leaf stomatal resistance (s/m)
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  RSSHAXY   ! shaded leaf stomatal resistance (s/m)
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  BGAPXY    ! between gap fraction
@@ -401,6 +402,7 @@ CONTAINS
     REAL                                :: PSN          ! total photosynthesis (umol co2/m2/s) [+]
     REAL                                :: SAV          ! solar rad absorbed by veg. (w/m2)
     REAL                                :: SAG          ! solar rad absorbed by ground (w/m2)
+    REAL                                :: PSAV         ! photosyn. active solar rad absorbed by veg. (w/m2)
     REAL                                :: RSSUN        ! sunlit leaf stomatal resistance (s/m)
     REAL                                :: RSSHA        ! shaded leaf stomatal resistance (s/m)
     REAL                                :: RB           ! leaf boundary layer resistance (s/m)
@@ -856,6 +858,7 @@ CONTAINS
          FAPAR  = LIS_undef_value 
          PSN    = LIS_undef_value 
          SAV    = LIS_undef_value 
+         PSAV   = LIS_undef_value 
          RSSUN  = LIS_undef_value 
          RSSHA  = LIS_undef_value 
          LAISUN = LIS_undef_value
@@ -919,7 +922,7 @@ CONTAINS
             FGEV    , FCTR    , ECAN    , ETRAN   , ESOIL   , TRAD    , & ! OUT : 
             SUBSNOW , RELSMC  ,                                       & ! OUT : 
             TGB     , TGV     , T2MV    , T2MB    , Q2MV    , Q2MB    , & ! OUT : 
-            RUNSF   , RUNSB   , APAR    , PSN     , SAV     , SAG     , & ! OUT : 
+            RUNSF   , RUNSB   , APAR    , PSN     , SAV     , SAG     , PSAV  , & ! OUT : 
             FSNO    , NEE     , GPP     , NPP     , FVEGMP  , SALB    , & ! OUT : 
             QSNBOT  , PONDING , PONDING1, PONDING2, RSSUN   , RSSHA   , & ! OUT : 
             BGAP    , WGAP    , CHV     , CHB     , EMISSI  ,           & ! OUT : 
@@ -1031,26 +1034,21 @@ CONTAINS
              ETRANXY  (I,J)                = ETRAN
              FSAXY    (I,J)                = FSA
              FIRAXY   (I,J)                = FIRA
-             ! "APAR" in Noah-MP is the absorbed PAR times LAIFRA with LAIFRA
-             ! = (ELAI)/(ELAI+ESAI), so the APAR fraction going to leaves, not
-             ! green stems. This is corrected here in the output
-             IF (PLAI .eq. 0.0) THEN
-                 APARXY   (I,J)                = 0.0
-             ELSE
-                 APARXY   (I,J)                = APAR * (PSAI + PLAI) / PLAI
-             ENDIF
+             ! The variable APAR in Noah-MP is per leaf area, PSAV is per ground area
+             APARXY   (I,J)                = PSAV
              ! the photosynthetically active radiation in Noah-MP is the
              ! visible fraction of SWDOWN, which is 0.5 (see SUBROUTINE
              ! ATMOSPHERE, where SOLAD and SOLAI are set)
              PARXY    (I,J)                = SWDOWN(I, J) * 0.5
-             IF (SWDN .eq. 0.0) THEN
-                 FAPARXY(I, J) = 0.0
+             IF (SWDOWN(I,J) .eq. 0.0) THEN
+                 FAPARXY(I, J) = LIS_undef_value
              ELSE
                  FAPARXY(I, J) = APARXY(I, J) / PARXY(I, J)
              ENDIF
              PSNXY    (I,J)                = PSN
              SAVXY    (I,J)                = SAV
              SAGXY    (I,J)                = SAG
+             PSAVXY    (I,J)               = PSAV
              RSSUNXY  (I,J)                = RSSUN
              RSSHAXY  (I,J)                = RSSHA
              LAISUN                        = MAX(LAISUN, 0.0)

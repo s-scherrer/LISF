@@ -211,6 +211,7 @@ subroutine NoahMP401_main(n)
     real                 :: tmp_psn                ! total photosynthesis [+] [umol co2/m2/s]
     real                 :: tmp_sav                ! solar radiation absorbed by vegetation [W/m2]
     real                 :: tmp_sag                ! solar radiation absorbed by ground [W/m2]
+    real                 :: tmp_psav               ! photosyn. active solar radiation absorbed by vegetation [W/m2]
     real                 :: tmp_rssun              ! sunlit leaf stomatal resistance [s/m]
     real                 :: tmp_rssha              ! shaded leaf stomatal resistance [s/m]
     real                 :: tmp_bgap               ! between gap fraction [-]
@@ -738,6 +739,7 @@ subroutine NoahMP401_main(n)
                                    tmp_psn               , & ! out   - total photosynthesis [+] [umol co2/m2/s]
                                    tmp_sav               , & ! out   - solar radiation absorbed by vegetation [W/m2]
                                    tmp_sag               , & ! out   - solar radiatiob absorbed by ground [W/m2]
+                                   tmp_psav              , & ! out   - photosyn. active solar radiation absorbed by vegetation [W/m2]
                                    tmp_rssun             , & ! out   - sunlit leaf stomatal resistance [s/m]
                                    tmp_rssha             , & ! out   - shaded leaf stomatal resistance [s/m]
                                    tmp_bgap              , & ! out   - between gap fraction [-]
@@ -863,6 +865,7 @@ subroutine NoahMP401_main(n)
             NOAHMP401_struc(n)%noahmp401(t)%psn       = tmp_psn
             NOAHMP401_struc(n)%noahmp401(t)%sav       = tmp_sav
             NOAHMP401_struc(n)%noahmp401(t)%sag       = tmp_sag
+            NOAHMP401_struc(n)%noahmp401(t)%psav      = tmp_psav
             NOAHMP401_struc(n)%noahmp401(t)%rssun     = tmp_rssun
             NOAHMP401_struc(n)%noahmp401(t)%rssha     = tmp_rssha
             NOAHMP401_struc(n)%noahmp401(t)%bgap      = tmp_bgap

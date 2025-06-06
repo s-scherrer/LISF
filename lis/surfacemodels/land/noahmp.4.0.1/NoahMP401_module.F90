@@ -299,6 +299,8 @@ module NoahMP401_module
 !     solar radiation absorbed by vegetation. unit: W/m2
 !   \item[sag]
 !     solar radiation absorbed by ground. unit: W/m2
+!   \item[psav]
+!     photosyn. active solar radiation absorbed by vegetation. unit: W/m2
 !   \item[rssun]
 !     sunlit leaf stomatal resistance. unit: s/m
 !   \item[rssha]
@@ -489,6 +491,7 @@ module NoahMP401_module
         real               :: psn
         real               :: sav
         real               :: sag
+        real               :: psav
         real               :: rssun
         real               :: rssha
         real               :: bgap
