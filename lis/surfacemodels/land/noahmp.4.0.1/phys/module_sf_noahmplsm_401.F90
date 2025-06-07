@@ -2868,7 +2868,6 @@ ENDIF   ! CROPTYPE == 0
     SAG = 0.
     SAV = 0.
     FSA = 0.
-    PSAV = CAD(1) + CAI(1)
 
 ! loop over nband wavebands
 
@@ -2892,6 +2891,8 @@ ENDIF   ! CROPTYPE == 0
     SAG = SAG + ABS
     FSA = FSA + ABS
   END DO
+
+  PSAV = CAD(1) + CAI(1)
 
 ! partition visible canopy absorption to sunlit and shaded fractions
 ! to get average absorbed par for sunlit and shaded leaves
