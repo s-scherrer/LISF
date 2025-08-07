@@ -1,47 +1,50 @@
 !-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
 ! NASA Goddard Space Flight Center
 ! Land Information System Framework (LISF)
-! Version 7.5
+! Version 7.3
 !
-! Copyright (c) 2024 United States Government as represented by the
+! Copyright (c) 2020 United States Government as represented by the
 ! Administrator of the National Aeronautics and Space Administration.
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
 !BOP
-! !ROUTINE: NoahMP401_qc_soilmobs
-! \label{NoahMP401_qc_soilmobs}
+! !ROUTINE: noahmp401_qc_VODobs
+! \label{noahmp401_qc_VODobs}
 !
 ! !REVISION HISTORY:
-! 25Feb2008: Sujay Kumar: Initial Specification
-! 15 Dec 2018: Mahdi Navari; Modified for NoahMP401
-! 15 Jun 2020: Yonghwan Kwon: Modified vegetation fraction threshold 
+! 26/03/2021 Sara Modanesi: Initial specifications
+! 12/05/2021 Sara Modanesi: added specifications for Sig0VV S1 obs only and removed flag for veg. cover
+! 18/06/2021 Michel Bechtold: assimilation flag for urban and water tiles
+! 16/03/2022 Samuel Scherrer: adapted for VOD
 !
 ! !INTERFACE:
-subroutine NoahMP401_qc_soilmobs(n,k,OBS_State)
+subroutine noahmp401_qc_VODobs(n,k,OBS_State)
 ! !USES:
   use ESMF
   use LIS_coreMod
   use LIS_logMod,  only : LIS_verify
   use LIS_constantsMod, only : LIS_CONST_TKFRZ
   use LIS_DAobservationsMod
-  use NoahMP401_lsmMod
-  !use module_sf_noahlsm_36  !, only: MAXSMC !MN
-  !use module_sf_noahmpdrv_401, only: parameters
+  use noahmp401_lsmMod
   use NOAHMP_TABLES_401, ONLY : SMCMAX_TABLE,SMCWLT_TABLE
+#if defined(RTMS)
+  use VODOO_Mod, only : vodoo_struc
+#endif
+
 
   implicit none
 ! !ARGUMENTS: 
   integer, intent(in)      :: n
   integer, intent(in)      :: k
   type(ESMF_State)         :: OBS_State
+#if defined(RTMS)
 !
 ! !DESCRIPTION:
 !
 !  This subroutine performs any model-based QC of the observation 
-!  prior to data assimilation. Here the soil moisture observations
+!  prior to data assimilation. Here the backscatter observations
 !  are flagged when LSM indicates that (1) rain is falling (2)
 !  soil is frozen or (3) ground is fully or partially covered 
-!  with snow MN:(4) ground is covered with vegatation (more than 50%). 
 !  
 !  The arguments are: 
 !  \begin{description}
@@ -50,17 +53,18 @@ subroutine NoahMP401_qc_soilmobs(n,k,OBS_State)
 !  \end{description}
 !
 !EOP
-  type(ESMF_Field)         :: obs_sm_field
+  type(ESMF_Field)         :: vodField
 
-  real, pointer            :: smobs(:)
+  real, pointer            :: obsl(:)
   integer                  :: t
   integer                  :: gid
   integer                  :: status
   real                     :: lat,lon
 
 ! mn
-  integer                 :: SOILTYP           ! soil type index [-]
- real                     :: smc1(LIS_rc%npatch(n,LIS_rc%lsm_index))
+  integer                  :: SOILTYP           ! soil type index [-]
+  real                     :: rtm_valid(LIS_rc%npatch(n,LIS_rc%lsm_index))
+  real                     :: smc1(LIS_rc%npatch(n,LIS_rc%lsm_index))
   real                     :: smc2(LIS_rc%npatch(n,LIS_rc%lsm_index))
   real                     :: smc3(LIS_rc%npatch(n,LIS_rc%lsm_index))
   real                     :: smc4(LIS_rc%npatch(n,LIS_rc%lsm_index))
@@ -76,10 +80,11 @@ subroutine NoahMP401_qc_soilmobs(n,k,OBS_State)
   real                     :: SMCMAX(LIS_rc%npatch(n,LIS_rc%lsm_index))
   real                     :: SMCWLT(LIS_rc%npatch(n,LIS_rc%lsm_index))
 
+  real                     :: rtm_valid_obs(LIS_rc%obs_ngrid(k))
   real                     :: rainf_obs(LIS_rc%obs_ngrid(k))
   real                     :: sneqv_obs(LIS_rc%obs_ngrid(k))
   real                     :: sca_obs(LIS_rc%obs_ngrid(k))
-  real                     :: shdfac_obs(LIS_rc%obs_ngrid(k))
+!  real                     :: shdfac_obs(LIS_rc%obs_ngrid(k)) !commented for now
   real                     :: t1_obs(LIS_rc%obs_ngrid(k))
   real                     :: smcwlt_obs(LIS_rc%obs_ngrid(k))
   real                     :: smcmax_obs(LIS_rc%obs_ngrid(k))
@@ -97,16 +102,26 @@ subroutine NoahMP401_qc_soilmobs(n,k,OBS_State)
   real                     :: stc4_obs(LIS_rc%obs_ngrid(k))
   real                     :: vegt_obs(LIS_rc%obs_ngrid(k))
 
-
-  call ESMF_StateGet(OBS_State,"Observation01",obs_sm_field,&
-       rc=status)
+!-----this part is derived from ./lis/dataassim/obs/s1_sigma/read_S1_sigma.F90
+  call ESMF_StateGet(OBS_State,"Observation01",vodField,&
+       rc=status) !
   call LIS_verify(status,&
-       "ESMF_StateGet failed in NoahMP401_qc_soilmobs")
-  call ESMF_FieldGet(obs_sm_field,localDE=0,farrayPtr=smobs,rc=status)
+       "ESMF_StateGet failed in noahmp401_qc_VODobs")
+
+  call ESMF_FieldGet(vodField,localDE=0,farrayPtr=obsl,rc=status)
   call LIS_verify(status,& 
-       "ESMF_FieldGet failed in NoahMP401_qc_soilmobs")
-  
+       "ESMF_FieldGet failed in noahmp401_qc_VODobs")
+
+!---------------------------------------------------------------------------  
+
   do t=1, LIS_rc%npatch(n,LIS_rc%lsm_index)
+     if (vodoo_struc(n)%isvalid(n,t)) then
+         ! setting to a real because conversion to obs space is only defined
+         ! for reals
+         rtm_valid(t) = 1.0
+     else
+         rtm_valid(t) = 0.0
+     endif
      smc1(t) = noahmp401_struc(n)%noahmp401(t)%smc(1)
      smc2(t) = noahmp401_struc(n)%noahmp401(t)%smc(2)
      smc3(t) = noahmp401_struc(n)%noahmp401(t)%smc(3)
@@ -121,26 +136,21 @@ subroutine NoahMP401_qc_soilmobs(n,k,OBS_State)
        !          temperature and then soil temeprature.
        !          But the number of snow layers changes from 0 to 3 
 !---------------------------------------------------------------------------------------------------------
- !    stc1(t) = noahmp401_struc(n)%noahmp401(t)%sstc(noahmp401_struc(n)%nsnow+1)
- !    stc2(t) = noahmp401_struc(n)%noahmp401(t)%sstc(noahmp401_struc(n)%nsnow+2)
- !    stc3(t) = noahmp401_struc(n)%noahmp401(t)%sstc(noahmp401_struc(n)%nsnow+3)
- !    stc4(t) = noahmp401_struc(n)%noahmp401(t)%sstc(noahmp401_struc(n)%nsnow+4)
-
-    stc1(t) = noahmp401_struc(n)%noahmp401(t)%tslb(1)
+     stc1(t) = noahmp401_struc(n)%noahmp401(t)%tslb(1)
      stc2(t) = noahmp401_struc(n)%noahmp401(t)%tslb(2)
      stc3(t) = noahmp401_struc(n)%noahmp401(t)%tslb(3)
      stc4(t) = noahmp401_struc(n)%noahmp401(t)%tslb(4)
 
      vegt(t) = noahmp401_struc(n)%noahmp401(t)%vegetype
 
-     !SOILTYP = noahmp401_struc(n)%noahmp401(t)%soiltype        
-     !SMCMAX(t)  =  parameters%SMCMAX(SOILTYP)  !  SMCMAX(t)  = MAXSMC (SOILTYP) 
-     !SMCWLT(t)  =  parameters%SMCWLT(SOILTYP)   ! SMCWLT(t) = WLTSMC (SOILTYP)
-     SOILTYP = NOAHMP401_struc(n)%noahmp401(t)%soiltype
-     SMCMAX(t)  = SMCMAX_TABLE(SOILTYP)
-     SMCWLT(t)  = SMCWLT_TABLE(SOILTYP)
+     SOILTYP = NOAHMP401_struc(n)%noahmp401(t)%soiltype        
+     SMCMAX(t) = SMCMAX_TABLE(SOILTYP) 
+     SMCWLT(t) = SMCWLT_TABLE(SOILTYP)
   enddo
 
+  call LIS_convertPatchSpaceToObsSpace(n,k,&       
+       LIS_rc%lsm_index, &
+       rtm_valid, rtm_valid_obs)
   call LIS_convertPatchSpaceToObsSpace(n,k,&       
        LIS_rc%lsm_index, &
        noahmp401_struc(n)%noahmp401(:)%prcp,&
@@ -151,12 +161,12 @@ subroutine NoahMP401_qc_soilmobs(n,k,OBS_State)
        sneqv_obs)
   call LIS_convertPatchSpaceToObsSpace(n,k,&
        LIS_rc%lsm_index, &
-       noahmp401_struc(n)%noahmp401(:)%snowc,&   ! MP36 fsno
+       noahmp401_struc(n)%noahmp401(:)%snowc,&
        sca_obs)
-  call LIS_convertPatchSpaceToObsSpace(n,k,&
-       LIS_rc%lsm_index, &
-       noahmp401_struc(n)%noahmp401(:)%fveg,&
-       shdfac_obs)
+!  call LIS_convertPatchSpaceToObsSpace(n,k,&  !out-commented for now
+!       LIS_rc%lsm_index, &
+!       noahmp401_struc(n)%noahmp401(:)%fveg,&
+!       shdfac_obs)
   call LIS_convertPatchSpaceToObsSpace(n,k,&
        LIS_rc%lsm_index, &
        noahmp401_struc(n)%noahmp401(:)%tg,&
@@ -223,60 +233,62 @@ subroutine NoahMP401_qc_soilmobs(n,k,OBS_State)
        vegt,&
        vegt_obs)
 
-  do t = 1,LIS_rc%obs_ngrid(k)
+   do t = 1,LIS_rc%obs_ngrid(k)
+       !------------------start loop considering one obs--------------------------
+       if(rtm_valid_obs(t).ne.1.0) then
+           obsl(t) = LIS_rc%udef
+       endif
 
-     if(smobs(t).ne.LIS_rc%udef) then 
-! MN: check for rain
-        if(rainf_obs(t).gt.3E-6) then   ! Var name Noah36 --> rainf 
-           smobs(t) = LIS_rc%udef
-!           print*, 'rainf ',gid,t,noahmp401_struc(n)%noahmp401(t)%prcp
-! MN: check for frozen soil
-        elseif(abs(smc1_obs(t)- &
-             sh2o1_obs(t)).gt.0.0001) then
-           smobs(t) = LIS_rc%udef
-        elseif(abs(smc2_obs(t)- &
-             sh2o2_obs(t)).gt.0.0001) then
-           smobs(t) = LIS_rc%udef
-        elseif(abs(smc3_obs(t)- &
-             sh2o3_obs(t)).gt.0.0001) then
-           smobs(t) = LIS_rc%udef
-        elseif(abs(smc4_obs(t)- &
-             sh2o4_obs(t)).gt.0.0001) then
-           smobs(t) = LIS_rc%udef
-        elseif(stc1_obs(t).le.LIS_CONST_TKFRZ) then
-           smobs(t) = LIS_rc%udef
-        elseif(stc2_obs(t).le.LIS_CONST_TKFRZ) then
-           smobs(t) = LIS_rc%udef
-        elseif(stc3_obs(t).le.LIS_CONST_TKFRZ) then
-           smobs(t) = LIS_rc%udef
-        elseif(stc4_obs(t).le.LIS_CONST_TKFRZ) then
-           smobs(t) = LIS_rc%udef 
-        elseif(t1_obs(t).le.LIS_CONST_TKFRZ) then ! Var name Noah36 --> t1
-           smobs(t) = LIS_rc%udef
-        elseif((vegt_obs(t).le.4).and.(NOAHMP401_struc(n)%forestDA_opt.eq..false.)) then !forest types ! Var name Noah36 --> vegt
-           smobs(t) = LIS_rc%udef
- ! MN: check for snow  
-        elseif(sneqv_obs(t).gt.0.001) then 
-           smobs(t) = LIS_rc%udef
-        elseif(sca_obs(t).gt.0.0001) then  ! Var name sca 
-           smobs(t) = LIS_rc%udef
- ! MN: check for green vegetation fraction NOTE: threshold incerased from 0.5 to 0.7 
-        elseif((shdfac_obs(t).gt.0.9).and.(NOAHMP401_struc(n)%forestDA_opt.eq..false.)) then  
-                                           ! var name Noah36 shdfac 12-month green veg. frac.  
-                                           ! The threshold has been tuned for spatial coverage
-                                           ! Higher than Noah.3.9 because max greenness is used for shdfac in Noah-MP.4.0.1
-                                           ! while Noah3.9 uses monthly climatological greenness. 
-           smobs(t) = LIS_rc%udef        
-!too close to the tails, could be due to scaling, so reject. 
-        elseif(NOAHMP401_struc(n)%QC_opt.eq..true.) then
-            if(smcmax_obs(t)-smobs(t).lt.0.02) then 
-                 smobs(t) = LIS_rc%udef
-            elseif(smobs(t) - smcwlt_obs(t).lt.0.02) then 
-                 smobs(t) = LIS_rc%udef
-            endif
-        endif
-     endif
-  enddo
+       if(obsl(t).ne.LIS_rc%udef) then 
+          ! MN: check for rain
+          if(rainf_obs(t).gt.3E-6) then   ! Var name Noah36 --> rainf 
+              obsl(t) = LIS_rc%udef
+          ! MN: check for frozen soil
+          elseif(abs(smc1_obs(t)- &
+               sh2o1_obs(t)).gt.0.0001) then
+             obsl(t) = LIS_rc%udef
+          elseif(abs(smc2_obs(t)- &
+               sh2o2_obs(t)).gt.0.0001) then
+             obsl(t) = LIS_rc%udef
+          elseif(abs(smc3_obs(t)- &
+               sh2o3_obs(t)).gt.0.0001) then
+             obsl(t) = LIS_rc%udef
+          elseif(abs(smc4_obs(t)- &
+               sh2o4_obs(t)).gt.0.0001) then
+             obsl(t) = LIS_rc%udef
+          elseif(stc1_obs(t).le.LIS_CONST_TKFRZ) then
+             obsl(t) = LIS_rc%udef
+          elseif(stc2_obs(t).le.LIS_CONST_TKFRZ) then
+             obsl(t) = LIS_rc%udef
+          elseif(stc3_obs(t).le.LIS_CONST_TKFRZ) then
+             obsl(t) = LIS_rc%udef
+          elseif(stc4_obs(t).le.LIS_CONST_TKFRZ) then
+             obsl(t) = LIS_rc%udef 
+          elseif(t1_obs(t).le.LIS_CONST_TKFRZ) then ! Var name Noah36 --> t1
+             obsl(t) = LIS_rc%udef
+  !        elseif(vegt_obs(t).le.4) then !forest types ! Var name Noah36 --> vegt
+  !           obsl(t) = LIS_rc%udef
+          elseif(vegt_obs(t).eq.13) then !urban ! Var name Noah36 --> vegt
+             obsl(t) = LIS_rc%udef
+          elseif(vegt_obs(t).eq.17) then !urban ! Var name Noah36 --> vegt
+             obsl(t) = LIS_rc%udef
+   ! MN: check for snow  
+          elseif(sneqv_obs(t).gt.0.001) then 
+             obsl(t) = LIS_rc%udef
+          elseif(sca_obs(t).gt.0.0001) then  ! Var name sca 
+             obsl(t) = LIS_rc%udef
+   ! MN: check for green vegetation fraction NOTE: threshold incerased from 0.5 to 0.7 !commented out for now
+   !      elseif(shdfac_obs(t).gt.0.7) then  ! var name Noah36 shdfac 12-month green veg. frac.  
+   !          obsl(t) = LIS_rc%udef        
+  !too close to the tails, could be due to scaling, so reject. !commented out for
+  !now. It was written for soil moisture
+  !        elseif(smcmax_obs(t)-obsl(t).lt.0.02) then 
+  !           obsl(t) = LIS_rc%udef
+  !        elseif(obsl(t) - smcwlt_obs(t).lt.0.02) then 
+  !           obsl(t) = LIS_rc%udef
+          endif
+       endif
+   enddo
+#endif
 
-end subroutine NoahMP401_qc_soilmobs
-
+end subroutine noahmp401_qc_VODobs
