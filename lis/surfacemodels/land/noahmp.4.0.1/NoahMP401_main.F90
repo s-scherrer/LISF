@@ -202,10 +202,13 @@ subroutine NoahMP401_main(n)
     real                 :: tmp_snowf              ! snowfall rate [kg s-1]
     real                 :: tmp_fsa                ! total absorbed solar radiation [W/m2]
     real                 :: tmp_fira               ! total net longwave radiation [+ to atm] [W/m2]
-    real                 :: tmp_apar               ! photosyn active energy by canopy [W/m2]
+    real                 :: tmp_apar               ! photosyn active energy absorbed by canopy [W/m2]
+    real                 :: tmp_par                ! total photosyn active energy [W/m2]
+    real                 :: tmp_fapar              ! fraction of absorbed photosyntheticaly active energy [-]
     real                 :: tmp_psn                ! total photosynthesis [+] [umol co2/m2/s]
     real                 :: tmp_sav                ! solar radiation absorbed by vegetation [W/m2]
     real                 :: tmp_sag                ! solar radiation absorbed by ground [W/m2]
+    real                 :: tmp_psav               ! photosyn. active solar radiation absorbed by vegetation [W/m2]
     real                 :: tmp_rssun              ! sunlit leaf stomatal resistance [s/m]
     real                 :: tmp_rssha              ! shaded leaf stomatal resistance [s/m]
     real                 :: tmp_bgap               ! between gap fraction [-]
@@ -728,10 +731,11 @@ subroutine NoahMP401_main(n)
                                    tmp_snowf             , & ! out   - snowfall rate [kg s-1]
                                    tmp_fsa               , & ! out   - total absorbed solar radiation [W/m2]
                                    tmp_fira              , & ! out   - total net longwave radiation [+ to atm] [W/m2]
-                                   tmp_apar              , & ! out   - photosyn active energy by canopy [W/m2]
+                                   tmp_apar              , & ! out   - photosyn active energy absorbed by canopy [W/m2]
                                    tmp_psn               , & ! out   - total photosynthesis [+] [umol co2/m2/s]
                                    tmp_sav               , & ! out   - solar radiation absorbed by vegetation [W/m2]
                                    tmp_sag               , & ! out   - solar radiatiob absorbed by ground [W/m2]
+                                   tmp_psav              , & ! out   - photosyn. active solar radiation absorbed by vegetation [W/m2]
                                    tmp_rssun             , & ! out   - sunlit leaf stomatal resistance [s/m]
                                    tmp_rssha             , & ! out   - shaded leaf stomatal resistance [s/m]
                                    tmp_bgap              , & ! out   - between gap fraction [-]
@@ -762,6 +766,8 @@ subroutine NoahMP401_main(n)
                                    tmp_rivsto            , & ! in   - river storage [m/s] 
                                    tmp_fldsto            , & ! in   - flood storage [m/s]
                                    tmp_fldfrc            , & ! in   - flooded fraction [-]
+                                   tmp_par               , & ! out   - total photosyn active energy [W/m2]
+                                   tmp_fapar             , & ! out   - fraction of absorbed photosyn active energy by canopy [-]
                                    NOAHMP401_struc(n)%noahmp401(t)%param, & ! out   - relative soil moisture [-]
                                    tmp_sfcheadrt         , & 
                                    tmp_infxs1rt          , &
@@ -855,9 +861,12 @@ subroutine NoahMP401_main(n)
             NOAHMP401_struc(n)%noahmp401(t)%fsa       = tmp_fsa
             NOAHMP401_struc(n)%noahmp401(t)%fira      = tmp_fira
             NOAHMP401_struc(n)%noahmp401(t)%apar      = tmp_apar
+            NOAHMP401_struc(n)%noahmp401(t)%par       = tmp_par
+            NOAHMP401_struc(n)%noahmp401(t)%fapar     = tmp_fapar
             NOAHMP401_struc(n)%noahmp401(t)%psn       = tmp_psn
             NOAHMP401_struc(n)%noahmp401(t)%sav       = tmp_sav
             NOAHMP401_struc(n)%noahmp401(t)%sag       = tmp_sag
+            NOAHMP401_struc(n)%noahmp401(t)%psav      = tmp_psav
             NOAHMP401_struc(n)%noahmp401(t)%rssun     = tmp_rssun
             NOAHMP401_struc(n)%noahmp401(t)%rssha     = tmp_rssha
             NOAHMP401_struc(n)%noahmp401(t)%bgap      = tmp_bgap
@@ -1201,6 +1210,14 @@ subroutine NoahMP401_main(n)
             ![ 61] output variable: psn (unit=umol/m2/s ). ***  total photosynthesis of CO2 [+]
             call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_PSCO2, value = NOAHMP401_struc(n)%noahmp401(t)%psn, &
                                               vlevel=1, unit="umol m-2 s-1", direction="IN", surface_type = LIS_rc%lsm_index)
+
+            ![ 62] output variable: par (unit=W/m2). ***  total photosynthesis active energy
+            call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_PAR, value = NOAHMP401_struc(n)%noahmp401(t)%par, &
+                                              vlevel=1, unit="W m-2", direction="IN", surface_type = LIS_rc%lsm_index)
+
+            ![ 62] output variable: fapar (unit=W/m2). ***  fration of absorbed photosynthesically active energy
+            call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_FAPAR, value = NOAHMP401_struc(n)%noahmp401(t)%fapar, &
+                                              vlevel=1, unit="-", direction="-", surface_type = LIS_rc%lsm_index)
 
             !![ 62] output variable: sav (unit=W/m2 ). ***  solar radiation absorbed by vegetation
             !call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_SAV, value = NOAHMP401_struc(n)%noahmp401(t)%sav, &

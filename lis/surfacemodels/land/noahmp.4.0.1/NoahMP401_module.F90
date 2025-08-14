@@ -289,12 +289,18 @@ module NoahMP401_module
 !     total net longwave radiation [+ to atm]. unit: W/m2
 !   \item[apar]
 !     photosyn active energy by canopy. unit: W/m2
+!   \item[par]
+!     photosyn active energy. unit: W/m2
+!   \item[fapar]
+!     fraction of photosyn active energy by canopy. unit: -
 !   \item[psn]
 !     total photosynthesis [+]. unit: umol co2/m2/s
 !   \item[sav]
 !     solar radiation absorbed by vegetation. unit: W/m2
 !   \item[sag]
 !     solar radiation absorbed by ground. unit: W/m2
+!   \item[psav]
+!     photosyn. active solar radiation absorbed by vegetation. unit: W/m2
 !   \item[rssun]
 !     sunlit leaf stomatal resistance. unit: s/m
 !   \item[rssha]
@@ -481,9 +487,12 @@ module NoahMP401_module
         real               :: fsa
         real               :: fira
         real               :: apar
+        real               :: par
+        real               :: fapar
         real               :: psn
         real               :: sav
         real               :: sag
+        real               :: psav
         real               :: rssun
         real               :: rssha
         real               :: bgap

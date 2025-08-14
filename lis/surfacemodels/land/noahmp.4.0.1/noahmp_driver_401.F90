@@ -44,14 +44,14 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
      trad    , nee     , gpp     , npp     , fveg    , runsf   , & ! out Noah MP only
      runsb   , ecan    , edir    , etran   ,                     & ! out Noah MP only
      rainf   , snowf   , fsa     , fira    ,                     & ! out Noah MP only
-     apar    , psn     , sav     , sag     , rssun   , rssha   , & ! out Noah MP only
+     apar    , psn     , sav     , sag     , psav    , rssun   , rssha   , & ! out Noah MP only
      bgap    , wgap    , tgb     , tgv     , chv     , chb     , & ! out Noah MP only
      shg     , shc     , shb     , evg     , evb     , ghv     , & ! out Noah MP only
      ghb     , irg     , irc     , irb     , tr      , evc     , & ! out Noah MP only
      fgev_pet, fcev_pet, fctr_pet,                               & ! PET 
      chleaf  , chuc    , chv2    , chb2    , relsmc,             &
      !ag (12Sep2019)
-     rivsto, fldsto, fldfrc,&
+     rivsto, fldsto, fldfrc, par, fapar,&
      parameters ,                                                & ! out Noah MP only
      sfcheadrt , INFXSRT, soldrain                               & ! For WRF-Hydro
 #ifdef PARFLOW
@@ -228,9 +228,12 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
   real, intent(out) :: fsa                    ! total absorbed solar radiation (w/m2)
   real, intent(out) :: fira                   ! total net longwave rad (w/m2) [+ to atm]
   real, intent(out) :: apar                   ! photosyn active energy by canopy (w/m2)
+  real, intent(out) :: par                    ! photosyn active energy (w/m2)
+  real, intent(out) :: fapar                  ! fraction of photosyn active energy by canopy (-)
   real, intent(out) :: psn                    ! total photosynthesis (umol co2/m2/s) [+]
   real, intent(out) :: sav                    ! solar rad absorbed by veg. (w/m2)
   real, intent(out) :: sag                    ! solar rad absorbed by ground (w/m2)
+  real, intent(out) :: psav                   ! photosyn. active solar rad absorbed by veg. (w/m2)
   real, intent(out) :: rssun                  ! sunlit leaf stomatal resistance (s/m)
   real, intent(out) :: rssha                  ! shaded leaf stomatal resistance (s/m)
   real, intent(out) :: bgap                   ! between gap fraction
@@ -439,9 +442,12 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
   real, dimension(1,1) :: fsaout
   real, dimension(1,1) :: firaout
   real, dimension(1,1) :: aparout
+  real, dimension(1,1) :: parout
+  real, dimension(1,1) :: faparout
   real, dimension(1,1) :: psnout
   real, dimension(1,1) :: savout
   real, dimension(1,1) :: sagout
+  real, dimension(1,1) :: psavout
   real, dimension(1,1) :: rssunout
   real, dimension(1,1) :: rsshaout
   real, dimension(1,1) :: bgapout 
@@ -706,9 +712,12 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
   fsaout(1,1)   = fsa
   firaout(1,1)  = fira
   aparout(1,1)  = apar
+  parout(1,1)  = par
+  faparout(1,1)  = fapar
   psnout(1,1)   = psn
   savout(1,1)   = sav
   sagout(1,1)   = sag
+  psavout(1,1)   = psav
   rssunout(1,1) = rssun
   rsshaout(1,1) = rssha
   bgapout(1,1)  = bgap
@@ -790,12 +799,13 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
        t2mvout , t2mbout , q2mvout , q2mbout , relsmcout,          & ! out Noah MP only
        tradout , neeout  , gppout  , nppout  , fvegout , runsfout, & ! out Noah MP only
        runsbout, ecanout , edirout , etranout, fsaout  , firaout , & ! out Noah MP only
-       aparout , psnout  , savout  , sagout  , rssunout, rsshaout, & ! out Noah MP only
+       aparout , psnout  , savout  , sagout  , psavout , rssunout, rsshaout, & ! out Noah MP only
        bgapout , wgapout , tgvout  , tgbout  , chvout  , chbout  , & ! out Noah MP only
        shgout  , shcout  , shbout  , evgout  , evbout  , ghvout  , & ! out Noah MP only
        ghbout  , irgout  , ircout  , irbout  , trout   , evcout  , & ! out Noah MP only
        fgev_petout, fcev_petout, fctr_petout,                      & ! PET 
        chleafout  , chucout , chv2out , chb2out , rsout , fpice  , & ! out Noah MP only
+       parout, faparout,                                           &
        parameters, &
        rivstoin,fldstoin,fldfrcin,                                 &
 #ifdef WRF_HYDRO
@@ -893,9 +903,12 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
   fsa = fsaout(1,1)
   fira = firaout(1,1)
   apar = aparout(1,1)
+  par = parout(1,1)
+  fapar = faparout(1,1)
   psn = psnout(1,1)
   sav = savout(1,1)
   sag = sagout(1,1)
+  psav = psavout(1,1)
   rssun = rssunout(1,1)
   rssha = rsshaout(1,1)
   bgap = bgapout(1,1)
