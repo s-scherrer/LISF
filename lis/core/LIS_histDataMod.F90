@@ -4371,6 +4371,17 @@ contains
             n,1,ntiles,(/"m3/m3"/),1,(/"-"/),1,1,1)
     endif
 
+    call ESMF_ConfigFindLabel(modelSpecConfig,"RTM VOD:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_rtm_list,&
+         "RTM_VOD",&
+         "vegetation_optical_depth",&
+         "vegetation optical depth",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_RTM_COUNT,LIS_MOC_RTM_VOD,&
+            LIS_histData(n)%head_rtm_list,&
+            n,1,ntiles,(/"-"/),1,(/"-"/),1,1,1)
+    endif
+
     call ESMF_ConfigFindLabel(modelSpecConfig,"Irrigated water:",rc=rc)
     call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_irrig_list, &
          "IrrigatedWater",&
