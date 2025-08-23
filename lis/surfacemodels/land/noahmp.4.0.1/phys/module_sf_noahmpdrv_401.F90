@@ -46,7 +46,7 @@ CONTAINS
 		 GHBXY,    IRGXY,    IRCXY,     IRBXY,     TRXY,     EVCXY, & ! OUT Noah MP only
                  FGEV_PETXY, FCEV_PETXY, FCTR_PETXY,                & ! PET code from Sujay 
               CHLEAFXY,   CHUCXY,   CHV2XY,    CHB2XY, RS, FPICE,           & ! OUT Noah MP only
-                 PARXY,  FAPARXY,                                           &
+                 PARXY,                                                     &
               parameters, &
 !                 BEXP_3D,SMCDRY_3D,SMCWLT_3D,SMCREF_3D,SMCMAX_3D,          & ! placeholders to activate 3D soil
 !		 DKSAT_3D,DWSAT_3D,PSISAT_3D,QUARTZ_3D,                     &
@@ -288,7 +288,6 @@ CONTAINS
     REAL,    DIMENSION( ims:ime, 1:nsoil, jms:jme ), INTENT(OUT  ) ::  RELSMCXY  ! relative soil moisture [-]
     REAL,    INTENT(OUT) :: FPICE                                                ! snow fraction of precip
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  PARXY     ! photosyn active energy (w/m2)
-    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  FAPARXY   ! fraction of photosyn active energy by canopy (-)
     INTEGER,  INTENT(IN   )   ::     ids,ide, jds,jde, kds,kde,  &  ! d -> domain
          &                           ims,ime, jms,jme, kms,kme,  &  ! m -> memory
          &                           its,ite, jts,jte, kts,kte      ! t -> tile
@@ -398,7 +397,6 @@ CONTAINS
     REAL                                :: FIRA         ! total net longwave rad (w/m2) [+ to atm]
     REAL                                :: APAR         ! photosyn active energy by canopy (w/m2)
     REAL                                :: PAR          ! photosyn active energy (w/m2)
-    REAL                                :: FAPAR        ! fraction of photosyn active energy by canopy (-)
     REAL                                :: PSN          ! total photosynthesis (umol co2/m2/s) [+]
     REAL                                :: SAV          ! solar rad absorbed by veg. (w/m2)
     REAL                                :: SAG          ! solar rad absorbed by ground (w/m2)
@@ -856,7 +854,6 @@ CONTAINS
          ETRAN  = LIS_undef_value 
          APAR   = LIS_undef_value 
          PAR    = LIS_undef_value 
-         FAPAR  = LIS_undef_value 
          PSN    = LIS_undef_value 
          SAV    = LIS_undef_value 
          PSAV   = LIS_undef_value 
@@ -1038,21 +1035,16 @@ CONTAINS
              ETRANXY  (I,J)                = ETRAN
              FSAXY    (I,J)                = FSA
              FIRAXY   (I,J)                = FIRA
+             APARXY   (I,J)                = APAR
              ! The variable APAR in Noah-MP is per leaf area, PSAV is per ground area
-             APARXY   (I,J)                = PSAV
+             PSAVXY   (I,J)                = PSAV
              ! the photosynthetically active radiation in Noah-MP is the
              ! visible fraction of SWDOWN, which is 0.5 (see SUBROUTINE
              ! ATMOSPHERE, where SOLAD and SOLAI are set)
              PARXY    (I,J)                = SWDOWN(I, J) * 0.5
-             IF (SWDOWN(I,J) .eq. 0.0) THEN
-                 FAPARXY(I, J) = LIS_undef_value
-             ELSE
-                 FAPARXY(I, J) = APARXY(I, J) / PARXY(I, J)
-             ENDIF
              PSNXY    (I,J)                = PSN
              SAVXY    (I,J)                = SAV
              SAGXY    (I,J)                = SAG
-             PSAVXY    (I,J)               = PSAV
              RSSUNXY  (I,J)                = RSSUN
              RSSHAXY  (I,J)                = RSSHA
              LAISUN                        = MAX(LAISUN, 0.0)

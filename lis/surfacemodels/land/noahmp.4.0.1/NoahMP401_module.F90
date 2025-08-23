@@ -486,13 +486,12 @@ module NoahMP401_module
         real               :: snowf
         real               :: fsa
         real               :: fira
-        real               :: apar
-        real               :: par
-        real               :: fapar
+        real               :: apar  ! absorbed PAR per canopy(!) area
+        real               :: fapar ! fraction of absorbed PAR
+        real               :: daily_fapar ! daily average of fapar
         real               :: psn
         real               :: sav
         real               :: sag
-        real               :: psav
         real               :: rssun
         real               :: rssha
         real               :: bgap

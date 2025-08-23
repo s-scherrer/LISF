@@ -204,9 +204,9 @@ subroutine NoahMP401_main(n)
     real                 :: tmp_fira               ! total net longwave radiation [+ to atm] [W/m2]
     real                 :: tmp_apar               ! photosyn active energy absorbed by canopy [W/m2]
     real                 :: tmp_par                ! total photosyn active energy [W/m2]
-    real                 :: tmp_fapar              ! fraction of absorbed photosyntheticaly active energy [-]
     real                 :: tmp_psn                ! total photosynthesis [+] [umol co2/m2/s]
     real                 :: tmp_sav                ! solar radiation absorbed by vegetation [W/m2]
+    real                 :: tmp_psav               ! photosyn. active solar radiation absorbed by vegetation [W/m2]
     real                 :: tmp_sag                ! solar radiation absorbed by ground [W/m2]
     real                 :: tmp_psav               ! photosyn. active solar radiation absorbed by vegetation [W/m2]
     real                 :: tmp_rssun              ! sunlit leaf stomatal resistance [s/m]
@@ -262,6 +262,9 @@ subroutine NoahMP401_main(n)
     real :: tmp_q2sat, tmp_es
     character*3 :: fnest
     REAL, PARAMETER:: LVH2O = 2.501000E+6 ! Latent heat for evapo for water  
+
+    ! SG for FAPAR DA
+    real                 :: tmp_fapar              ! fraction of absorbed photosyntheticaly active energy [-]
 
     allocate( tmp_sldpth( NOAHMP401_struc(n)%nsoil ) )
     allocate( tmp_shdfac_monthly( 12 ) )
@@ -767,7 +770,6 @@ subroutine NoahMP401_main(n)
                                    tmp_fldsto            , & ! in   - flood storage [m/s]
                                    tmp_fldfrc            , & ! in   - flooded fraction [-]
                                    tmp_par               , & ! out   - total photosyn active energy [W/m2]
-                                   tmp_fapar             , & ! out   - fraction of absorbed photosyn active energy by canopy [-]
                                    NOAHMP401_struc(n)%noahmp401(t)%param, & ! out   - relative soil moisture [-]
                                    tmp_sfcheadrt         , & 
                                    tmp_infxs1rt          , &
@@ -862,7 +864,6 @@ subroutine NoahMP401_main(n)
             NOAHMP401_struc(n)%noahmp401(t)%fira      = tmp_fira
             NOAHMP401_struc(n)%noahmp401(t)%apar      = tmp_apar
             NOAHMP401_struc(n)%noahmp401(t)%par       = tmp_par
-            NOAHMP401_struc(n)%noahmp401(t)%fapar     = tmp_fapar
             NOAHMP401_struc(n)%noahmp401(t)%psn       = tmp_psn
             NOAHMP401_struc(n)%noahmp401(t)%sav       = tmp_sav
             NOAHMP401_struc(n)%noahmp401(t)%sag       = tmp_sag
@@ -1203,7 +1204,7 @@ subroutine NoahMP401_main(n)
             call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_LWUP, value = NOAHMP401_struc(n)%noahmp401(t)%fira, &
                                               vlevel=1, unit="W m-2", direction="UP", surface_type = LIS_rc%lsm_index)
 
-            ![ 60] output variable: apar (unit=W/m2). ***  photosynthesis active energy by canopy
+            ![ 60] output variable: apar (unit=W/m2). ***  photosynthesis energy by canopy
             call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_APAR, value = NOAHMP401_struc(n)%noahmp401(t)%apar, &
                                               vlevel=1, unit="W m-2", direction="IN", surface_type = LIS_rc%lsm_index)
 
@@ -1211,12 +1212,12 @@ subroutine NoahMP401_main(n)
             call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_PSCO2, value = NOAHMP401_struc(n)%noahmp401(t)%psn, &
                                               vlevel=1, unit="umol m-2 s-1", direction="IN", surface_type = LIS_rc%lsm_index)
 
-            ![ 62] output variable: par (unit=W/m2). ***  total photosynthesis active energy
-            call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_PAR, value = NOAHMP401_struc(n)%noahmp401(t)%par, &
-                                              vlevel=1, unit="W m-2", direction="IN", surface_type = LIS_rc%lsm_index)
-
             ![ 62] output variable: fapar (unit=W/m2). ***  fration of absorbed photosynthesically active energy
             call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_FAPAR, value = NOAHMP401_struc(n)%noahmp401(t)%fapar, &
+                                              vlevel=1, unit="-", direction="-", surface_type = LIS_rc%lsm_index)
+
+            ![ 62] output variable: daily fapar (unit=W/m2). ***  daily mean fration of absorbed photosynthesically active energy
+            call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_FAPAR, value = NOAHMP401_struc(n)%noahmp401(t)%daily_fapar, &
                                               vlevel=1, unit="-", direction="-", surface_type = LIS_rc%lsm_index)
 
             !![ 62] output variable: sav (unit=W/m2 ). ***  solar radiation absorbed by vegetation

@@ -399,8 +399,8 @@ module LIS_histDataMod
   public ::   LIS_MOC_VEGE2MQ2    
   public ::   LIS_MOC_BARE2MQ2    
   public ::   LIS_MOC_APAR
-  public ::   LIS_MOC_PAR
   public ::   LIS_MOC_FAPAR
+  public ::   LIS_MOC_DAILY_FAPAR  ! due to nonlinearity, daily FAPAR cannot be calculated by averaging FAPAR
   public ::   LIS_MOC_PSCO2   
   public ::   LIS_MOC_SAV   
   public ::   LIS_MOC_SAG   
@@ -933,8 +933,8 @@ module LIS_histDataMod
     integer ::  LIS_MOC_VEGE2MQ2    = -9999
     integer ::  LIS_MOC_BARE2MQ2    = -9999
     integer ::  LIS_MOC_APAR    = -9999
-    integer ::  LIS_MOC_PAR     = -9999
     integer ::  LIS_MOC_FAPAR   = -9999
+    integer ::  LIS_MOC_DAILY_FAPAR   = -9999
     integer ::  LIS_MOC_PSCO2   = -9999
     integer ::  LIS_MOC_SAV   = -9999
     integer ::  LIS_MOC_SAG   = -9999
@@ -4913,18 +4913,6 @@ contains
             model_patch=.true.)
     endif
 
-    Call ESMF_ConfigFindLabel(modelSpecConfig, "PAR:", rc = rc)
-    Call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
-         "PAR", &
-         "absorbed_photosynthesis_active_energy",   &
-         "absorbed photosynthesis active radiation energy",rc)
-    if ( rc == 1 ) then
-        call register_dataEntry(LIS_MOC_LSM_COUNT, LIS_MOC_PAR, &
-            LIS_histData(n)%head_lsm_list,&
-            n, 1, ntiles,(/"W/m2"/), 2, (/"IN ", "OUT"/),1,1,1,&
-            model_patch=.true.)
-    endif
-
     Call ESMF_ConfigFindLabel(modelSpecConfig, "FAPAR:", rc = rc)
     Call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
          "FAPAR", &
@@ -4932,6 +4920,18 @@ contains
          "fraction of absorbed photosynthesis active radiation energy by canopy",rc)
     if ( rc == 1 ) then
         call register_dataEntry(LIS_MOC_LSM_COUNT, LIS_MOC_FAPAR, &
+            LIS_histData(n)%head_lsm_list,&
+            n, 1, ntiles,(/"-"/), 1, (/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+    Call ESMF_ConfigFindLabel(modelSpecConfig, "DailyFAPAR:", rc = rc)
+    Call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "DailyFAPAR", &
+         "daily mean fraction_of_absorbed_photosynthesis_active_energy_by_canopy",   &
+         "daily mean fraction of absorbed photosynthesis active radiation energy by canopy",rc)
+    if ( rc == 1 ) then
+        call register_dataEntry(LIS_MOC_LSM_COUNT, LIS_MOC_DAILY_FAPAR, &
             LIS_histData(n)%head_lsm_list,&
             n, 1, ntiles,(/"-"/), 1, (/"-"/),1,1,1,&
             model_patch=.true.)
