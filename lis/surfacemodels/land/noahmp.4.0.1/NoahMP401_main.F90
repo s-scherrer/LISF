@@ -36,6 +36,7 @@ subroutine NoahMP401_main(n)
     use LIS_logMod, only     : LIS_logunit, LIS_endrun
     use LIS_FORC_AttributesMod
     use NoahMP401_lsmMod
+    use LIS_timeAvgMod, only : LIS_TemporalAverage_t
 
     implicit none
 ! !ARGUMENTS:
@@ -264,7 +265,12 @@ subroutine NoahMP401_main(n)
     REAL, PARAMETER:: LVH2O = 2.501000E+6 ! Latent heat for evapo for water  
 
     ! SG for FAPAR DA
-    real                 :: tmp_fapar              ! fraction of absorbed photosyntheticaly active energy [-]
+    real                 :: tmp_fapar        ! fraction of absorbed photosyntheticaly active energy [-]
+    real                 :: tmp_fapar_daily  ! mean daily fraction of absorbed photosyntheticaly active energy [-]
+    type(LIS_TemporalAverage)  :: daily_par_avg
+    type(LIS_TemporalAverage)  :: daily_psav_avg
+    call daily_par_avg%init(LIS_rc%ts, 86400.0)
+    call daily_psav_avg%init(LIS_rc%ts, 86400.0)
 
     allocate( tmp_sldpth( NOAHMP401_struc(n)%nsoil ) )
     allocate( tmp_shdfac_monthly( 12 ) )
@@ -863,11 +869,9 @@ subroutine NoahMP401_main(n)
             NOAHMP401_struc(n)%noahmp401(t)%fsa       = tmp_fsa
             NOAHMP401_struc(n)%noahmp401(t)%fira      = tmp_fira
             NOAHMP401_struc(n)%noahmp401(t)%apar      = tmp_apar
-            NOAHMP401_struc(n)%noahmp401(t)%par       = tmp_par
             NOAHMP401_struc(n)%noahmp401(t)%psn       = tmp_psn
             NOAHMP401_struc(n)%noahmp401(t)%sav       = tmp_sav
             NOAHMP401_struc(n)%noahmp401(t)%sag       = tmp_sag
-            NOAHMP401_struc(n)%noahmp401(t)%psav      = tmp_psav
             NOAHMP401_struc(n)%noahmp401(t)%rssun     = tmp_rssun
             NOAHMP401_struc(n)%noahmp401(t)%rssha     = tmp_rssha
             NOAHMP401_struc(n)%noahmp401(t)%bgap      = tmp_bgap
@@ -912,6 +916,27 @@ subroutine NoahMP401_main(n)
                tmp_q2sat = 0.622*tmp_es/(tmp_psurf-(1.-0.622)*tmp_es)
                noahmp401_struc(n)%noahmp401(t)%rhmin = tmp_qair / tmp_q2sat
             endif
+
+
+            ! save PAR, PSAV, FAPAR for daily mean FAPAR
+            daily_par_avg%add_value(tmp_par)
+            daily_psav_avg%add_value(tmp_psav)
+            ! instantaneous FAPAR
+            if tmp_par .gt. 0 then
+                tmp_fapar = tmp_psav / tmp_par
+            else
+                tmp_fapar = 0.
+            endif
+            NOAHMP401_struc(n)%noahmp401(t)%fapar = tmp_fapar
+            ! daily average FAPAR
+            tmp_par = daily_par_avg%get()
+            tmp_psav = daily_psav_avg%get()
+            if tmp_par .gt. 0 then
+                tmp_fapar = tmp_psav / tmp_par
+            else
+                tmp_fapar = 0.
+            endif
+            NOAHMP401_struc(n)%noahmp401(t)%daily_fapar = tmp_fapar
 
             call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_RHMIN, &
              value=noahmp401_struc(n)%noahmp401(t)%rhmin, &
