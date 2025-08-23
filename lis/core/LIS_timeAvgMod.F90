@@ -18,7 +18,7 @@ module LIS_timeAvgMod
         generic   :: init => init_temporal_average_from_size, init_temporal_average_from_timestep
         procedure :: add_value    => add_value_for_temporal_average
         procedure :: get          => get_value_of_temporal_average
-    end type running_sum_type
+    end type LIS_TemporalAverage
 
 contains
     
@@ -40,9 +40,9 @@ contains
         real, intent(in) :: timestep
         real, intent(in) :: totaltime
         integer :: n
-        n = max(1, int(T/dt))   ! ensure at least 1 sample
-        call this%init_temporal_average_from_size(n)
-    end subroutine init_temporal_average_from_size
+        n = max(1, int(totaltime/timestep))   ! ensure at least 1 sample
+        call init_temporal_average_from_size(this, n)
+    end subroutine init_temporal_average_from_timestep
 
     subroutine add_value_for_temporal_average(this, value)
         class(LIS_TemporalAverage), intent(inout) :: this
@@ -64,11 +64,11 @@ contains
     end subroutine add_value_for_temporal_average
 
     function get_value_of_temporal_average(this) result(avgval)
-        class(running_sum_type), intent(in) :: this
+        class(LIS_TemporalAverage), intent(in) :: this
         real :: avgval
 
-        if (this%count > 0) then
-            avgval = this%total / real(this%count)   <<< divide by count
+        if (this%count .gt. 0) then
+            avgval = this%total / real(this%count) 
         else
             avgval = 0.0
         end if
