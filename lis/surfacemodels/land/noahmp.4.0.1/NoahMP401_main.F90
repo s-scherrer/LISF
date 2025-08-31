@@ -1242,7 +1242,7 @@ subroutine NoahMP401_main(n)
                                               vlevel=1, unit="-", direction="-", surface_type = LIS_rc%lsm_index)
 
             ![ 62] output variable: daily fapar (unit=W/m2). ***  daily mean fration of absorbed photosynthesically active energy
-            call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_FAPAR, value = NOAHMP401_struc(n)%noahmp401(t)%daily_fapar, &
+            call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_DAILY_FAPAR, value = NOAHMP401_struc(n)%noahmp401(t)%daily_fapar, &
                                               vlevel=1, unit="-", direction="-", surface_type = LIS_rc%lsm_index)
 
             !![ 62] output variable: sav (unit=W/m2 ). ***  solar radiation absorbed by vegetation
