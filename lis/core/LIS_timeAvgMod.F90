@@ -25,6 +25,8 @@ module LIS_timeAvgMod
 contains
     
     subroutine init_tmp_avg_from_size(this, n)
+        use LIS_logmod, only: LIS_logunit
+
         class(LIS_TemporalAverage), intent(inout) :: this
         integer, intent(in) :: n
 
