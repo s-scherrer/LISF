@@ -488,7 +488,6 @@ module NoahMP401_module
         real               :: fira
         real               :: apar  ! absorbed PAR per canopy(!) area
         real               :: fapar ! fraction of absorbed PAR
-        real               :: daily_fapar ! daily average of fapar
         real               :: psn
         real               :: sav
         real               :: sag
@@ -530,6 +529,11 @@ module NoahMP401_module
 #ifdef PARFLOW
         real, pointer      :: wtrflx(:)
 #endif
+
+        ! For daily FAPAR output
+        real                      :: daily_fapar ! daily average of fapar
+        type(LIS_TemporalAverage) :: daily_par_avg
+        type(LIS_TemporalAverage) :: daily_psav_avg
  
     end type noahmp401dec
 

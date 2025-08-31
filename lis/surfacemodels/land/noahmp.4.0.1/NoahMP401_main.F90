@@ -266,10 +266,6 @@ subroutine NoahMP401_main(n)
     ! SG for FAPAR DA
     real                 :: tmp_fapar        ! fraction of absorbed photosyntheticaly active energy [-]
     real                 :: tmp_fapar_daily  ! mean daily fraction of absorbed photosyntheticaly active energy [-]
-    type(LIS_TemporalAverage)  :: daily_par_avg
-    type(LIS_TemporalAverage)  :: daily_psav_avg
-    call daily_par_avg%init(LIS_rc%ts, 86400.0)
-    call daily_psav_avg%init(LIS_rc%ts, 86400.0)
 
     allocate( tmp_sldpth( NOAHMP401_struc(n)%nsoil ) )
     allocate( tmp_shdfac_monthly( 12 ) )
@@ -918,8 +914,8 @@ subroutine NoahMP401_main(n)
 
 
             ! save PAR, PSAV, FAPAR for daily mean FAPAR
-            call daily_par_avg%add_value(tmp_par)
-            call daily_psav_avg%add_value(tmp_psav)
+            call noahmp401_struc(n)%noahmp401(t)%daily_par_avg%add_value(tmp_par)
+            call noahmp401_struc(n)%noahmp401(t)%daily_psav_avg%add_value(tmp_psav)
             ! instantaneous FAPAR
             if (tmp_par .gt. 0) then
                 tmp_fapar = tmp_psav / tmp_par
@@ -928,8 +924,8 @@ subroutine NoahMP401_main(n)
             endif
             NOAHMP401_struc(n)%noahmp401(t)%fapar = tmp_fapar
             ! daily average FAPAR
-            tmp_par = daily_par_avg%get()
-            tmp_psav = daily_psav_avg%get()
+            tmp_par = noahmp401_struc(n)%noahmp401(t)%daily_par_avg%get()
+            tmp_psav = noahmp401_struc(n)%noahmp401(t)%daily_psav_avg%get()
             if (tmp_par .gt. 0) then
                 tmp_fapar = tmp_psav / tmp_par
             else
