@@ -15,16 +15,16 @@ module LIS_timeAvgMod
         integer :: count = 0             ! how many values stored so far
         real :: total = 0.0              ! running sum
     contains
-        generic   :: init => init_temporal_average_from_size, init_temporal_average_from_timestep
-        procedure :: add_value    => add_value_for_temporal_average
-        procedure :: get          => get_value_of_temporal_average
+        procedure :: init_tmp_avg_from_size
+        procedure :: init_tmp_avg_from_timestep
+        generic   :: init => init_tmp_avg_from_size, init_tmp_avg_from_timestep
+        procedure :: add_value    => add_value_for_tmp_avg
+        procedure :: get          => get_value_of_tmp_avg
     end type LIS_TemporalAverage
 
 contains
     
-    subroutine init_temporal_average_from_size(this, n)
-        use LIS_logmod
-
+    subroutine init_tmp_avg_from_size(this, n)
         class(LIS_TemporalAverage), intent(inout) :: this
         integer, intent(in) :: n
 
@@ -36,18 +36,18 @@ contains
         this%idx = 0
         this%count = 0
         this%total = 0.0
-    end subroutine init_temporal_average_from_size
+    end subroutine init_tmp_avg_from_size
 
-    subroutine init_temporal_average_from_timestep(this, timestep, totaltime)
+    subroutine init_tmp_avg_from_timestep(this, timestep, totaltime)
         class(LIS_TemporalAverage), intent(inout) :: this
         real, intent(in) :: timestep
         real, intent(in) :: totaltime
         integer :: n
         n = max(1, int(totaltime/timestep))   ! ensure at least 1 sample
-        call init_temporal_average_from_size(this, n)
-    end subroutine init_temporal_average_from_timestep
+        call this%init_tmp_avg_from_size(n)
+    end subroutine init_tmp_avg_from_timestep
 
-    subroutine add_value_for_temporal_average(this, value)
+    subroutine add_value_for_tmp_avg(this, value)
         class(LIS_TemporalAverage), intent(inout) :: this
         real, intent(in) :: value
 
@@ -64,9 +64,9 @@ contains
         ! Store new value
         this%buffer(this%idx) = value
         this%total = this%total + value
-    end subroutine add_value_for_temporal_average
+    end subroutine add_value_for_tmp_avg
 
-    function get_value_of_temporal_average(this) result(avgval)
+    function get_value_of_tmp_avg(this) result(avgval)
         class(LIS_TemporalAverage), intent(in) :: this
         real :: avgval
 
@@ -75,8 +75,6 @@ contains
         else
             avgval = 0.0
         end if
-    end function get_value_of_temporal_average
+    end function get_value_of_tmp_avg
 
 end module
-
-    

@@ -36,7 +36,7 @@ subroutine NoahMP401_main(n)
     use LIS_logMod, only     : LIS_logunit, LIS_endrun
     use LIS_FORC_AttributesMod
     use NoahMP401_lsmMod
-    use LIS_timeAvgMod, only : LIS_TemporalAverage_t
+    use LIS_timeAvgMod, only : LIS_TemporalAverage
 
     implicit none
 ! !ARGUMENTS:
@@ -209,7 +209,6 @@ subroutine NoahMP401_main(n)
     real                 :: tmp_sav                ! solar radiation absorbed by vegetation [W/m2]
     real                 :: tmp_psav               ! photosyn. active solar radiation absorbed by vegetation [W/m2]
     real                 :: tmp_sag                ! solar radiation absorbed by ground [W/m2]
-    real                 :: tmp_psav               ! photosyn. active solar radiation absorbed by vegetation [W/m2]
     real                 :: tmp_rssun              ! sunlit leaf stomatal resistance [s/m]
     real                 :: tmp_rssha              ! shaded leaf stomatal resistance [s/m]
     real                 :: tmp_bgap               ! between gap fraction [-]
@@ -919,10 +918,10 @@ subroutine NoahMP401_main(n)
 
 
             ! save PAR, PSAV, FAPAR for daily mean FAPAR
-            daily_par_avg%add_value(tmp_par)
-            daily_psav_avg%add_value(tmp_psav)
+            call daily_par_avg%add_value(tmp_par)
+            call daily_psav_avg%add_value(tmp_psav)
             ! instantaneous FAPAR
-            if tmp_par .gt. 0 then
+            if (tmp_par .gt. 0) then
                 tmp_fapar = tmp_psav / tmp_par
             else
                 tmp_fapar = 0.
@@ -931,7 +930,7 @@ subroutine NoahMP401_main(n)
             ! daily average FAPAR
             tmp_par = daily_par_avg%get()
             tmp_psav = daily_psav_avg%get()
-            if tmp_par .gt. 0 then
+            if (tmp_par .gt. 0) then
                 tmp_fapar = tmp_psav / tmp_par
             else
                 tmp_fapar = 0.
