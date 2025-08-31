@@ -360,7 +360,8 @@ module NoahMP401_module
 !  10/25/18: Shugong Wang, Zhuo Wang Initial implementation for LIS 7 and NoahMP401
 !
 !EOP
-   USE MODULE_SF_NOAHMPLSM_401
+    USE MODULE_SF_NOAHMPLSM_401
+    use LIS_timeAvgMod, only : LIS_TemporalAverage
     implicit none
 
     INTEGER, PRIVATE, PARAMETER :: MBAND = 2

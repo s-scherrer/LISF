@@ -36,7 +36,6 @@ subroutine NoahMP401_main(n)
     use LIS_logMod, only     : LIS_logunit, LIS_endrun
     use LIS_FORC_AttributesMod
     use NoahMP401_lsmMod
-    use LIS_timeAvgMod, only : LIS_TemporalAverage
 
     implicit none
 ! !ARGUMENTS:
