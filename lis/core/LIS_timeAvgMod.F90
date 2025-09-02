@@ -20,6 +20,7 @@ module LIS_timeAvgMod
         generic   :: init => init_tmp_avg_from_size, init_tmp_avg_from_timestep
         procedure :: add_value    => add_value_for_tmp_avg
         procedure :: get          => get_value_of_tmp_avg
+        procedure :: print_state  => print_state_of_tmp_avg
     end type LIS_TemporalAverage
 
 contains
@@ -78,5 +79,16 @@ contains
             avgval = 0.0
         end if
     end function get_value_of_tmp_avg
+
+    subroutine print_state_of_tmp_avg(this)
+        use LIS_logmod, only: LIS_logunit
+
+        write(LIS_logunit,*) "[DEBUG] Size: ", this%n
+        write(LIS_logunit,*) "[DEBUG] Count: ", this%count
+        write(LIS_logunit,*) "[DEBUG] Idx: ", this%idx
+        do i=1, this%n
+          write(LIS_logunit,*) "[DEBUG] Buffer: ", i, this%buffer(i)
+        enddo
+    end subroutine print_state_of_tmp_avg
 
 end module
