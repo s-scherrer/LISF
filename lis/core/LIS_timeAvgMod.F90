@@ -106,6 +106,9 @@ contains
 
     subroutine print_state_of_tmp_avg(this)
         use LIS_logmod, only: LIS_logunit
+        class(LIS_TemporalAverage), intent(in) :: this
+
+        integer :: i
 
         write(LIS_logunit,*) "[DEBUG] Size: ", this%n
         write(LIS_logunit,*) "[DEBUG] Count: ", this%count
