@@ -931,6 +931,7 @@ subroutine NoahMP401_main(n)
             endif
             if (tmp_psav .lt. 0.0) then
                write(LIS_logunit, *) "[ERR] daily_psav_avg < 0.0"
+               write(LIS_logunit, *) "[ERR] daily_psav_avg = ", tmp_psav
                call noahmp401_struc(n)%noahmp401(t)%daily_psav_avg%print_state()
             endif
             if (tmp_par .gt. 0.0) then

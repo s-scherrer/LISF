@@ -13,6 +13,7 @@ module LIS_timeAvgMod
         real, allocatable :: buffer(:)   ! circular buffer
         integer :: idx = 0               ! current position
         integer :: count = 0             ! how many values stored so far
+        integer :: zerocount = 0         ! number of stored values that are zero
         real :: total = 0.0              ! running sum
     contains
         procedure :: init_tmp_avg_from_size
@@ -38,6 +39,7 @@ contains
         this%n = n
         this%idx = 0
         this%count = 0
+        this%zerocount = 0
         this%total = 0.0
     end subroutine init_tmp_avg_from_size
 
@@ -54,11 +56,17 @@ contains
         class(LIS_TemporalAverage), intent(inout) :: this
         real, intent(in) :: value
 
+        real :: oldval
+
         ! Advance circular index
         this%idx = mod(this%idx, this%n) + 1
 
         ! Subtract old value if buffer is full
         if (this%count >= this%n) then
+            oldval = this%buffer(this%idx)
+            if (oldval == 0.0) then
+                this%zerocount = this%zerocount - 1
+            endif
             this%total = this%total - this%buffer(this%idx)
         else
             this%count = this%count + 1
@@ -67,6 +75,22 @@ contains
         ! Store new value
         this%buffer(this%idx) = value
         this%total = this%total + value
+        if (value == 0.0) then
+            this%zerocount = this%zerocount + 1
+        endif
+
+        ! Calculating the total by subtracting the last
+        ! value in the buffer and adding the new value
+        ! has the risk of accumulating numerical roundoff
+        ! error. I encountered the case where all values
+        ! were zero, but the total slightly nonzero. To
+        ! capture these cases, an additional zero-value
+        ! counter is used, and if all values are zero,
+        ! the total sum is set to zero.
+        if (this%zerocount == this%count) then
+          this%total = 0.0
+        endif
+
     end subroutine add_value_for_tmp_avg
 
     function get_value_of_tmp_avg(this) result(avgval)
@@ -85,6 +109,7 @@ contains
 
         write(LIS_logunit,*) "[DEBUG] Size: ", this%n
         write(LIS_logunit,*) "[DEBUG] Count: ", this%count
+        write(LIS_logunit,*) "[DEBUG] Total: ", this%total
         write(LIS_logunit,*) "[DEBUG] Idx: ", this%idx
         do i=1, this%n
           write(LIS_logunit,*) "[DEBUG] Buffer: ", i, this%buffer(i)
