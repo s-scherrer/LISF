@@ -282,6 +282,10 @@ subroutine LIS_DAobs_plugin
     use CustomLAI_Mod,       only :&
          CustomLAI_setup, read_CustomLAI, write_CustomLAI
 #endif
+#if ( defined DA_OBS_CUSTOM_FAPAR )
+    use CustomFAPAR_Mod,       only :&
+         CustomFAPAR_setup, read_CustomFAPAR, write_CustomFAPAR
+#endif
 #if ( defined DA_OBS_CUSTOM_VOD )
     use CustomVOD_Mod,       only :&
          CustomVOD_setup, read_CustomVOD, write_CustomVOD
@@ -975,6 +979,16 @@ subroutine LIS_DAobs_plugin
         read_CustomLAI)
    call registerwritedaobs(trim(LIS_CustomLAIsmobsId)//char(0),&
         write_CustomLAI)
+#endif
+
+#if ( defined DA_OBS_CUSTOM_FAPAR )
+   call registerdaobsclass(trim(LIS_CustomFAPARobsId),"LSM")
+   call registerdaobssetup(trim(LIS_CustomFAPARobsId)//char(0),&
+        CustomFAPAR_setup)
+   call registerreaddaobs(trim(LIS_CustomFAPARobsId)//char(0),&
+        read_CustomFAPAR)
+   call registerwritedaobs(trim(LIS_CustomFAPARobsId)//char(0),&
+        write_CustomFAPAR)
 #endif
 
 #if ( defined DA_OBS_CUSTOM_SSM )
