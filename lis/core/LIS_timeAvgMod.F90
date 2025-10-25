@@ -32,7 +32,7 @@ contains
         class(LIS_TemporalAverage), intent(inout) :: this
         integer, intent(in) :: n
 
-        write(LIS_logunit,*) "[DEBUG] Temporal average initalised with buffer size ", n
+        ! write(LIS_logunit,*) "[DEBUG] Temporal average initalised with buffer size ", n
         if (allocated(this%buffer)) deallocate(this%buffer)
         allocate(this%buffer(n))
         this%buffer = 0.0

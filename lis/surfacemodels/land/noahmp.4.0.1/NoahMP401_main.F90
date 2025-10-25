@@ -934,11 +934,7 @@ subroutine NoahMP401_main(n)
                write(LIS_logunit, *) "[ERR] daily_psav_avg = ", tmp_psav
                call noahmp401_struc(n)%noahmp401(t)%daily_psav_avg%print_state()
             endif
-            if (tmp_par .gt. 0.0) then
-                tmp_fapar = tmp_psav / tmp_par
-            else
-                tmp_fapar = 0.
-            endif
+            tmp_fapar = tmp_psav / (tmp_par + 1e-8)  ! addition of a small value to avoid divide by zero
             NOAHMP401_struc(n)%noahmp401(t)%daily_fapar = tmp_fapar
 
             call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_RHMIN, &
