@@ -519,6 +519,10 @@ subroutine LIS_lsmda_plugin
    external NoahMP401_scale_laisoilm
    external NoahMP401_descale_laisoilm
    external NoahMP401_updatelaisoilm
+   
+   ! NOAHMP4.0.1 FAPAR DA
+   external NoahMP401_getfaparpred
+   external noahmp401_qc_faparobs
 
    ! VOD
    external NoahMP401_getVODpred
