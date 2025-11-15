@@ -2,6 +2,7 @@
 !
 ! Written by Samuel Gotterbarm, 23.08.2025 (assisted by ChatGPT)
 module LIS_timeAvgMod
+    use iso_fortran_env, only: real64
     implicit none
 
     ! public types
@@ -10,11 +11,13 @@ module LIS_timeAvgMod
     type :: LIS_TemporalAverage
         private
         integer :: n = 0                 ! number of values to keep
-        real, allocatable :: buffer(:)   ! circular buffer
         integer :: idx = 0               ! current position
         integer :: count = 0             ! how many values stored so far
         integer :: zerocount = 0         ! number of stored values that are zero
-        real :: total = 0.0              ! running sum
+        ! buffer & running sum are using double precision to avoid rounding
+        ! errors typically encountered with the running sum calculation
+        real(kind=real64) :: total = 0.0              ! running sum
+        real(kind=real64), allocatable :: buffer(:)   ! circular buffer
     contains
         procedure :: init_tmp_avg_from_size
         procedure :: init_tmp_avg_from_timestep
@@ -22,6 +25,7 @@ module LIS_timeAvgMod
         procedure :: add_value    => add_value_for_tmp_avg
         procedure :: get          => get_value_of_tmp_avg
         procedure :: print_state  => print_state_of_tmp_avg
+        procedure :: reinit       => reinit_tmp_avg
     end type LIS_TemporalAverage
 
 contains
@@ -56,7 +60,7 @@ contains
         class(LIS_TemporalAverage), intent(inout) :: this
         real, intent(in) :: value
 
-        real :: oldval
+        real(kind=real64) :: oldval
 
         ! Advance circular index
         this%idx = mod(this%idx, this%n) + 1
@@ -95,7 +99,7 @@ contains
 
     function get_value_of_tmp_avg(this) result(avgval)
         class(LIS_TemporalAverage), intent(in) :: this
-        real :: avgval
+        real(kind=real64) :: avgval
 
         if (this%count .gt. 0) then
             avgval = this%total / real(this%count) 
@@ -117,6 +121,14 @@ contains
         do i=1, this%n
           write(LIS_logunit,*) "[DEBUG] Buffer: ", i, this%buffer(i)
         enddo
+    end subroutine print_state_of_tmp_avg
+
+    subroutine reinit_tmp_avg(this)
+        use LIS_logmod, only: LIS_logunit
+        class(LIS_TemporalAverage), intent(in) :: this
+
+        integer :: i
+        this%total = sum(this%buffer)
     end subroutine print_state_of_tmp_avg
 
 end module

@@ -928,11 +928,13 @@ subroutine NoahMP401_main(n)
             if (tmp_par .lt. 0.0) then
                write(LIS_logunit, *) "[ERR] daily_par_avg < 0.0"
                call noahmp401_struc(n)%noahmp401(t)%daily_par_avg%print_state()
+               call noahmp401_struc(n)%noahmp401(t)%daily_par_avg%reinit()
             endif
             if (tmp_psav .lt. 0.0) then
                write(LIS_logunit, *) "[ERR] daily_psav_avg < 0.0"
                write(LIS_logunit, *) "[ERR] daily_psav_avg = ", tmp_psav
                call noahmp401_struc(n)%noahmp401(t)%daily_psav_avg%print_state()
+               call noahmp401_struc(n)%noahmp401(t)%daily_psav_avg%reinit()
             endif
             tmp_fapar = tmp_psav / (tmp_par + 1e-8)  ! addition of a small value to avoid divide by zero
             NOAHMP401_struc(n)%noahmp401(t)%daily_fapar = tmp_fapar
@@ -1240,7 +1242,7 @@ subroutine NoahMP401_main(n)
             call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_FAPAR, value = NOAHMP401_struc(n)%noahmp401(t)%fapar, &
                                               vlevel=1, unit="-", direction="-", surface_type = LIS_rc%lsm_index)
 
-            ![ 62] output variable: daily fapar (unit=W/m2). ***  daily mean fration of absorbed photosynthesically active energy
+            ![ 62] output variable: daily fapar (unit=-). ***  daily mean fration of absorbed photosynthesically active energy
             call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_DAILY_FAPAR, value = NOAHMP401_struc(n)%noahmp401(t)%daily_fapar, &
                                               vlevel=1, unit="-", direction="-", surface_type = LIS_rc%lsm_index)
 
