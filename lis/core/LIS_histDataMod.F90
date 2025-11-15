@@ -4986,11 +4986,11 @@ contains
 
     Call ESMF_ConfigFindLabel(modelSpecConfig, "PAR:", rc = rc)
     Call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
-         "DailyPAR", &
-         "daily_photosynthetically_active_solar_radiation",   &
-         "daily mean photosynthetically active solar radiation",rc)
+         "PAR", &
+         "photosynthetically_active_solar_radiation",   &
+         "photosynthetically active solar radiation",rc)
     if ( rc == 1 ) then
-        call register_dataEntry(LIS_MOC_LSM_COUNT, LIS_MOC_DAILY_PAR, &
+        call register_dataEntry(LIS_MOC_LSM_COUNT, LIS_MOC_PAR, &
             LIS_histData(n)%head_lsm_list,&
             n, 1, ntiles,(/"W/m2"/), 2, (/"IN ", "OUT"/),1,1,1,&
             model_patch=.true.)
