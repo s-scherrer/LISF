@@ -125,10 +125,9 @@ contains
 
     subroutine reinit_tmp_avg(this)
         use LIS_logmod, only: LIS_logunit
-        class(LIS_TemporalAverage), intent(in) :: this
+        class(LIS_TemporalAverage), intent(inout) :: this
 
-        integer :: i
         this%total = sum(this%buffer)
-    end subroutine print_state_of_tmp_avg
+    end subroutine reinit_tmp_avg
 
 end module
