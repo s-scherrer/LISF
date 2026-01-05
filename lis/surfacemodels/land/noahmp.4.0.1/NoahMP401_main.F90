@@ -204,11 +204,12 @@ subroutine NoahMP401_main(n)
     real                 :: tmp_fira               ! total net longwave radiation [+ to atm] [W/m2]
     real                 :: tmp_apar               ! photosyn active energy absorbed by canopy [W/m2]
     real                 :: tmp_par                ! total photosyn active energy [W/m2]
-    real                 :: tmp_daily_par                ! total photosyn active energy [W/m2]
+    real                 :: tmp_daily_par          ! total photosyn active energy [W/m2]
     real                 :: tmp_psn                ! total photosynthesis [+] [umol co2/m2/s]
     real                 :: tmp_sav                ! solar radiation absorbed by vegetation [W/m2]
     real                 :: tmp_psav               ! photosyn. active solar radiation absorbed by vegetation [W/m2]
-    real                 :: tmp_daily_psav               ! photosyn. active solar radiation absorbed by vegetation [W/m2]
+    real                 :: tmp_daily_psav         ! photosyn. active solar radiation absorbed by vegetation [W/m2]
+    real                 :: tmp_fdapar             ! 
     real                 :: tmp_sag                ! solar radiation absorbed by ground [W/m2]
     real                 :: tmp_rssun              ! sunlit leaf stomatal resistance [s/m]
     real                 :: tmp_rssha              ! shaded leaf stomatal resistance [s/m]
@@ -741,6 +742,7 @@ subroutine NoahMP401_main(n)
                                    tmp_sav               , & ! out   - solar radiation absorbed by vegetation [W/m2]
                                    tmp_sag               , & ! out   - solar radiatiob absorbed by ground [W/m2]
                                    tmp_psav              , & ! out   - photosyn. active solar radiation absorbed by vegetation [W/m2]
+                                   tmp_fdapar            , & ! out   - 
                                    tmp_rssun             , & ! out   - sunlit leaf stomatal resistance [s/m]
                                    tmp_rssha             , & ! out   - shaded leaf stomatal resistance [s/m]
                                    tmp_bgap              , & ! out   - between gap fraction [-]
@@ -941,6 +943,7 @@ subroutine NoahMP401_main(n)
             endif
             tmp_fapar = tmp_daily_psav / (tmp_daily_par + 1e-8)  ! addition of a small value to avoid divide by zero
             NOAHMP401_struc(n)%noahmp401(t)%daily_fapar = tmp_fapar
+            NOAHMP401_struc(n)%noahmp401(t)%fdapar = tmp_fdapar
 
             call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_RHMIN, &
              value=noahmp401_struc(n)%noahmp401(t)%rhmin, &
@@ -1249,11 +1252,15 @@ subroutine NoahMP401_main(n)
             call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_DAILY_FAPAR, value = NOAHMP401_struc(n)%noahmp401(t)%daily_fapar, &
                                               vlevel=1, unit="-", direction="-", surface_type = LIS_rc%lsm_index)
 
+            ![ 62] output variable: inst direct fapar (unit=-). *** instantaneous fration of direct absorbed photosynthesically active energy
+            call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_DAILY_FDAPAR, value = NOAHMP401_struc(n)%noahmp401(t)%fdapar, &
+                                              vlevel=1, unit="-", direction="-", surface_type = LIS_rc%lsm_index)
+
             !![ 62] output variable: psav (unit=W/m2 ). ***  photosynthetically active solar radiation absorbed by vegetation
             call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_DAILY_PSAV, value = tmp_daily_psav, &
                                               vlevel=1, unit="W m-2", direction="IN", surface_type = LIS_rc%lsm_index)
 
-            !![ 62] output variable: psav (unit=W/m2 ). ***  photosynthetically active solar radiation absorbed by vegetation
+            !![ 62] output variable: par (unit=W/m2 ). ***  photosynthetically active solar radiation absorbed by vegetation
             call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_DAILY_PAR, value = tmp_daily_par, &
                                               vlevel=1, unit="W m-2", direction="IN", surface_type = LIS_rc%lsm_index)
 
@@ -1261,7 +1268,7 @@ subroutine NoahMP401_main(n)
             call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_PSAV, value = tmp_psav, &
                                               vlevel=1, unit="W m-2", direction="IN", surface_type = LIS_rc%lsm_index)
 
-            !![ 62] output variable: psav (unit=W/m2 ). ***  photosynthetically active solar radiation absorbed by vegetation
+            !![ 62] output variable: par (unit=W/m2 ). ***  photosynthetically active solar radiation absorbed by vegetation
             call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_PAR, value = tmp_par, &
                                               vlevel=1, unit="W m-2", direction="IN", surface_type = LIS_rc%lsm_index)
 

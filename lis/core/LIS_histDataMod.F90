@@ -400,6 +400,7 @@ module LIS_histDataMod
   public ::   LIS_MOC_BARE2MQ2    
   public ::   LIS_MOC_APAR
   public ::   LIS_MOC_FAPAR
+  public ::   LIS_MOC_FDAPAR
   public ::   LIS_MOC_DAILY_FAPAR  ! due to nonlinearity, daily FAPAR cannot be calculated by averaging FAPAR
   public ::   LIS_MOC_DAILY_PAR
   public ::   LIS_MOC_DAILY_PSAV
@@ -938,6 +939,7 @@ module LIS_histDataMod
     integer ::  LIS_MOC_BARE2MQ2    = -9999
     integer ::  LIS_MOC_APAR    = -9999
     integer ::  LIS_MOC_FAPAR   = -9999
+    integer ::  LIS_MOC_FDAPAR   = -9999
     integer ::  LIS_MOC_DAILY_FAPAR   = -9999
     integer ::  LIS_MOC_DAILY_PSAV   = -9999
     integer ::  LIS_MOC_DAILY_PAR   = -9999
@@ -4928,6 +4930,18 @@ contains
          "fraction of absorbed photosynthesis active radiation energy by canopy",rc)
     if ( rc == 1 ) then
         call register_dataEntry(LIS_MOC_LSM_COUNT, LIS_MOC_FAPAR, &
+            LIS_histData(n)%head_lsm_list,&
+            n, 1, ntiles,(/"-"/), 1, (/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+    Call ESMF_ConfigFindLabel(modelSpecConfig, "FDAPAR:", rc = rc)
+    Call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "FDAPAR", &
+         "fraction_of_direct_absorbed_photosynthesis_active_energy_by_canopy",   &
+         "fraction of direct absorbed photosynthesis active radiation energy by canopy",rc)
+    if ( rc == 1 ) then
+        call register_dataEntry(LIS_MOC_LSM_COUNT, LIS_MOC_FDAPAR, &
             LIS_histData(n)%head_lsm_list,&
             n, 1, ntiles,(/"-"/), 1, (/"-"/),1,1,1,&
             model_patch=.true.)

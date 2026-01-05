@@ -386,7 +386,7 @@ contains
                    SUBSNOW , RELSMC  ,                                         & ! OUT :
                    TGB     , TGV     , T2MV    , T2MB    , Q2V     , Q2B     , & ! OUT :
                    RUNSRF  , RUNSUB  , APAR    , PSN     , SAV     , SAG     , & ! OUT :
-                   PSAV    , &
+                   PSAV    , FDAPAR  , &
                    FSNO    , NEE     , GPP     , NPP     , FVEG    , ALBEDO  , & ! OUT :
                    QSNBOT  , PONDING , PONDING1, PONDING2, RSSUN   , RSSHA   , & ! OUT :
                    BGAP    , WGAP    , CHV     , CHB     , EMISSI  ,           & ! OUT :
@@ -524,6 +524,7 @@ contains
   REAL                           , INTENT(OUT)   :: SAV    !solar rad absorbed by veg. (w/m2)
   REAL                           , INTENT(OUT)   :: SAG    !solar rad absorbed by ground (w/m2)
   REAL                           , INTENT(OUT)   :: PSAV   !photosyn. active solar rad absorbed by veg. (w/m2)
+  REAL                           , INTENT(OUT)   :: FDAPAR
   REAL                           , INTENT(OUT)   :: FSNO   !snow cover fraction on the ground (-)
   REAL                           , INTENT(OUT)   :: FVEG   !green vegetation fraction [0.0-1.0]
   REAL                           , INTENT(OUT)   :: ALBEDO !surface albedo [-]
@@ -763,7 +764,7 @@ contains
                  QSNOW  ,DZSNSO ,LAT    ,CANLIQ ,CANICE ,iloc, jloc , & !in
 		 Z0WRF  ,                                         &
                  IMELT  ,SNICEV ,SNLIQV ,EPORE  ,T2M    ,FSNO   , & !out
-                 SAV    ,SAG    ,PSAV   ,QMELT  ,FSA    ,FSR    ,TAUX   , & !out
+                 SAV    ,SAG    ,PSAV   ,FDAPAR ,QMELT  ,FSA    ,FSR    ,TAUX   , & !out
                  TAUY   ,FIRA   ,FSH    ,FCEV   ,FGEV   ,FCTR   , & !out
                  TRAD   ,PSN    ,APAR   ,SSOIL  ,BTRANI ,BTRAN  , & !out
                  PONDING,TS     ,LATHEAV , LATHEAG , frozen_canopy,frozen_ground,                         & !out
@@ -1521,7 +1522,7 @@ ENDIF   ! CROPTYPE == 0
                      QSNOW  ,DZSNSO ,LAT    ,CANLIQ ,CANICE ,ILOC   , JLOC, & !in
 		     Z0WRF  ,                                         &
                      IMELT  ,SNICEV ,SNLIQV ,EPORE  ,T2M    ,FSNO   , & !out
-                     SAV    ,SAG    ,PSAV   ,QMELT  ,FSA    ,FSR    ,TAUX   , & !out
+                     SAV    ,SAG    ,PSAV   ,FDAPAR ,QMELT  ,FSA    ,FSR    ,TAUX   , & !out
                      TAUY   ,FIRA   ,FSH    ,FCEV   ,FGEV   ,FCTR   , & !out
                      TRAD   ,PSN    ,APAR   ,SSOIL  ,BTRANI ,BTRAN  , & !out
                      PONDING,TS     ,LATHEAV , LATHEAG , frozen_canopy,frozen_ground,                       & !out
@@ -1640,6 +1641,7 @@ ENDIF   ! CROPTYPE == 0
   REAL                              , INTENT(OUT)   :: SAV    !solar rad. absorbed by veg. (w/m2)
   REAL                              , INTENT(OUT)   :: SAG    !solar rad. absorbed by ground (w/m2)
   REAL                              , INTENT(OUT)   :: PSAV   !photosyn. solar rad. absorbed by veg. (w/m2)
+  REAL                              , INTENT(OUT)   :: FDAPAR
   REAL                              , INTENT(OUT)   :: FSA    !tot. absorbed solar radiation (w/m2)
   REAL                              , INTENT(OUT)   :: FSR    !tot. reflected solar radiation (w/m2)
   REAL                              , INTENT(OUT)   :: TAUX   !wind stress: e-w (n/m2)
@@ -1902,7 +1904,7 @@ ENDIF   ! CROPTYPE == 0
                    FVEG    ,ILOC    ,JLOC    ,                   & !in
                    ALBOLD  ,TAUSS   ,                            & !inout
                    FSUN    ,LAISUN  ,LAISHA  ,PARSUN  ,PARSHA  , & !out
-                   SAV     ,SAG     ,PSAV    ,FSR     ,FSA     ,FSRV    , & 
+                   SAV     ,SAG     ,PSAV    ,FDAPAR  ,FSR     ,FSA     ,FSRV    , & 
                    FSRG    ,BGAP    ,WGAP    )            !out
 
 ! vegetation and ground emissivity
@@ -2494,7 +2496,7 @@ ENDIF   ! CROPTYPE == 0
                         FVEG    ,ILOC    ,JLOC    ,                   & !in
                         ALBOLD  ,TAUSS   ,                            & !inout
                         FSUN    ,LAISUN  ,LAISHA  ,PARSUN  ,PARSHA  , & !out
-                        SAV     ,SAG     ,PSAV    ,FSR     ,FSA     ,FSRV    , &
+                        SAV     ,SAG     ,PSAV    ,FDAPAR  ,FSR     ,FSA     ,FSRV    , &
                         FSRG    ,BGAP    ,WGAP)            !out
 ! --------------------------------------------------------------------------------------------------
   IMPLICIT NONE
@@ -2538,6 +2540,7 @@ ENDIF   ! CROPTYPE == 0
   REAL, INTENT(OUT)                    :: SAV    !solar radiation absorbed by vegetation (w/m2)
   REAL, INTENT(OUT)                    :: SAG    !solar radiation absorbed by ground (w/m2)
   REAL, INTENT(OUT)                    :: PSAV   !photosyn. active solar radiation absorbed by vegetation (w/m2)
+  REAL, INTENT(OUT)                    :: FDAPAR
   REAL, INTENT(OUT)                    :: FSA    !total absorbed solar radiation (w/m2)
   REAL, INTENT(OUT)                    :: FSR    !total reflected solar radiation (w/m2)
 
@@ -2606,7 +2609,7 @@ ENDIF   ! CROPTYPE == 0
                 PARSUN ,PARSHA ,SAV    ,SAG    ,FSA    , & !out
                 FSR    ,                                 & !out
                 FREVI  ,FREVD  ,FREGD  ,FREGI  ,FSRV   , & !inout
-                FSRG, PSAV)
+                FSRG, PSAV, FDAPAR)
 
   END SUBROUTINE RADIATION
 
@@ -2801,7 +2804,7 @@ ENDIF   ! CROPTYPE == 0
                      PARSUN  ,PARSHA  ,SAV     ,SAG     ,FSA     , & !out
                      FSR     , & !)                                       !out
                      FREVI   ,FREVD   ,FREGD   ,FREGI   ,FSRV    , &
-                     FSRG, PSAV) !inout
+                     FSRG, PSAV, FDAPAR) !inout
 
 ! --------------------------------------------------------------------------------------------------
   IMPLICIT NONE
@@ -2848,6 +2851,7 @@ ENDIF   ! CROPTYPE == 0
   REAL, INTENT(OUT)                :: FSRV    !reflected solar radiation by vegetation
   REAL, INTENT(OUT)                :: FSRG    !reflected solar radiation by ground
   REAL, INTENT(OUT)                :: PSAV    !photosyn. active solar radiation absorbed by vegetation (w/m2)
+  REAL, INTENT(OUT)                :: FDAPAR
 
 ! ------------------------ local variables ----------------------------------------------------
   INTEGER                          :: IB      !waveband number (1=vis, 2=nir)
@@ -2893,7 +2897,9 @@ ENDIF   ! CROPTYPE == 0
     FSA = FSA + ABS
   END DO
 
+! variables required to calculate FAPAR
   PSAV = CAD(1) + CAI(1)
+  FDAPAR = FABD(1)
 
 ! partition visible canopy absorption to sunlit and shaded fractions
 ! to get average absorbed par for sunlit and shaded leaves
