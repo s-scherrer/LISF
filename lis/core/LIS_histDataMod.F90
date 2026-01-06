@@ -1162,6 +1162,9 @@ module LIS_histDataMod
      integer :: min         ! specific output writing time (min)
      integer :: sec         ! specific output writing time (sec)
 
+     integer :: lhour       ! specific local output writing time (hour)
+     integer :: lmin        ! specific local output writing time (min)
+
      type(LIS_metadataEntry), pointer :: head_lsm_list
      type(LIS_metadataEntry), pointer :: head_routing_list
      type(LIS_metadataEntry), pointer :: head_rtm_list
@@ -7101,6 +7104,9 @@ end subroutine LIS_diagnoseIrrigationOutputVar
     logical                 :: dir_status
     real                    :: mfactor
     real                    :: value
+    integer                 :: gindex
+    real                    :: lon, localoutputtime, gmtoutputtime
+    real                    :: lhour, lmin, dt
        
     unit_status = .false.
     do i=1,dataEntry%nunits
@@ -7143,8 +7149,8 @@ end subroutine LIS_diagnoseIrrigationOutputVar
              dataEntry%valid_max = vmin
           endif
           if(value.ne.LIS_rc%udef) then 
-             ! accumulate values and record instantaneous values
              if(dataEntry%timeAvgOpt.eq.2) then 
+                ! accumulate values and record instantaneous values
                 dataEntry%modelOutput(1,t,vlevel) = &
                      dataEntry%modelOutput(1,t,vlevel) + value
                 dataEntry%modelOutput(2,t,vlevel) = value
@@ -7152,17 +7158,41 @@ end subroutine LIS_diagnoseIrrigationOutputVar
                 dataEntry%count(t,vlevel) = &
                      dataEntry%count(t,vlevel)+1
                 !$OMP END CRITICAL 
-                ! accumulate values
              elseif(dataEntry%timeAvgOpt.eq.1 .or. &
                   dataEntry%timeAvgOpt.eq.3) then 
+                ! accumulate values
                 dataEntry%modelOutput(1,t,vlevel) = &
                      dataEntry%modelOutput(1,t,vlevel) + value
                 !$OMP CRITICAL 
                 dataEntry%count(t,vlevel) = &
                      dataEntry%count(t,vlevel)+1
                 !$OMP END CRITICAL 
-                ! record instantaneous values
+             elseif(daaEntry%timeAvgOpt.eq.4) then
+                ! record only matching local time values
+                if (LIS_histData(n)%lhour.eq.-1.and.LIS_histData(n)%lmin.eq.-1) then
+                    ! no local time given, using the specific output time if it
+                    ! exists otherwise 0
+                    lhour = max(LIS_histData(n)%hour, 0)
+                    lmin = max(LIS_histData(n)%min, 0)
+                else
+                    lhour = max(LIS_histData(n)%lhour, 0)
+                    lmin = max(LIS_histData(n)%lmin, 0)
+                endif
+                localoutputtime = lhour * 3600.0 + lmin * 60.0
+                gindex = LIS_domain(n)%tile(t)%index
+                lon = LIS_domain(n)%grid(gindex)%lon
+                gmtoutputtime = localoutputtime - 240 * lon
+                if (gmtoutputtime.lt.-LIS_rc%ts) gmtoutputtime = gmtoutputtime + 86400
+                if (gmtoutputtime.ge.86400-LIS_rc%ts) gmtoutputtime = gmtoutputtime - 86400
+                ! we output if the target output time is now or within the next
+                ! integration interval
+                dt = gmtoutputtime - LIS_rc%gmt*3600.0
+                if (dt.ge.0.and.dt.lt.LIS_rc%ts) then
+                    dataEntry%modelOutput(1,t,vlevel) = value
+                    dataEntry%count(t,vlevel) = 1
+                endif
              else 
+                ! record instantaneous values
                 dataEntry%modelOutput(1,t,vlevel) = value
                 dataEntry%count(t,vlevel) = 1
              endif
@@ -7235,6 +7265,9 @@ end subroutine LIS_diagnoseIrrigationOutputVar
     logical                 :: dir_status
     real                    :: mfactor
     real                    :: value
+    integer                 :: gindex
+    real                    :: lon, localoutputtime, gmtoutputtime
+    real                    :: lhour, lmin, dt
        
     unit_status = .false.
     do i=1,dataEntry%nunits
@@ -7277,8 +7310,8 @@ end subroutine LIS_diagnoseIrrigationOutputVar
              dataEntry%valid_max = vmin
           endif
           if(value.ne.LIS_rc%udef) then 
-             ! accumulate values and record instantaneous values
              if(dataEntry%timeAvgOpt.eq.2) then 
+                ! accumulate values and record instantaneous values
                 dataEntry%modelOutput(1,t,vlevel) = &
                      dataEntry%modelOutput(1,t,vlevel) + value
                 dataEntry%modelOutput(2,t,vlevel) = value
@@ -7286,17 +7319,41 @@ end subroutine LIS_diagnoseIrrigationOutputVar
                 dataEntry%count(t,vlevel) = &
                      dataEntry%count(t,vlevel)+1
                 !$OMP END CRITICAL 
-                ! accumulate values
              elseif(dataEntry%timeAvgOpt.eq.1 .or. &
                   dataEntry%timeAvgOpt.eq.3) then 
+                ! accumulate values
                 dataEntry%modelOutput(1,t,vlevel) = &
                      dataEntry%modelOutput(1,t,vlevel) + value
                 !$OMP CRITICAL 
                 dataEntry%count(t,vlevel) = &
                      dataEntry%count(t,vlevel)+1
                 !$OMP END CRITICAL 
-                ! record instantaneous values
+             elseif(dataEntry%timeAvgOpt.eq.4) then
+                ! record only matching local time values
+                if (LIS_histData(n)%lhour.eq.-1.and.LIS_histData(n)%lmin.eq.-1) then
+                    ! no local time given, using the specific output time if it
+                    ! exists otherwise 0
+                    lhour = max(LIS_histData(n)%hour, 0)
+                    lmin = max(LIS_histData(n)%min, 0)
+                else
+                    lhour = max(LIS_histData(n)%lhour, 0)
+                    lmin = max(LIS_histData(n)%lmin, 0)
+                endif
+                localoutputtime = lhour * 3600.0 + lmin * 60.0
+                gindex = LIS_domain(n)%tile(t)%index
+                lon = LIS_domain(n)%grid(gindex)%lon
+                gmtoutputtime = localoutputtime - 240 * lon
+                if (gmtoutputtime.lt.-LIS_rc%ts) gmtoutputtime = gmtoutputtime + 86400
+                if (gmtoutputtime.ge.86400-LIS_rc%ts) gmtoutputtime = gmtoutputtime - 86400
+                ! we output if the target output time is now or within the next
+                ! integration interval
+                dt = gmtoutputtime - LIS_rc%gmt*3600.0
+                if (dt.ge.0.and.dt.lt.LIS_rc%ts) then
+                    dataEntry%modelOutput(1,t,vlevel) = value
+                    dataEntry%count(t,vlevel) = 1
+                endif
              else 
+                ! record instantaneous values
                 dataEntry%modelOutput(1,t,vlevel) = value
                 dataEntry%count(t,vlevel) = 1
              endif

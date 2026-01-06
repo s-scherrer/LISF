@@ -1102,6 +1102,8 @@ contains
           mvar = trim(dataEntry%short_name)//'_tavg'
        elseif(dataEntry%timeAvgOpt.eq.3) then
           mvar = trim(dataEntry%short_name)//'_acc'
+       elseif(dataEntry%timeAvgOpt.eq.4) then
+          mvar = trim(dataEntry%short_name)//'_locinst'
        endif
        units = dataEntry%units
        
@@ -1120,15 +1122,7 @@ contains
                   dataEntry%modelOutput(2,:,k),&
                   dataEntry%form)
              ! time-averaged or instantaneous values
-          elseif(dataEntry%timeAvgOpt.eq.3) then 
-             call writevar_dist_bin(ftn,n,&
-                  dataEntry%modelOutput(1,:,k),&
-                  dataEntry%form)
-          elseif(dataEntry%timeAvgOpt.eq.0) then 
-             call writevar_dist_bin(ftn,n,&
-                  dataEntry%modelOutput(1,:,k),&
-                  dataEntry%form)             
-          elseif(dataEntry%timeAvgOpt.eq.1) then 
+          else
              call writevar_dist_bin(ftn,n,&
                   dataEntry%modelOutput(1,:,k),&
                   dataEntry%form)
@@ -1205,6 +1199,8 @@ contains
           mvar = trim(dataEntry%short_name)//'_tavg'
        elseif(dataEntry%timeAvgOpt.eq.3) then
           mvar = trim(dataEntry%short_name)//'_acc'
+       elseif(dataEntry%timeAvgOpt.eq.4) then
+          mvar = trim(dataEntry%short_name)//'_locinst'
        endif
        units = dataEntry%units
        
@@ -1223,15 +1219,7 @@ contains
                   dataEntry%modelOutput(2,:,k),&
                   dataEntry%form)
              ! time-averaged or instantaneous values
-          elseif(dataEntry%timeAvgOpt.eq.3) then 
-             call writeroutingvar_dist_bin(ftn,n,&
-                  dataEntry%modelOutput(1,:,k),&
-                  dataEntry%form)
-          elseif(dataEntry%timeAvgOpt.eq.0) then 
-             call writeroutingvar_dist_bin(ftn,n,&
-                  dataEntry%modelOutput(1,:,k),&
-                  dataEntry%form)             
-          elseif(dataEntry%timeAvgOpt.eq.1) then 
+          else
              call writeroutingvar_dist_bin(ftn,n,&
                   dataEntry%modelOutput(1,:,k),&
                   dataEntry%form)
@@ -2808,6 +2796,8 @@ contains
           short_name = trim(dataEntry%short_name)//'_tavg'
        elseif (dataEntry%timeAvgOpt.eq.3) then
           short_name = trim(dataEntry%short_name)//'_acc'
+       elseif (dataEntry%timeAvgOpt.eq.4) then
+          short_name = trim(dataEntry%short_name)//'_locinst'
        endif
     endif
 

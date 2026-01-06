@@ -1076,6 +1076,10 @@ subroutine LIS_readConfig()
              label="Specific output writing time (minute):",default=-1,rc=rc)
         call ESMF_ConfigGetAttribute(LIS_config,LIS_histData(i)%sec,&
              label="Specific output writing time (second):",default=-1,rc=rc)
+        call ESMF_ConfigGetAttribute(LIS_config,LIS_histData(i)%lhour,&
+             label="Local output writing time (hour):",default=-1,rc=rc)
+        call ESMF_ConfigGetAttribute(LIS_config,LIS_histData(i)%lmin,&
+             label="Local output writing time (minute):",default=-1,rc=rc)
      enddo
   endif
 
