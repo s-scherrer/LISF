@@ -1253,7 +1253,7 @@ subroutine NoahMP401_main(n)
                                               vlevel=1, unit="-", direction="-", surface_type = LIS_rc%lsm_index)
 
             ![ 62] output variable: inst direct fapar (unit=-). *** instantaneous fration of direct absorbed photosynthesically active energy
-            call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_DAILY_FDAPAR, value = NOAHMP401_struc(n)%noahmp401(t)%fdapar, &
+            call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_FDAPAR, value = NOAHMP401_struc(n)%noahmp401(t)%fdapar, &
                                               vlevel=1, unit="-", direction="-", surface_type = LIS_rc%lsm_index)
 
             !![ 62] output variable: psav (unit=W/m2 ). ***  photosynthetically active solar radiation absorbed by vegetation
