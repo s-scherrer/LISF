@@ -7181,7 +7181,7 @@ end subroutine LIS_diagnoseIrrigationOutputVar
                 dataEntry%count(t,vlevel) = &
                      dataEntry%count(t,vlevel)+1
                 !$OMP END CRITICAL 
-             elseif(daaEntry%timeAvgOpt.eq.4) then
+             elseif(dataEntry%timeAvgOpt.eq.4) then
                 ! record only matching local time values
                 if (LIS_histData(n)%lhour.eq.-1.and.LIS_histData(n)%lmin.eq.-1) then
                     ! no local time given, using the specific output time if it
