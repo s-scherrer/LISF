@@ -803,7 +803,7 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
        tradout , neeout  , gppout  , nppout  , fvegout , runsfout, & ! out Noah MP only
        runsbout, ecanout , edirout , etranout, fsaout  , firaout , & ! out Noah MP only
        aparout , psnout  , savout  , sagout  , psavout , bsfparout,&
-       wsparout, rssunout, rsshaout,                               & ! out Noah MP only
+       wsfparout,rssunout, rsshaout,                               & ! out Noah MP only
        bgapout , wgapout , tgvout  , tgbout  , chvout  , chbout  , & ! out Noah MP only
        shgout  , shcout  , shbout  , evgout  , evbout  , ghvout  , & ! out Noah MP only
        ghbout  , irgout  , ircout  , irbout  , trout   , evcout  , & ! out Noah MP only

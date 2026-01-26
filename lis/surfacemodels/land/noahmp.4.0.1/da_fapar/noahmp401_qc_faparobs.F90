@@ -152,10 +152,10 @@ subroutine noahmp401_qc_faparobs(n,k,OBS_State)
               obs(t) = LIS_rc%udef
           else if(sneqv_obs(t).gt.0.001) then 
               ! reject snowy pixels
-              smobs(t) = LIS_rc%udef
+              obs(t) = LIS_rc%udef
           else if(sca_obs(t).gt.0.0001) then  ! Var name sca 
               ! reject snowy pixels
-              smobs(t) = LIS_rc%udef
+              obs(t) = LIS_rc%udef
       endif
   enddo
 
