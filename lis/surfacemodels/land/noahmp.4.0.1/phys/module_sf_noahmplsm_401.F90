@@ -386,7 +386,7 @@ contains
                    SUBSNOW , RELSMC  ,                                         & ! OUT :
                    TGB     , TGV     , T2MV    , T2MB    , Q2V     , Q2B     , & ! OUT :
                    RUNSRF  , RUNSUB  , APAR    , PSN     , SAV     , SAG     , & ! OUT :
-                   PSAV    , BSFPAR  , WSFPAR  ,                             , & ! OUT :
+                   PSAV    , BSFPAR  , WSFPAR  ,                               & ! OUT :
                    FSNO    , NEE     , GPP     , NPP     , FVEG    , ALBEDO  , & ! OUT :
                    QSNBOT  , PONDING , PONDING1, PONDING2, RSSUN   , RSSHA   , & ! OUT :
                    BGAP    , WGAP    , CHV     , CHB     , EMISSI  ,           & ! OUT :
