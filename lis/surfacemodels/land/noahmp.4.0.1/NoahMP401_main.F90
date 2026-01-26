@@ -210,6 +210,7 @@ subroutine NoahMP401_main(n)
     real                 :: tmp_psav               ! photosyn. active solar radiation absorbed by vegetation [W/m2]
     real                 :: tmp_daily_psav         ! photosyn. active solar radiation absorbed by vegetation [W/m2]
     real                 :: tmp_bsfpar             ! 
+    real                 :: tmp_wsfpar             ! 
     real                 :: tmp_sag                ! solar radiation absorbed by ground [W/m2]
     real                 :: tmp_rssun              ! sunlit leaf stomatal resistance [s/m]
     real                 :: tmp_rssha              ! shaded leaf stomatal resistance [s/m]
@@ -743,6 +744,7 @@ subroutine NoahMP401_main(n)
                                    tmp_sag               , & ! out   - solar radiatiob absorbed by ground [W/m2]
                                    tmp_psav              , & ! out   - photosyn. active solar radiation absorbed by vegetation [W/m2]
                                    tmp_bsfpar            , & ! out   - 
+                                   tmp_wsfpar            , & ! out   - 
                                    tmp_rssun             , & ! out   - sunlit leaf stomatal resistance [s/m]
                                    tmp_rssha             , & ! out   - shaded leaf stomatal resistance [s/m]
                                    tmp_bgap              , & ! out   - between gap fraction [-]
@@ -944,6 +946,7 @@ subroutine NoahMP401_main(n)
             tmp_fapar = tmp_daily_psav / (tmp_daily_par + 1e-8)  ! addition of a small value to avoid divide by zero
             NOAHMP401_struc(n)%noahmp401(t)%daily_fapar = tmp_fapar
             NOAHMP401_struc(n)%noahmp401(t)%bsfpar = tmp_bsfpar
+            NOAHMP401_struc(n)%noahmp401(t)%wsfpar = tmp_wsfpar
 
             call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_RHMIN, &
              value=noahmp401_struc(n)%noahmp401(t)%rhmin, &
