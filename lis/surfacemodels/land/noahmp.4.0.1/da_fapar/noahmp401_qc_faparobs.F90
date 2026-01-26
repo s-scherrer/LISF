@@ -37,10 +37,9 @@ subroutine noahmp401_qc_faparobs(n,k,OBS_State)
 ! !DESCRIPTION:
 !
 !  This subroutine performs any model-based QC of the observation 
-!  prior to data assimilation. Here the soil moisture observations
-!  are flagged when LSM indicates that (1) rain is falling (2)
-!  soil is frozen or (3) ground is fully or partially covered 
-!  with snow MN:(4) ground is covered with vegatation (more than 50%). 
+!  prior to data assimilation. Here the FAPAR observations are
+!  flagged when LSM indicates that soil is frozen or ground is fully
+!  or partially covered with snow
 !  
 !  The arguments are: 
 !  \begin{description}
@@ -61,6 +60,12 @@ subroutine noahmp401_qc_faparobs(n,k,OBS_State)
   real                     :: forecast_obsspace(LIS_rc%obs_ngrid(k))
   real                     :: spread_obsspace(LIS_rc%obs_ngrid(k))
 
+  real                     :: smc1(LIS_rc%npatch(n,LIS_rc%lsm_index))
+  real                     :: sh2o1(LIS_rc%npatch(n,LIS_rc%lsm_index))
+  real                     :: smc1_obs(LIS_rc%obs_ngrid(k))
+  real                     :: sh2o1_obs(LIS_rc%obs_ngrid(k))
+  real                     :: sneqv_obs(LIS_rc%obs_ngrid(k))
+  real                     :: sca_obs(LIS_rc%obs_ngrid(k))
 
 
   call ESMF_StateGet(OBS_State,"Observation01",obs_field,&
@@ -70,6 +75,29 @@ subroutine noahmp401_qc_faparobs(n,k,OBS_State)
   call ESMF_FieldGet(obs_field,localDE=0,farrayPtr=obs,rc=status)
   call LIS_verify(status,& 
        "ESMF_FieldGet failed in NoahMP401_qc_faparobs")
+
+  ! calculation of snow & frozen conditions
+  do t=1, LIS_rc%npatch(n,LIS_rc%lsm_index)
+     smc1(t) = noahmp401_struc(n)%noahmp401(t)%smc(1)
+     sh2o1(t) = noahmp401_struc(n)%noahmp401(t)%sh2o(1)
+  end do
+
+  call LIS_convertPatchSpaceToObsSpace(n,k,&
+       LIS_rc%lsm_index, &
+       noahmp401_struc(n)%noahmp401(:)%sneqv,&
+       sneqv_obs)
+  call LIS_convertPatchSpaceToObsSpace(n,k,&
+       LIS_rc%lsm_index, &
+       noahmp401_struc(n)%noahmp401(:)%snowc,&   ! MP36 fsno
+       sca_obs)
+  call LIS_convertPatchSpaceToObsSpace(n,k,&
+       LIS_rc%lsm_index, &
+       smc1,&
+       smc1_obs)
+  call LIS_convertPatchSpaceToObsSpace(n,k,&
+       LIS_rc%lsm_index, &
+       sh2o1,&
+       sh2o1_obs)
 
   !-------------------------------------------------------------------
   ! FORECAST AND SPREAD CALCULATION
@@ -115,11 +143,19 @@ subroutine noahmp401_qc_faparobs(n,k,OBS_State)
           .and.forecast_obsspace(t).ne.LIS_rc%udef &
           .and.spread_obsspace(t).ne.LIS_rc%udef.and.spread_obsspace(t).gt.1e-10) then
           innov = obs(t) - forecast_obsspace(t)
-          ! reject observations if they are more than 50 standard deviations
-          ! away from the ensemble mean
           if (abs(innov) > 50 * spread_obsspace(t)) then
+              ! reject observations if they are more than 50 standard deviations
+              ! away from the ensemble mean
               obs(t) = LIS_rc%udef
-          endif
+          else if (abs(smc1_obs(t) - sh2o1_obs(t)).gt.0.0001) then
+              ! reject if the first soil layer is frozen
+              obs(t) = LIS_rc%udef
+          else if(sneqv_obs(t).gt.0.001) then 
+              ! reject snowy pixels
+              smobs(t) = LIS_rc%udef
+          else if(sca_obs(t).gt.0.0001) then  ! Var name sca 
+              ! reject snowy pixels
+              smobs(t) = LIS_rc%udef
       endif
   enddo
 

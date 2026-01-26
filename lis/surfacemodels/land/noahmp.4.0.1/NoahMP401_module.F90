@@ -301,8 +301,10 @@ module NoahMP401_module
 !     solar radiation absorbed by ground. unit: W/m2
 !   \item[psav]
 !     photosyn. active solar radiation absorbed by vegetation. unit: W/m2
-!   \item[fdapar]
+!   \item[bsfpar]
 !     fraction of direct photosyn. active solar radiation absorbed by vegetation. unit: -
+!   \item[wsfpar]
+!     fraction of diffuse photosyn. active solar radiation absorbed by vegetation. unit: -
 !   \item[rssun]
 !     sunlit leaf stomatal resistance. unit: s/m
 !   \item[rssha]
@@ -491,7 +493,8 @@ module NoahMP401_module
         real               :: fira
         real               :: apar  ! absorbed PAR per canopy(!) area
         real               :: fapar ! fraction of absorbed PAR
-        real               :: fdapar ! fraction of direct absorbed PAR
+        real               :: bsfpar ! fraction of direct absorbed PAR
+        real               :: wsfpar ! fraction of diffuse absorbed PAR
         real               :: psn
         real               :: sav
         real               :: sag

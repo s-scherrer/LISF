@@ -521,7 +521,8 @@ subroutine LIS_lsmda_plugin
    external NoahMP401_updatelaisoilm
    
    ! NOAHMP4.0.1 FAPAR DA
-   external NoahMP401_getfaparpred
+   external NoahMP401_getdailyfaparpred
+   external NoahMP401_getinstfaparpred
    external noahmp401_qc_faparobs
 
    ! VOD
@@ -3112,7 +3113,8 @@ subroutine LIS_lsmda_plugin
 
    call register_noahmp401_laida(LIS_CustomLAIobsId)
    call register_noahmp401_laismda(LIS_CustomLAIsmobsId)
-   call register_noahmp401_faparda(LIS_CustomFAPARobsId)
+   call register_noahmp401_faparda(LIS_CustomDailyFAPARobsId, true)
+   call register_noahmp401_faparda(LIS_CustomInstFAPARobsId, false)
    call register_noahmp401_vodda(LIS_CustomVODobsId)
    call register_noahmp401_vodda_only_lai(LIS_CustomVODonlyLAIobsId)
    call register_noahmp401_vodda_only_sm(LIS_CustomVODonlySMobsId)
@@ -4427,7 +4429,7 @@ contains
             trim(obsid)//char(0),noahmp401_qc_laiobs_laism)
     end subroutine register_noahmp401_laismda
 
-    subroutine register_noahmp401_faparda(obsId)
+    subroutine register_noahmp401_faparda(obsId, useDaily)
         ! Registers the functions for a DA of daily FAPAR, where LAI
         ! is the state variable to be updated.
         !
@@ -4436,6 +4438,7 @@ contains
         ! are different.
         implicit none
         character*50, intent(in) :: obsId
+        logical, intent(in)      :: useDaily
 
         ! state variable routines -> same as LAI DA
         call registerlsmdainit(trim(LIS_noahmp401Id)//"+"//&
@@ -4454,8 +4457,13 @@ contains
             trim(obsId)//char(0),noahmp401_descale_veg)
 
         ! observation related
-        call registerlsmdagetobspred(trim(LIS_noahmp401Id)//"+"//&
-            trim(obsId)//char(0),noahmp401_getfaparpred)
+        if (useDaily) then
+            call registerlsmdagetobspred(trim(LIS_noahmp401Id)//"+"//&
+                trim(obsId)//char(0),noahmp401_getdailyfaparpred)
+        else
+            call registerlsmdagetobspred(trim(LIS_noahmp401Id)//"+"//&
+                trim(obsId)//char(0),noahmp401_getinstfaparpred)
+        endif
         call registerlsmdaqcobsstate(trim(LIS_noahmp401Id)//"+"//&
             trim(obsId)//char(0),noahmp401_qc_faparobs)
     end subroutine register_noahmp401_faparda

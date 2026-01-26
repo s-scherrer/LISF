@@ -400,7 +400,8 @@ module LIS_histDataMod
   public ::   LIS_MOC_BARE2MQ2    
   public ::   LIS_MOC_APAR
   public ::   LIS_MOC_FAPAR
-  public ::   LIS_MOC_FDAPAR
+  public ::   LIS_MOC_BSFPAR
+  public ::   LIS_MOC_WSFPAR
   public ::   LIS_MOC_DAILY_FAPAR  ! due to nonlinearity, daily FAPAR cannot be calculated by averaging FAPAR
   public ::   LIS_MOC_DAILY_PAR
   public ::   LIS_MOC_DAILY_PSAV
@@ -939,7 +940,8 @@ module LIS_histDataMod
     integer ::  LIS_MOC_BARE2MQ2    = -9999
     integer ::  LIS_MOC_APAR    = -9999
     integer ::  LIS_MOC_FAPAR   = -9999
-    integer ::  LIS_MOC_FDAPAR   = -9999
+    integer ::  LIS_MOC_BSFPAR   = -9999
+    integer ::  LIS_MOC_WSFPAR   = -9999
     integer ::  LIS_MOC_DAILY_FAPAR   = -9999
     integer ::  LIS_MOC_DAILY_PSAV   = -9999
     integer ::  LIS_MOC_DAILY_PAR   = -9999
@@ -4926,9 +4928,9 @@ contains
             model_patch=.true.)
     endif
 
-    Call ESMF_ConfigFindLabel(modelSpecConfig, "FAPAR:", rc = rc)
+    Call ESMF_ConfigFindLabel(modelSpecConfig, "InstFAPAR:", rc = rc)
     Call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
-         "FAPAR", &
+         "InstFAPAR", &
          "fraction_of_absorbed_photosynthesis_active_energy_by_canopy",   &
          "fraction of absorbed photosynthesis active radiation energy by canopy",rc)
     if ( rc == 1 ) then
@@ -4938,13 +4940,25 @@ contains
             model_patch=.true.)
     endif
 
-    Call ESMF_ConfigFindLabel(modelSpecConfig, "FDAPAR:", rc = rc)
+    Call ESMF_ConfigFindLabel(modelSpecConfig, "BlackSkyInstFAPAR:", rc = rc)
     Call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
-         "FDAPAR", &
+         "BlackSkyInstFAPAR", &
          "fraction_of_direct_absorbed_photosynthesis_active_energy_by_canopy",   &
          "fraction of direct absorbed photosynthesis active radiation energy by canopy",rc)
     if ( rc == 1 ) then
-        call register_dataEntry(LIS_MOC_LSM_COUNT, LIS_MOC_FDAPAR, &
+        call register_dataEntry(LIS_MOC_LSM_COUNT, LIS_MOC_BSFPAR, &
+            LIS_histData(n)%head_lsm_list,&
+            n, 1, ntiles,(/"-"/), 1, (/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+    Call ESMF_ConfigFindLabel(modelSpecConfig, "WhiteSkyInstFAPAR:", rc = rc)
+    Call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "WhiteSkyInstFAPAR", &
+         "fraction_of_diffuse_absorbed_photosynthesis_active_energy_by_canopy",   &
+         "fraction of diffuse absorbed photosynthesis active radiation energy by canopy",rc)
+    if ( rc == 1 ) then
+        call register_dataEntry(LIS_MOC_LSM_COUNT, LIS_MOC_WSFPAR, &
             LIS_histData(n)%head_lsm_list,&
             n, 1, ntiles,(/"-"/), 1, (/"-"/),1,1,1,&
             model_patch=.true.)
