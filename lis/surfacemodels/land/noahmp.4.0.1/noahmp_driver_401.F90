@@ -44,7 +44,8 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
      trad    , nee     , gpp     , npp     , fveg    , runsf   , & ! out Noah MP only
      runsb   , ecan    , edir    , etran   ,                     & ! out Noah MP only
      rainf   , snowf   , fsa     , fira    ,                     & ! out Noah MP only
-     apar    , psn     , sav     , sag     , psav    , bsfpar  , rssun   , rssha   , & ! out Noah MP only
+     apar    , psn     , sav     , sag     , psav    , bsfpar  , & ! out Noah MP only
+     wsfpar  , rssun   , rssha   ,                               & ! out Noah MP only        
      bgap    , wgap    , tgb     , tgv     , chv     , chb     , & ! out Noah MP only
      shg     , shc     , shb     , evg     , evb     , ghv     , & ! out Noah MP only
      ghb     , irg     , irc     , irb     , tr      , evc     , & ! out Noah MP only
@@ -234,6 +235,7 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
   real, intent(out) :: sag                    ! solar rad absorbed by ground (w/m2)
   real, intent(out) :: psav                   ! photosyn. active solar rad absorbed by veg. (w/m2)
   real, intent(out) :: bsfpar                 ! 
+  real, intent(out) :: wsfpar                 ! 
   real, intent(out) :: rssun                  ! sunlit leaf stomatal resistance (s/m)
   real, intent(out) :: rssha                  ! shaded leaf stomatal resistance (s/m)
   real, intent(out) :: bgap                   ! between gap fraction
@@ -448,6 +450,7 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
   real, dimension(1,1) :: sagout
   real, dimension(1,1) :: psavout
   real, dimension(1,1) :: bsfparout
+  real, dimension(1,1) :: wsfparout
   real, dimension(1,1) :: rssunout
   real, dimension(1,1) :: rsshaout
   real, dimension(1,1) :: bgapout 
@@ -717,6 +720,7 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
   savout(1,1)   = sav
   sagout(1,1)   = sag
   bsfparout(1,1)   = bsfpar
+  wsfparout(1,1)   = wsfpar
   rssunout(1,1) = rssun
   rsshaout(1,1) = rssha
   bgapout(1,1)  = bgap
@@ -798,7 +802,8 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
        t2mvout , t2mbout , q2mvout , q2mbout , relsmcout,          & ! out Noah MP only
        tradout , neeout  , gppout  , nppout  , fvegout , runsfout, & ! out Noah MP only
        runsbout, ecanout , edirout , etranout, fsaout  , firaout , & ! out Noah MP only
-       aparout , psnout  , savout  , sagout  , psavout , bsfparout, rssunout, rsshaout, & ! out Noah MP only
+       aparout , psnout  , savout  , sagout  , psavout , bsfparout,&
+       wsparout, rssunout, rsshaout,                               & ! out Noah MP only
        bgapout , wgapout , tgvout  , tgbout  , chvout  , chbout  , & ! out Noah MP only
        shgout  , shcout  , shbout  , evgout  , evbout  , ghvout  , & ! out Noah MP only
        ghbout  , irgout  , ircout  , irbout  , trout   , evcout  , & ! out Noah MP only
@@ -908,6 +913,7 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
   sag = sagout(1,1)
   psav = psavout(1,1)
   bsfpar = bsfparout(1,1)
+  wsfpar = wsfparout(1,1)
   rssun = rssunout(1,1)
   rssha = rsshaout(1,1)
   bgap = bgapout(1,1)
