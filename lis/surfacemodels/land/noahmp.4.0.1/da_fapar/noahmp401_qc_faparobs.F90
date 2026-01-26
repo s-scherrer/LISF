@@ -156,6 +156,7 @@ subroutine noahmp401_qc_faparobs(n,k,OBS_State)
           else if(sca_obs(t).gt.0.0001) then  ! Var name sca 
               ! reject snowy pixels
               obs(t) = LIS_rc%udef
+          endif
       endif
   enddo
 
