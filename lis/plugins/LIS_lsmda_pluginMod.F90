@@ -3113,8 +3113,8 @@ subroutine LIS_lsmda_plugin
 
    call register_noahmp401_laida(LIS_CustomLAIobsId)
    call register_noahmp401_laismda(LIS_CustomLAIsmobsId)
-   call register_noahmp401_faparda(LIS_CustomDailyFAPARobsId, true)
-   call register_noahmp401_faparda(LIS_CustomInstFAPARobsId, false)
+   call register_noahmp401_faparda(LIS_CustomDailyFAPARobsId, .true.)
+   call register_noahmp401_faparda(LIS_CustomInstFAPARobsId, .false.)
    call register_noahmp401_vodda(LIS_CustomVODobsId)
    call register_noahmp401_vodda_only_lai(LIS_CustomVODonlyLAIobsId)
    call register_noahmp401_vodda_only_sm(LIS_CustomVODonlySMobsId)
