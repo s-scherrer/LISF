@@ -60,10 +60,6 @@ subroutine noahmp401_qc_faparobs(n,k,OBS_State)
   real                     :: forecast_obsspace(LIS_rc%obs_ngrid(k))
   real                     :: spread_obsspace(LIS_rc%obs_ngrid(k))
 
-  real                     :: smc1(LIS_rc%npatch(n,LIS_rc%lsm_index))
-  real                     :: sh2o1(LIS_rc%npatch(n,LIS_rc%lsm_index))
-  real                     :: smc1_obs(LIS_rc%obs_ngrid(k))
-  real                     :: sh2o1_obs(LIS_rc%obs_ngrid(k))
   real                     :: sneqv_obs(LIS_rc%obs_ngrid(k))
   real                     :: sca_obs(LIS_rc%obs_ngrid(k))
 

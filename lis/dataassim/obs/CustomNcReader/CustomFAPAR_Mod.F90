@@ -8,7 +8,7 @@ module CustomFAPAR_Mod
 
     implicit none
 
-    public :: CustomFAPAR_setup, read_CustomFAPAR, write_CustomFAPAR
+    public :: CustomDailyFAPAR_setup, CustomInstFAPAR_setup, read_CustomFAPAR, write_CustomFAPAR
     public :: CustomFAPAR_struc
 
     ! declare public reader array
@@ -16,7 +16,7 @@ module CustomFAPAR_Mod
 
 contains
 
-    subroutine CustomFAPAR_setup(k, OBS_State, OBS_Pert_State)
+    subroutine CustomDailyFAPAR_setup(k, OBS_State, OBS_Pert_State)
         use ESMF, only: ESMF_State
         use LIS_coreMod, only: LIS_rc
         use CustomNcReader_Mod, only: CustomNcReader_setup
@@ -32,7 +32,7 @@ contains
 
         allocate(CustomFAPAR_struc(LIS_rc%nnest))
         do n=1,LIS_rc%nnest
-            CustomFAPAR_struc(n)%obsid = "Custom FAPAR"
+            CustomFAPAR_struc(n)%obsid = "Custom DailyFAPAR"
             CustomFAPAR_struc(n)%varname = "FAPAR"
             CustomFAPAR_struc(n)%min_value = 0.0001
             CustomFAPAR_struc(n)%max_value = 10.0
@@ -42,7 +42,35 @@ contains
 
         call CustomNcReader_setup(CustomFAPAR_struc, k, OBS_State, OBS_Pert_State)
 
-    end subroutine CustomFAPAR_setup
+    end subroutine CustomDailyFAPAR_setup
+
+    subroutine CustomInstFAPAR_setup(k, OBS_State, OBS_Pert_State)
+        use ESMF, only: ESMF_State
+        use LIS_coreMod, only: LIS_rc
+        use CustomNcReader_Mod, only: CustomNcReader_setup
+
+        implicit none
+
+        ! !ARGUMENTS:
+        integer                   :: k
+        type(ESMF_State)          :: OBS_State(LIS_rc%nnest)
+        type(ESMF_State)          :: OBS_Pert_State(LIS_rc%nnest)
+
+        integer :: n
+
+        allocate(CustomFAPAR_struc(LIS_rc%nnest))
+        do n=1,LIS_rc%nnest
+            CustomFAPAR_struc(n)%obsid = "Custom InstFAPAR"
+            CustomFAPAR_struc(n)%varname = "FAPAR"
+            CustomFAPAR_struc(n)%min_value = 0.0001
+            CustomFAPAR_struc(n)%max_value = 10.0
+            CustomFAPAR_struc(n)%qcmin_value = 0.0
+            CustomFAPAR_struc(n)%qcmax_value = 100.0
+        enddo
+
+        call CustomNcReader_setup(CustomFAPAR_struc, k, OBS_State, OBS_Pert_State)
+
+    end subroutine CustomInstFAPAR_setup
 
     subroutine read_CustomFAPAR(n, k, OBS_State, OBS_Pert_State)
         use ESMF, only: ESMF_State
