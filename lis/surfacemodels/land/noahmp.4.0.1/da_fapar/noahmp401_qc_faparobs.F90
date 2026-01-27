@@ -76,12 +76,7 @@ subroutine noahmp401_qc_faparobs(n,k,OBS_State)
   call LIS_verify(status,& 
        "ESMF_FieldGet failed in NoahMP401_qc_faparobs")
 
-  ! calculation of snow & frozen conditions
-  do t=1, LIS_rc%npatch(n,LIS_rc%lsm_index)
-     smc1(t) = noahmp401_struc(n)%noahmp401(t)%smc(1)
-     sh2o1(t) = noahmp401_struc(n)%noahmp401(t)%sh2o(1)
-  end do
-
+  ! calculation of snow conditions
   call LIS_convertPatchSpaceToObsSpace(n,k,&
        LIS_rc%lsm_index, &
        noahmp401_struc(n)%noahmp401(:)%sneqv,&
@@ -90,14 +85,6 @@ subroutine noahmp401_qc_faparobs(n,k,OBS_State)
        LIS_rc%lsm_index, &
        noahmp401_struc(n)%noahmp401(:)%snowc,&   ! MP36 fsno
        sca_obs)
-  call LIS_convertPatchSpaceToObsSpace(n,k,&
-       LIS_rc%lsm_index, &
-       smc1,&
-       smc1_obs)
-  call LIS_convertPatchSpaceToObsSpace(n,k,&
-       LIS_rc%lsm_index, &
-       sh2o1,&
-       sh2o1_obs)
 
   !-------------------------------------------------------------------
   ! FORECAST AND SPREAD CALCULATION
@@ -146,9 +133,6 @@ subroutine noahmp401_qc_faparobs(n,k,OBS_State)
           if (abs(innov) > 50 * spread_obsspace(t)) then
               ! reject observations if they are more than 50 standard deviations
               ! away from the ensemble mean
-              obs(t) = LIS_rc%udef
-          else if (abs(smc1_obs(t) - sh2o1_obs(t)).gt.0.0001) then
-              ! reject if the first soil layer is frozen
               obs(t) = LIS_rc%udef
           else if(sneqv_obs(t).gt.0.001) then 
               ! reject snowy pixels
