@@ -303,6 +303,10 @@ module LIS_pluginIndices
         "Custom DailyFAPAR"
    character*50, public,  parameter :: LIS_CustomInstFAPARobsId      = &
         "Custom InstFAPAR"
+   character*50, public,  parameter :: LIS_CustomInstBsFAPARobsId      = &
+        "Custom InstBlackSkyFAPAR"
+   character*50, public,  parameter :: LIS_CustomInstWsFAPARobsId      = &
+        "Custom InstWhiteSkyFAPAR"
    character*50, public,  parameter :: LIS_CustomVODobsId      = &
         "Custom VOD"
    character*50, public,  parameter :: LIS_CustomVODonlySMobsId      = &
