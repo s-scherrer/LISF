@@ -87,7 +87,7 @@ contains
 
         allocate(CustomFAPAR_struc(LIS_rc%nnest))
         do n=1,LIS_rc%nnest
-            CustomFAPAR_struc(n)%obsid = "Custom InstBsFAPAR"
+            CustomFAPAR_struc(n)%obsid = "Custom InstBlackSkyFAPAR"
             CustomFAPAR_struc(n)%varname = "FAPAR"
             CustomFAPAR_struc(n)%min_value = 0.0001
             CustomFAPAR_struc(n)%max_value = 10.0
@@ -115,7 +115,7 @@ contains
 
         allocate(CustomFAPAR_struc(LIS_rc%nnest))
         do n=1,LIS_rc%nnest
-            CustomFAPAR_struc(n)%obsid = "Custom InstWsFAPAR"
+            CustomFAPAR_struc(n)%obsid = "Custom InstWhiteSkyFAPAR"
             CustomFAPAR_struc(n)%varname = "FAPAR"
             CustomFAPAR_struc(n)%min_value = 0.0001
             CustomFAPAR_struc(n)%max_value = 10.0
