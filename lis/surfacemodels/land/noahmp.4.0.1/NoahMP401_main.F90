@@ -776,7 +776,8 @@ subroutine NoahMP401_main(n)
                                    tmp_fldsto            , & ! in   - flood storage [m/s]
                                    tmp_fldfrc            , & ! in   - flooded fraction [-]
                                    tmp_par               , & ! out   - total photosyn active energy [W/m2]
-                                   NOAHMP401_struc(n)%noahmp401(t)%param, & ! out   - relative soil moisture [-]
+                                   NOAHMP401_struc(n)%noahmp401(t)%param, & ! out - parameters
+                                   NOAHMP401_struc(n)%noahmp401(t)%cosz, &  ! out
                                    tmp_sfcheadrt         , & 
                                    tmp_infxs1rt          , &
                                    tmp_soldrain1rt         & ! out   - extra output for WRF-HYDRO [m]

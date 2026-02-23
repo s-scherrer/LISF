@@ -529,6 +529,7 @@ module NoahMP401_module
 
         type(noahmp_parameters) :: param
 
+
         ! For WRF-HYDRO
 	real               :: sfcheadrt
 	real               :: infxs1rt
@@ -541,6 +542,9 @@ module NoahMP401_module
         real                      :: daily_fapar ! daily average of fapar
         type(LIS_TemporalAverage) :: daily_par_avg
         type(LIS_TemporalAverage) :: daily_psav_avg
+
+        ! for FAPAR DA
+        real                      :: cosz
  
     end type noahmp401dec
 

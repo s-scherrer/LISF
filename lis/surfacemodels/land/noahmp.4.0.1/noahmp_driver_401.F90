@@ -53,7 +53,7 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
      chleaf  , chuc    , chv2    , chb2    , relsmc,             &
      !ag (12Sep2019)
      rivsto, fldsto, fldfrc, par, &
-     parameters ,                                                & ! out Noah MP only
+     parameters , cosz,                                          & ! out Noah MP only
      sfcheadrt , INFXSRT, soldrain                               & ! For WRF-Hydro
 #ifdef PARFLOW
      ,qinsur, etrani                                             & ! out Noah MP only
