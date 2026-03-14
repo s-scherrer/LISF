@@ -1000,10 +1000,10 @@ subroutine LIS_DAobs_plugin
    call registerwritedaobs(trim(LIS_CustomInstFAPARobsId)//char(0),&
         write_CustomFAPAR)
 
-   call registerdaobsclass(trim(LIS_CustomInstFAPARwMLAIupdOI),"LSM")
-   call registerdaobssetup(trim(LIS_CustomInstFAPARwMLAIupdOI)//char(0),&
+   call registerdaobsclass(trim(LIS_CustomInstFAPARwMLAIupdOId),"LSM")
+   call registerdaobssetup(trim(LIS_CustomInstFAPARwMLAIupdOId)//char(0),&
         CustomInstFAPAR_setup)
-   call registerreaddaobs(trim(LIS_CustomInstFAPARwMLAIupdOI)//char(0),&
+   call registerreaddaobs(trim(LIS_CustomInstFAPARwMLAIupdOId)//char(0),&
         read_CustomFAPAR)
    call registerwritedaobs(trim(LIS_CustomInstFAPARwMLAIupdOId)//char(0),&
         write_CustomFAPAR)

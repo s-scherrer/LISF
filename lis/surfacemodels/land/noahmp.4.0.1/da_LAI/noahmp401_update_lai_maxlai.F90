@@ -41,8 +41,8 @@ subroutine noahmp401_update_lai_maxlai(n, LSM_State, LSM_Incr_State)
   integer                :: status
   real, pointer          :: lai(:), laiincr(:)
   real, pointer          :: maxlai(:), maxlaiincr(:)
-  real                   :: laitmp,laimax,laimin,
-  real                   :: maxlaitmp,maxlaimax,maxlaimin,
+  real                   :: laitmp,laimax,laimin
+  real                   :: maxlaitmp,maxlaimax,maxlaimin
 
   logical                :: update_flag(LIS_rc%ngrid(n))
   real                   :: perc_violation(LIS_rc%ngrid(n))
