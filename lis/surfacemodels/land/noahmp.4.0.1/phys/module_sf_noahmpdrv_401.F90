@@ -810,7 +810,7 @@ CONTAINS
 
 
        ! this corresponds to a = 0.5 for EBLFOREST and a = 0.75 otherwise
-       if (PMAXLAI .leq. 0.0) then
+       if (PMAXLAI .le. 0.0) then
            if (VEGTYP == parameters%EBLFOREST) then
                PMAXLAI = 6.498 ! with threshold 0.2
            else

@@ -1149,6 +1149,10 @@ subroutine NoahMP401_main(n)
             call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_SAI, value = NOAHMP401_struc(n)%noahmp401(t)%sai, &
                                               vlevel=1, unit="-", direction="-", surface_type = LIS_rc%lsm_index)
 
+            ![ 38] output variable: maxlai (unit=-). ***  maximum leaf index parameter
+            call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_MAXLAI, value = NOAHMP401_struc(n)%noahmp401(t)%maxlai, &
+                                              vlevel=1, unit="-", direction="-", surface_type = LIS_rc%lsm_index)
+
             ![ 40] output variable: tauss (unit=- ). ***  snow aging factor
             call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_SNOWAGE, value = NOAHMP401_struc(n)%noahmp401(t)%tauss, &
                                               vlevel=1, unit="-", direction="-", surface_type = LIS_rc%lsm_index)
