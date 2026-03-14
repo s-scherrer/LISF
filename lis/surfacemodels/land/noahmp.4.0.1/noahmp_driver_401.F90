@@ -17,7 +17,7 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
      year    , month   , day     , hour    , minute  ,           &
      dz8w    ,                                                   & ! new in : model configuration
      dt      , sldpth  , nsoil   , nsnow   ,                     & ! in : model configuration  
-     vegetype, soiltype, shdfac_monthly    , tbot    ,           & ! in : Vegetation/Soil characteristics 
+     vegetype, soiltype, shdfac_monthly    , tbot,        & ! in : Vegetation/Soil characteristics 
      urban_vegetype,                                             & ! in
      cropcat,  planting, harvest ,season_gdd,                    & ! in : Vegetation/Soil characteristics
      dveg_opt, crs_opt, btr_opt, run_opt, sfc_opt, frz_opt,      & ! in : User options
@@ -36,7 +36,7 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
      tah     , cm      , ch      , fwet    , sneqvo  , albold  , & ! in/out Noah MP only
      qsnow   , wslake  , zwt     , wa      , wt      , tsno    , & ! in/out Noah MP only
      zss     , snowice , snowliq , lfmass  , rtmass  , stmass  , & ! in/out Noah MP only
-     wood    , stblcp  , fastcp  , lai     , sai     , tauss   , & ! in/out Noah MP only
+     wood    , stblcp  , fastcp  , lai     , sai     , maxlai, tauss   , & ! in/out Noah MP only
      smoiseq , smcwtd  ,deeprech , rech    ,                     & ! in/out Noah MP only
      grain   , gdd     , pgs     ,                               & ! in/out Noah MP only for crop model
      gecros_state,                                               & ! in/out gecros model
@@ -203,6 +203,7 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
   real, intent(inout) :: fastcp               ! short-lived carbon, shallow soil [g/m2]
   real, intent(inout) :: lai                  ! leaf area index
   real, intent(inout) :: sai                  ! stem area index
+  real, intent(inout) :: maxlai               ! maximum leaf area index
   real, intent(inout) :: tauss                ! snow age factor
   real, intent(inout) :: smoiseq(nsoil)       ! eq volumetric soil moisture [m3/m3]
   real, intent(inout) :: smcwtd               ! soil moisture content in the layer to the water table when deep
@@ -418,6 +419,7 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
   real, dimension(1,1) :: fastcpinout
   real, dimension(1,1) :: laiinout
   real, dimension(1,1) :: saiinout
+  real, dimension(1,1) :: maxlaiinout
   real, dimension(1,1) :: taussinout
   real, dimension(1,nsoil,1) :: smoiseqinout
   real, dimension(1,1) :: smcwtdinout 
@@ -689,6 +691,7 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
   fastcpinout(1,1) = fastcp
   laiinout(1,1)    = lai
   saiinout(1,1)    = sai
+  maxlaiinout(1,1)    = maxlai
   taussinout(1,1)  = tauss
   smoiseqinout(1,:,1) = smoiseq(:)
   smcwtdinout(1,1) = smcwtd
@@ -794,7 +797,7 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
        tahinout     , cminout      , chinout      , fwetinout    , sneqvoinout  , alboldinout  , & ! in/out Noah MP only
        qsnowinout   , wslakeinout  , zwtinout     , wainout      , wtinout      , tsnowinout    , & ! in/out Noah MP only
        zsnsoinout     , sniceinout , snliqinout , lfmassinout  , rtmassinout  , stmassinout  , & ! in/out Noah MP only
-       woodinout    , stblcpinout  , fastcpinout  , laiinout     , saiinout     , taussinout   , & ! in/out Noah MP only
+       woodinout    , stblcpinout  , fastcpinout  , laiinout     , saiinout     , maxlaiinout, taussinout   , & ! in/out Noah MP only
        smoiseqinout , smcwtdinout  ,deeprechinout , rechinout    , graininout   , gddinout     , & ! in/out Noah MP only 
        pgsinout     ,                                                   & ! in/out Noah MP only
        gecros_stateinout,                                               & ! in/out gecros model
@@ -881,6 +884,7 @@ subroutine noahmp_driver_401(n, ttile, itimestep, &
   fastcp = fastcpinout(1,1)
   lai = laiinout(1,1)
   sai = saiinout(1,1)
+  maxlai = maxlaiinout(1,1)
   tauss = taussinout(1,1)
   smoiseq(:) = smoiseqinout(1,:,1)
   smcwtd = smcwtdinout(1,1)

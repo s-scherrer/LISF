@@ -175,6 +175,7 @@ subroutine NoahMP401_main(n)
     real                 :: tmp_fastcp             ! short-lived carbon in shallow soil [g/m2]
     real                 :: tmp_lai                ! leaf area index [-]
     real                 :: tmp_sai                ! stem area index [-]
+    real                 :: tmp_maxlai             ! 
     real                 :: tmp_tauss              ! snow age factor [-]
     real, allocatable    :: tmp_smoiseq(:)         ! equilibrium volumetric soil moisture content [m3/m3]
     real                 :: tmp_smcwtd             ! soil moisture content in the layer to the water table when deep [-]
@@ -577,6 +578,7 @@ subroutine NoahMP401_main(n)
                tmp_lai          = NOAHMP401_struc(n)%noahmp401(t)%lai
                tmp_sai          = NOAHMP401_struc(n)%noahmp401(t)%sai
             endif
+            tmp_maxlai          = NOAHMP401_struc(n)%noahmp401(t)%maxlai
             tmp_tauss           = NOAHMP401_struc(n)%noahmp401(t)%tauss
             tmp_smoiseq(:)      = NOAHMP401_struc(n)%noahmp401(t)%smoiseq(:)
             tmp_smcwtd          = NOAHMP401_struc(n)%noahmp401(t)%smcwtd
@@ -711,6 +713,7 @@ subroutine NoahMP401_main(n)
                                    tmp_fastcp            , & ! inout - short-lived carbon in shallow soil [g/m2]
                                    tmp_lai               , & ! inout - leaf area index [-]
                                    tmp_sai               , & ! inout - stem area index [-]
+                                   tmp_maxlai            , & ! inout - 
                                    tmp_tauss             , & ! inout - snow age factor [-]
                                    tmp_smoiseq           , & ! inout - equilibrium volumetric soil moisture content [m3/m3]
                                    tmp_smcwtd            , & ! inout - soil moisture content in the layer to the water table when deep [-]
@@ -827,6 +830,7 @@ subroutine NoahMP401_main(n)
             NOAHMP401_struc(n)%noahmp401(t)%fastcp          = tmp_fastcp
             NOAHMP401_struc(n)%noahmp401(t)%lai             = tmp_lai
             NOAHMP401_struc(n)%noahmp401(t)%sai             = tmp_sai
+            NOAHMP401_struc(n)%noahmp401(t)%maxlai          = tmp_maxlai
             NOAHMP401_struc(n)%noahmp401(t)%tauss           = tmp_tauss
             NOAHMP401_struc(n)%noahmp401(t)%smoiseq(:)      = tmp_smoiseq(:)
             NOAHMP401_struc(n)%noahmp401(t)%smcwtd          = tmp_smcwtd

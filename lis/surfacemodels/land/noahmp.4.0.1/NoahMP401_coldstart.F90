@@ -123,6 +123,7 @@ subroutine NoahMP401_coldstart(mtype)
     real, dimension(1,1)      :: fastcpxy    !short-lived carbon, shallow soil [g/m2]
     real, dimension(1,1)      :: saixy       !stem area index
     real, dimension(1,1)      :: laixy       !leaf area index
+    real, dimension(1,1)      :: maxlaixy    !
     real, dimension(1,1)      :: grainxy     !mass of grain [g/m2] !XING
     real, dimension(1,1)      :: gddxy       !growing degree days !XING
     integer, dimension(1,  1) :: cropcatxy
@@ -319,6 +320,7 @@ subroutine NoahMP401_coldstart(mtype)
              fastcpxy(1,1) = 0.0   ! Noah-MP.4.0.1 initial short-lived carbon in shallow soil set in NOAHMP_INIT
              saixy(1,1)    = 0.0   ! Noah-MP.4.0.1 initial stem area index set in NOAHMP_INIT
              laixy(1,1) = NOAHMP401_struc(n)%init_lai         ! Noah-MP.4.0.1 initial leaf area index:
+             maxlaixy(1,1) = -1                               ! negative = use default values
              grainxy(1,1) = 0.0
              gddxy(1,1) = 0.0
              cropcatxy(1,1) = 0.0

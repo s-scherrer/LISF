@@ -34,7 +34,7 @@ CONTAINS
 	         TAHXY,     CMXY,     CHXY,    FWETXY, SNEQVOXY,  ALBOLDXY, & ! IN/OUT Noah MP only
                QSNOWXY, WSLAKEXY,    ZWTXY,      WAXY,     WTXY,    TSNOXY, & ! IN/OUT Noah MP only
 	       ZSNSOXY,  SNICEXY,  SNLIQXY,  LFMASSXY, RTMASSXY,  STMASSXY, & ! IN/OUT Noah MP only
-	        WOODXY, STBLCPXY, FASTCPXY,    XLAIXY,   XSAIXY,   TAUSSXY, & ! IN/OUT Noah MP only
+	        WOODXY, STBLCPXY, FASTCPXY,    XLAIXY,   XSAIXY,   MAXLAIXY, TAUSSXY, & ! IN/OUT Noah MP only
 	       SMOISEQ, SMCWTDXY,DEEPRECHXY,   RECHXY,  GRAINXY,    GDDXY,PGSXY,  & ! IN/OUT Noah MP only
                GECROS_STATE,                                                & ! IN/OUT gecros model
 	        T2MVXY,   T2MBXY,    Q2MVXY,   Q2MBXY, RELSMCXY,            & ! OUT Noah MP only
@@ -230,6 +230,7 @@ CONTAINS
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  FASTCPXY  ! short-lived carbon, shallow soil [g/m2]
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  XLAIXY    ! leaf area index
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  XSAIXY    ! stem area index
+    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  MAXXLAIXY ! 
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  TAUSSXY   ! snow age factor
     REAL,    DIMENSION( ims:ime, 1:nsoil, jms:jme ), INTENT(INOUT) ::  SMOISEQ   ! eq volumetric soil moisture [m3/m3]
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  SMCWTDXY  ! soil moisture content in the layer to the water table when deep
@@ -377,6 +378,7 @@ CONTAINS
     REAL                                :: FASTCP       ! short-lived carbon, shallow soil [g/m2]
     REAL                                :: PLAI         ! leaf area index
     REAL                                :: PSAI         ! stem area index
+    REAL                                :: PMAXLAI      ! 
     REAL                                :: TAUSS        ! non-dimensional snow age
 
 ! OUT (with no Noah LSM equivalent)
@@ -676,6 +678,8 @@ CONTAINS
        FASTCP                = FASTCPXY(I,J)                ! fast carbon pool
        PLAI                  = XLAIXY  (I,J)                ! leaf area index [-] (no snow effects)
        PSAI                  = XSAIXY  (I,J)                ! stem area index [-] (no snow effects)
+       PMAXLAI               = XMAXLAIXY  (I,J)             ! 
+
        TAUSS                 = TAUSSXY (I,J)                ! non-dimensional snow age
        SMCEQ(       1:NSOIL) = SMOISEQ (I,       1:NSOIL,J)
        SMCWTD                = SMCWTDXY(I,J)
@@ -805,6 +809,16 @@ CONTAINS
        IF(VEGTYP == 27) FVEG = 0.0
        IF(VEGTYP == 27) PLAI = 0.0
 
+
+       ! this corresponds to a = 0.5 for EBLFOREST and a = 0.75 otherwise
+       if (PMAXLAI .leq. 0.0) then
+           if (VEGTYP == parameters%EBLFOREST) then
+               PMAXLAI = 6.498 ! with threshold 0.2
+           else
+               PMAXLAI = 4.739
+           endif
+       endif 
+
        IF ( VEGTYP == ISICE_TABLE ) THEN
          ICE = -1                           ! Land-ice point
          CALL NOAHMP_OPTIONS_GLACIER(IOPT_ALB  ,IOPT_SNF  ,IOPT_TBOT, IOPT_STC, IOPT_GLA , IOPT_SNDPTH)
@@ -907,7 +921,7 @@ CONTAINS
             I       , J       , LAT     , YEARLEN , JULIAN  , COSZ    , & ! IN : Time/Space-related
             DT      , DX      , DZ8W1D  , NSOIL   , ZSOIL   , NSNOW   , & ! IN : Model configuration 
             FVEG    , FVGMAX  , VEGTYP  , ICE     , IST     , CROPTYPE, & ! IN : Vegetation/Soil characteristics
-            SMCEQ   ,                                                   & ! IN : Vegetation/Soil characteristics
+            SMCEQ   , MAXLAI  ,                                         & ! IN : Vegetation/Soil characteristics
             T_ML    , P_ML    , PSFC    , U_ML    , V_ML    , Q_ML    , & ! IN : Forcing
             QC      , SWDN    , LWDN    ,                               & ! IN : Forcing
 	    PRCPCONV, PRCPNONC, PRCPSHCV, PRCPSNOW, PRCPGRPL, PRCPHAIL, & ! IN : Forcing
@@ -1021,6 +1035,7 @@ CONTAINS
              FASTCPXY (I,J)                = FASTCP
              XLAIXY   (I,J)                = PLAI
              XSAIXY   (I,J)                = PSAI
+             MAXLAIXY   (I,J)              = PMAXLAI
              TAUSSXY  (I,J)                = TAUSS
 
 ! OUTPUT

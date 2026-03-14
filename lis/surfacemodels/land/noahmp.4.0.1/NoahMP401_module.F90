@@ -545,6 +545,7 @@ module NoahMP401_module
 
         ! for FAPAR DA
         real                      :: cosz
+        real                      :: maxlai
  
     end type noahmp401dec
 

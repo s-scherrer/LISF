@@ -389,6 +389,9 @@ subroutine NoahMP401_readrst()
             ! read: stem area index
             call LIS_readvar_restart(ftn, n, LIS_rc%lsm_index, NOAHMP401_struc(n)%noahmp401%sai, &
                                      varname="SAI", wformat=wformat)
+
+            ! for now, use the default value at the start -> TODO: add to restart file and read from file
+            NOAHMP401_struc(n)%noahmp401%maxlai = -1.0
  
             ! read: snow age factor
             call LIS_readvar_restart(ftn, n, LIS_rc%lsm_index, NOAHMP401_struc(n)%noahmp401%tauss, &

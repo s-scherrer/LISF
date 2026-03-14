@@ -365,7 +365,7 @@ contains
                    ILOC    , JLOC    , LAT     , YEARLEN , JULIAN  , COSZ    , & ! IN : Time/Space-related
                    DT      , DX      , DZ8W    , NSOIL   , ZSOIL   , NSNOW   , & ! IN : Model configuration 
                    SHDFAC  , SHDMAX  , VEGTYP  , ICE     , IST     , CROPTYPE, & ! IN : Vegetation/Soil characteristics
-                   SMCEQ   ,                                                   & ! IN : Vegetation/Soil characteristics
+                   SMCEQ   , MAXLAI  ,                                         & ! IN : Vegetation/Soil characteristics
                    SFCTMP  , SFCPRS  , PSFC    , UU      , VV      , Q2      , & ! IN : Forcing
                    QC      , SOLDN   , LWDN    ,                               & ! IN : Forcing
 	           PRCPCONV, PRCPNONC, PRCPSHCV, PRCPSNOW, PRCPGRPL, PRCPHAIL, & ! IN : Forcing
@@ -441,6 +441,7 @@ contains
   REAL                           , INTENT(IN)    :: LAT    !latitude (radians)
   REAL, DIMENSION(-NSNOW+1:    0), INTENT(IN)    :: FICEOLD!ice fraction at last timestep
   REAL, DIMENSION(       1:NSOIL), INTENT(IN)    :: SMCEQ  !equilibrium soil water  content [m3/m3]
+  REAL                           , INTENT(IN)    :: MAXLAI  !see CO2_FLUX
   REAL                           , INTENT(IN)    :: PRCPCONV ! convective precipitation entering  [mm/s]    ! MB/AN : v3.7
   REAL                           , INTENT(IN)    :: PRCPNONC ! non-convective precipitation entering [mm/s] ! MB/AN : v3.7
   REAL                           , INTENT(IN)    :: PRCPSHCV ! shallow convective precip entering  [mm/s]   ! MB/AN : v3.7
@@ -830,7 +831,7 @@ contains
    IF (dveg_active) THEN
      CALL CARBON (parameters,NSNOW  ,NSOIL  ,VEGTYP ,DT     ,ZSOIL  , & !in
                  DZSNSO ,STC    ,SMC    ,TV     ,TG     ,PSN    , & !in
-                 FOLN   ,BTRAN  ,APAR   ,FVEG   ,IGS    , & !in
+                 FOLN   ,BTRAN  ,APAR   ,FVEG   ,MAXLAI ,IGS    , & !in
                  TROOT  ,IST    ,LAT    ,iloc   ,jloc   , & !in
                  LFMASS ,RTMASS ,STMASS ,WOOD   ,STBLCP ,FASTCP , & !inout
                  GPP    ,NPP    ,NEE    ,AUTORS ,HETERS ,TOTSC  , & !out
@@ -8692,7 +8693,7 @@ END  SUBROUTINE SHALLOWWATERTABLE
 
   SUBROUTINE CARBON (parameters,NSNOW  ,NSOIL  ,VEGTYP ,DT     ,ZSOIL  , & !in
                      DZSNSO ,STC    ,SMC    ,TV     ,TG     ,PSN    , & !in
-                     FOLN   ,BTRAN  ,APAR   ,FVEG   ,IGS    , & !in
+                     FOLN   ,BTRAN  ,APAR   ,FVEG   ,MAXLAI ,IGS    , & !in
                      TROOT  ,IST    ,LAT    ,ILOC   ,JLOC   , & !in
                      LFMASS ,RTMASS ,STMASS ,WOOD   ,STBLCP ,FASTCP , & !inout
                      GPP    ,NPP    ,NEE    ,AUTORS ,HETERS ,TOTSC  , & !out
@@ -8722,6 +8723,7 @@ END  SUBROUTINE SHALLOWWATERTABLE
   REAL                           , INTENT(IN) :: APAR   !PAR by canopy (w/m2)
   REAL                           , INTENT(IN) :: IGS    !growing season index (0=off, 1=on)
   REAL                           , INTENT(IN) :: FVEG   !vegetation greenness fraction
+  REAL                           , INTENT(IN) :: MAXLAI !see CO2_FLUX
   REAL                           , INTENT(IN) :: TROOT  !root-zone averaged temperature (k)
   INTEGER                        , INTENT(IN) :: IST    !surface type 1->soil; 2->lake
 
@@ -8790,7 +8792,7 @@ END  SUBROUTINE SHALLOWWATERTABLE
   CALL CO2FLUX (parameters,NSNOW  ,NSOIL  ,VEGTYP ,IGS    ,DT     , & !in
                 DZSNSO ,STC    ,PSN    ,TROOT  ,TV     , & !in
                 WROOT  ,WSTRES ,FOLN   ,LAPM   ,         & !in
-                LAT    ,ILOC   ,JLOC   ,FVEG   ,         & !in
+                LAT    ,ILOC   ,JLOC   ,FVEG   ,MAXLAI , & !in
                 XLAI   ,XSAI   ,LFMASS ,RTMASS ,STMASS , & !inout
                 FASTCP ,STBLCP ,WOOD   ,                 & !inout
                 GPP    ,NPP    ,NEE    ,AUTORS ,HETERS , & !out
@@ -8806,7 +8808,7 @@ END  SUBROUTINE SHALLOWWATERTABLE
   SUBROUTINE CO2FLUX (parameters,NSNOW  ,NSOIL  ,VEGTYP ,IGS    ,DT     , & !in
                       DZSNSO ,STC    ,PSN    ,TROOT  ,TV     , & !in
                       WROOT  ,WSTRES ,FOLN   ,LAPM   ,         & !in
-                      LAT    ,ILOC   ,JLOC   ,FVEG   ,         & !in
+                      LAT    ,ILOC   ,JLOC   ,FVEG   ,MAXLAI , & !in
                       XLAI   ,XSAI   ,LFMASS ,RTMASS ,STMASS , & !inout
                       FASTCP ,STBLCP ,WOOD   ,                 & !inout
                       GPP    ,NPP    ,NEE    ,AUTORS ,HETERS , & !out
@@ -8838,6 +8840,7 @@ END  SUBROUTINE SHALLOWWATERTABLE
   REAL                           , INTENT(IN) :: FOLN   !foliage nitrogen (%)
   REAL                           , INTENT(IN) :: LAPM   !leaf area per unit mass [m2/g]
   REAL                           , INTENT(IN) :: FVEG   !vegetation greenness fraction
+  REAL                           , INTENT(IN) :: MAXLAI !"maximum" LAI parameter for LEAFPT function
 
 ! input and output
 
@@ -8918,6 +8921,8 @@ END  SUBROUTINE SHALLOWWATERTABLE
   REAL                   :: SD
   REAL                   :: VEGFRAC
 
+  REAL                   :: ALEAFPT  ! parameter A for the LEAFPT function
+
 ! Respiration as a function of temperature
 
   real :: r,x
@@ -8962,8 +8967,10 @@ END  SUBROUTINE SHALLOWWATERTABLE
 
 ! fraction of carbon into leaf versus nonleaf
 
-     LEAFPT = EXP(0.01*(1.-EXP(0.75*XLAI))*XLAI)
-     IF(VEGTYP == parameters%EBLFOREST) LEAFPT = EXP(0.01*(1.-EXP(0.50*XLAI))*XLAI)
+     ! Parameter 0.2 comes from chosen threshold, which is also encoded
+     ! in the starting values for MAXLAI
+     ALEAFPT = LOG(1. - LOG(0.2)/(0.01*MAXLAI)) / MAXLAI
+     LEAFPT = EXP(0.01*(1.-EXP(ALEAFPT*XLAI))*XLAI)
 
      NONLEF = 1.0 - LEAFPT
      STEMPT = XLAI/10.0*LEAFPT
