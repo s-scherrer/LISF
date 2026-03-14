@@ -677,7 +677,7 @@ CONTAINS
        FASTCP                = FASTCPXY(I,J)                ! fast carbon pool
        PLAI                  = XLAIXY  (I,J)                ! leaf area index [-] (no snow effects)
        PSAI                  = XSAIXY  (I,J)                ! stem area index [-] (no snow effects)
-       PMAXLAI               = XMAXLAIXY  (I,J)             ! 
+       PMAXLAI               = MAXLAIXY  (I,J)              ! 
 
        TAUSS                 = TAUSSXY (I,J)                ! non-dimensional snow age
        SMCEQ(       1:NSOIL) = SMOISEQ (I,       1:NSOIL,J)
