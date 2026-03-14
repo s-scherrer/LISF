@@ -71,13 +71,14 @@ subroutine noahmp401_calculate_instantaneous_fapar(n, k, fpartype, fpar)
     use LIS_DAobservationsMod
     use noahmp401_lsmMod
     use noahmp401_dasoilm_Mod
+    use module_sf_noahmplsm_401, only: noahmp_parameters, albedo
 
     implicit none
     ! !ARGUMENTS: 
     integer, intent(in)    :: n
     integer, intent(in)    :: k
     integer, intent(in)    :: fpartype  ! 1: black-sky, 2: white-sky, else: total
-    real, intent(out)      :: wsfpar(LIS_rc%npatch(n,LIS_rc%lsm_index))
+    real, intent(out)      :: fpar(LIS_rc%npatch(n,LIS_rc%lsm_index))
 
     real                   :: cosz
     real                   :: fage, elai, esai, fsno
@@ -86,11 +87,12 @@ subroutine noahmp401_calculate_instantaneous_fapar(n, k, fpartype, fpar)
     real, dimension(1:2)   :: albgrd, albgri, albd, albi
     real, dimension(1:2)   :: fabd, fabi
     real, dimension(1:2)   :: ftdd, ftid, ftii
-    real, dimension(1:2)   :: fsun
+    real                   :: fsun
     real, dimension(1:2)   :: frevd, frevi, fregd, fregi
     integer                :: iloc, jloc, ist, ice
     real                   :: lat, lon
     type(noahmp_parameters) :: param
+    integer :: t
 
     ice = 0  ! no ice
     ist = 1  ! land

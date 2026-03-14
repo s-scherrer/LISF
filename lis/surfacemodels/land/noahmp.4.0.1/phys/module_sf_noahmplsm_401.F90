@@ -16,7 +16,7 @@ MODULE MODULE_SF_NOAHMPLSM_401
   private ::               CSNOW
   private ::               TDFCND
   private ::       RADIATION
-  private ::               ALBEDO
+  public  ::               ALBEDO
   private ::                         SNOW_AGE
   private ::                         SNOWALB_BATS  
   private ::                         SNOWALB_CLASS
