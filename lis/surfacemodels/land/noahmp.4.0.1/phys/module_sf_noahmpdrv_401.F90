@@ -64,8 +64,7 @@ CONTAINS
                its,ite,  jts,jte,  kts,kte,                    &
                MP_RAINC, MP_RAINNC, MP_SHCV, MP_SNOW, MP_GRAUP, MP_HAIL     )
 !----------------------------------------------------------------
-    USE MODULE_SF_NOAHMPLSM_401
-!    USE MODULE_SF_NOAHMPLSM_401, only: noahmp_options, NOAHMP_SFLX, noahmp_parameters
+    USE MODULE_SF_NOAHMPLSM_401, only: noahmp_options, NOAHMP_SFLX, noahmp_parameters, opt_pedo
     USE module_sf_noahmp_glacier_401
     USE NOAHMP_TABLES_401, ONLY: ISICE_TABLE, CO2_TABLE, O2_TABLE, DEFAULT_CROP_TABLE, ISCROP_TABLE, ISURBAN_TABLE, NATURAL_TABLE, &
                              LOW_DENSITY_RESIDENTIAL_TABLE, HIGH_DENSITY_RESIDENTIAL_TABLE, HIGH_INTENSITY_INDUSTRIAL_TABLE
