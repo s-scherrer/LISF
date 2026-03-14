@@ -4453,8 +4453,6 @@ contains
         ! state variable routines -> same as LAI DA
         call registerlsmdainit(trim(LIS_noahmp401Id)//"+"//&
             trim(obsId)//char(0),noahmp401_daveg_init)
-        call registerlsmdagetstatevar(trim(LIS_noahmp401Id)//"+"//&
-            trim(obsId)//char(0),noahmp401_getvegvars)
         if (maxlaiupdate) then
             call registerlsmdagetstatevar(trim(LIS_noahmp401Id)//"+"//&
                 trim(obsId)//char(0),noahmp401_get_lai_maxlai)
@@ -4463,8 +4461,8 @@ contains
             call registerlsmdaupdatestate(trim(LIS_noahmp401Id)//"+"//&
                 trim(obsId)//char(0),noahmp401_update_lai_maxlai)
         else
-        call registerlsmdagetstatevar(trim(LIS_noahmp401Id)//"+"//&
-            trim(obsId)//char(0),noahmp401_getvegvars)
+            call registerlsmdagetstatevar(trim(LIS_noahmp401Id)//"+"//&
+                trim(obsId)//char(0),noahmp401_getvegvars)
             call registerlsmdasetstatevar(trim(LIS_noahmp401Id)//"+"//&
                 trim(obsId)//char(0),noahmp401_setvegvars)
             call registerlsmdaupdatestate(trim(LIS_noahmp401Id)//"+"//&
