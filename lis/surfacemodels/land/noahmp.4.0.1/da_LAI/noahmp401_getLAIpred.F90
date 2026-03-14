@@ -34,8 +34,8 @@ subroutine noahmp401_getLAIpred(n, k,obs_pred)
 !
 ! !DESCRIPTION:
 !
-!  Returns the Soil moisture obs pred (model's estimate of 
-!  observations) for data assimilation
+!  Returns the LAI obs pred (model's estimate of observations) for data
+!  assimilation
 ! 
 !  The arguments are: 
 !  \begin{description}

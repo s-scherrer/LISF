@@ -3099,7 +3099,7 @@ contains
 
     call ESMF_ConfigFindLabel(modelSpecConfig,"MAXLAI:",rc=rc)
     call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
-         "LAI",&
+         "MAXLAI",&
          "maximum_leaf_area_index",&
          "maximum leaf area index",rc)
     if ( rc == 1 ) then

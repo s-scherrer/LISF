@@ -303,6 +303,8 @@ module LIS_pluginIndices
         "Custom DailyFAPAR"
    character*50, public,  parameter :: LIS_CustomInstFAPARobsId      = &
         "Custom InstFAPAR"
+   character*50, public,  parameter :: LIS_CustomInstFAPARwMLAIupdOId      = &
+        "Custom InstFAPAR with MAXLAI update"
    character*50, public,  parameter :: LIS_CustomInstBsFAPARobsId      = &
         "Custom InstBlackSkyFAPAR"
    character*50, public,  parameter :: LIS_CustomInstWsFAPARobsId      = &
