@@ -3264,7 +3264,7 @@ ENDIF   ! CROPTYPE == 0
          KOPEN   = 1.0
      ELSE
          IF(OPT_RAD == 1) THEN
-	   DENFVEG = -LOG(MAX(1.0-FVEG,0.01))/(PAI*parameters%RC**2)
+           DENFVEG = -LOG(MAX(1.0-FVEG,0.01))/(PAI*parameters%RC**2)
            HD      = parameters%HVT - parameters%HVB
            BB      = 0.5 * HD           
            THETAP  = ATAN(BB/parameters%RC * TAN(ACOS(MAX(0.01,COSZ))) )
@@ -3280,7 +3280,7 @@ ENDIF   ! CROPTYPE == 0
 
            !KOPEN   = 0.05
            ! Manual implementation of eq. (2) via a Kronrod15 quadrature
-           KOPEN = KOPEN_INTEGRAL(DENFVEG, RC, BB)
+           KOPEN = KOPEN_INTEGRAL(DENFVEG, parameters%RC, BB)
            
          END IF
 
@@ -3434,6 +3434,7 @@ ENDIF   ! CROPTYPE == 0
 
     REAL, PARAMETER :: PAI = 3.14159265 
     REAL, PARAMETER :: W0 = 0.209482141084728
+    ! Kronrod 15 weights and support points
     REAL, PARAMETER, DIMENSION(7) :: WS = (/0.022935322010529,&
                                             0.063092092629979,&
                                             0.104790010322250,&
@@ -3453,7 +3454,7 @@ ENDIF   ! CROPTYPE == 0
     WSCALE = PAI * 0.25
     X0 = WSCALE
     FVAL = CALC_BGAP(X0, DENFVEG, RC, BB)
-    KOPEN = W0S * FVAL
+    KOPEN = W0 * WSCALE * FVAL
     do i=1,7
         WI = WS(i)
         XIP = (XS(i) + 1.) * WSCALE
@@ -3466,11 +3467,12 @@ ENDIF   ! CROPTYPE == 0
 
   END FUNCTION
 
-  FUNCTION CALC_BGAP(X, DENFVEG, RC, BB) return(BGAP)
+  FUNCTION CALC_BGAP(X, DENFVEG, RC, BB) result(BGAP)
     REAL, INTENT(IN) :: X
     REAL, INTENT(IN) :: DENFVEG
     REAL, INTENT(IN) :: RC
     REAL, INTENT(IN) :: BB
+    REAL :: BGAP
 
     REAL :: THETAP
     REAL, PARAMETER :: PAI = 3.14159265 
