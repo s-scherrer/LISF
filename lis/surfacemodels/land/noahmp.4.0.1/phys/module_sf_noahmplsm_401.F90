@@ -3269,13 +3269,19 @@ ENDIF   ! CROPTYPE == 0
            BB      = 0.5 * HD           
            THETAP  = ATAN(BB/parameters%RC * TAN(ACOS(MAX(0.01,COSZ))) )
            ! BGAP    = EXP(-parameters%DEN * PAI * parameters%RC**2/COS(THETAP) )
+           ! In the paper, eq. (1) is wrongly written as "times cos(thetap)"
+           ! instead of "divided by cos(thetap)". BGAP = P(n=0|theta)
            BGAP    = EXP(-DENFVEG * PAI * parameters%RC**2/COS(THETAP) )
            FA      = VAI/(1.33 * PAI * parameters%RC**3.0 *(BB/parameters%RC)*DENFVEG)
            NEWVAI  = HD*FA
+           ! paper eq. (3), P(n>0|theta)
            WGAP    = (1.0-BGAP) * EXP(-0.5*NEWVAI/COSZ)
            GAP     = MIN(1.0-FVEG, BGAP+WGAP)
 
-           KOPEN   = 0.05
+           !KOPEN   = 0.05
+           ! Manual implementation of eq. (2) via a Kronrod15 quadrature
+           KOPEN = KOPEN_INTEGRAL(DENFVEG, RC, BB)
+           
          END IF
 
          IF(OPT_RAD == 2) THEN
@@ -3410,6 +3416,69 @@ ENDIF   ! CROPTYPE == 0
                             - (1.-ALBGRI(IB))*FTI(IB)
 
   END SUBROUTINE TWOSTREAM
+
+  FUNCTION KOPEN_INTEGRAL(DENFVEG, RC, BB) result(KOPEN)
+    ! Calculates K_open from the integral in Niu and Yang (2004), JGR
+    ! using a Kronrod15 quadrature.
+    ! Tests in python against scipy.integrate.quad showed that this has a
+    ! relative error of ca. 1e-4, which is sufficient here
+  
+    REAL, INTENT(IN) :: DENFVEG
+    REAL, INTENT(IN) :: RC
+    REAL, INTENT(IN) :: BB
+    REAL :: KOPEN
+
+    REAL :: WI, XI, X0, XIP, XIM, WSCALE
+    REAL :: THETAP, BGAP, FVAL
+    INTEGER :: I
+
+    REAL, PARAMETER :: PAI = 3.14159265 
+    REAL, PARAMETER :: W0 = 0.209482141084728
+    REAL, PARAMETER, DIMENSION(7) :: WS = (/0.022935322010529,&
+                                            0.063092092629979,&
+                                            0.104790010322250,&
+                                            0.140653259715525,&
+                                            0.169004726639267,&
+                                            0.190350578064785,&
+                                            0.204432940075298/)
+    REAL, PARAMETER, DIMENSION(7) :: XS = (/0.991455371120813,&
+                                            0.949107912342759,&
+                                            0.864864423359769,&
+                                            0.741531185599394,&
+                                            0.586087235467691,&
+                                            0.405845151377397,&
+                                            0.207784955007898/)
+
+
+    WSCALE = PAI * 0.25
+    X0 = WSCALE
+    FVAL = CALC_BGAP(X0, DENFVEG, RC, BB)
+    KOPEN = W0S * FVAL
+    do i=1,7
+        WI = WS(i)
+        XIP = (XS(i) + 1.) * WSCALE
+        XIM = (-XS(i) + 1.) * WSCALE
+        FVAL = CALC_BGAP(XIP, DENFVEG, RC, BB)
+        KOPEN = KOPEN + WI * FVAL
+        FVAL = CALC_BGAP(XIM, DENFVEG, RC, BB)
+        KOPEN = KOPEN + WI * FVAL
+    end do
+
+  END FUNCTION
+
+  FUNCTION CALC_BGAP(X, DENFVEG, RC, BB) return(BGAP)
+    REAL, INTENT(IN) :: X
+    REAL, INTENT(IN) :: DENFVEG
+    REAL, INTENT(IN) :: RC
+    REAL, INTENT(IN) :: BB
+
+    REAL :: THETAP
+    REAL, PARAMETER :: PAI = 3.14159265 
+
+    THETAP  = ATAN(BB/RC * TAN(X))
+    BGAP    = EXP(-DENFVEG * PAI * RC**2/COS(THETAP) )
+  END FUNCTION
+
 
 !== begin vege_flux ================================================================================
 
