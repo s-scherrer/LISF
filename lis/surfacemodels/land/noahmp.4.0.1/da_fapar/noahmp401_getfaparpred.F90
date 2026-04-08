@@ -91,6 +91,7 @@ subroutine noahmp401_calculate_instantaneous_fapar(n, k, fpartype, fpar)
     real, dimension(1:2)   :: frevd, frevi, fregd, fregi
     integer                :: iloc, jloc, ist, ice
     real                   :: lat, lon
+    real                   :: fveg
     type(noahmp_parameters) :: param
     integer :: t
 
@@ -101,69 +102,74 @@ subroutine noahmp401_calculate_instantaneous_fapar(n, k, fpartype, fpar)
 
     do t=1, LIS_rc%npatch(n,LIS_rc%lsm_index)
 
-        param = noahmp401_struc(n)%noahmp401(t)%param
+        fveg = noahmp401_struc(n)%noahmp401(t)%fveg
 
-        call calc_elai_esai(param, &
-             noahmp401_struc(n)%noahmp401(t)%lai,&
-             noahmp401_struc(n)%noahmp401(t)%sai,&
-             noahmp401_struc(n)%noahmp401(t)%snowh,&
-             elai, esai)
-
-        call calc_fsno(param,&
-             noahmp401_struc(n)%noahmp401(t)%sneqv,&
-             noahmp401_struc(n)%noahmp401(t)%snowh,&
-             fsno)
-
-        albold = noahmp401_struc(n)%noahmp401(t)%albold
-        tauss = noahmp401_struc(n)%noahmp401(t)%tauss
-
-        call albedo(&
-             param,&                                     ! parameters
-             noahmp401_struc(n)%noahmp401(t)%vegetype,&  ! VEGTYP: not used
-             ist,&                                       ! IST: surface type = land
-             ice,&                                       ! ICE: no ice
-             noahmp401_struc(n)%nsoil,&                  ! NSOIL
-             noahmp401_struc(n)%ts,&                     ! DT
-             noahmp401_struc(n)%noahmp401(t)%cosz,&      ! COSZ
-             fage,&                                      ! FAGE (dummy value)
-             elai,&                                      ! ELAI
-             esai,&                                      ! ESAI
-             noahmp401_struc(n)%noahmp401(t)%tg,&        ! TG
-             noahmp401_struc(n)%noahmp401(t)%tv,&        ! TV
-             noahmp401_struc(n)%noahmp401(t)%snowh,&     ! SNOWH
-             fsno,&                                      ! FSNO
-             noahmp401_struc(n)%noahmp401(t)%fwet,&      ! FWET
-             noahmp401_struc(n)%noahmp401(t)%smc,&       ! SMC
-             noahmp401_struc(n)%noahmp401(t)%sneqvo,&    ! SNEQVO
-             noahmp401_struc(n)%noahmp401(t)%sneqv,&     ! SNEQV
-             noahmp401_struc(n)%noahmp401(t)%qsnow,&     ! QSNOW
-             noahmp401_struc(n)%noahmp401(t)%fveg,&      ! FVEG
-             iloc, jloc,&
-             albold, tauss,&                             ! inout
-             albgrd, albgri, albd, albi,fabd,fabi,&      ! out
-             ftdd,ftid,ftii,fsun,frevi,frevd,fregd,&     ! out
-             fregi,bgap,wgap&                            ! out
-             )
-
-        if (fpartype.eq.1) then
-            fpar(t) = fabd(1)  ! direct -> black sky
-        else if (fpartype.eq.2) then
-            fpar(t) = fabi(1)  ! diffuse -> white sky
+        if (fveg == 0.0) then   ! can happen due to snow
+            fpar(t) = 0.0
         else
-            ! total instantaneous FAPAR = PSAV / PAR
-            ! with
-            !  PSAV = CAD(1) + CAI(1)
-            !  CAD(1) = SOLAD(1) * FABD(1)
-            !  CAI(1) = SOLAI(1) * FABI(1)
-            !  PAR = SOLAD(1) + SOLAI(1)    i.e. total incoming visible radiation
-            !  SOLAD(1) = SWDOWN * 0.7 * 0.5
-            !  SOLAI(1) = SWDOWN * 0.3 * 0.5
-            ! therefore:
-            !  PAR = SWDOWN * 0.5
-            !  PSAV = SWDOWN * 0.5 * (0.7 * FABD(1) + 0.3 * FABI(1))
-            !  FAPAR = 0.7 * FABD(1) + 0.3 * FABI(1)
-            fpar(t) = 0.7 * fabd(1) + 0.3 * fabi(1)
-        endif
+            param = noahmp401_struc(n)%noahmp401(t)%param
+    
+            call calc_elai_esai(param, &
+                 noahmp401_struc(n)%noahmp401(t)%lai,&
+                 noahmp401_struc(n)%noahmp401(t)%sai,&
+                 noahmp401_struc(n)%noahmp401(t)%snowh,&
+                 elai, esai)
+    
+            call calc_fsno(param,&
+                 noahmp401_struc(n)%noahmp401(t)%sneqv,&
+                 noahmp401_struc(n)%noahmp401(t)%snowh,&
+                 fsno)
+    
+            albold = noahmp401_struc(n)%noahmp401(t)%albold
+            tauss = noahmp401_struc(n)%noahmp401(t)%tauss
+          call albedo(&
+               param,&                                     ! parameters
+               noahmp401_struc(n)%noahmp401(t)%vegetype,&  ! VEGTYP: not used
+               ist,&                                       ! IST: surface type = land
+               ice,&                                       ! ICE: no ice
+               noahmp401_struc(n)%nsoil,&                  ! NSOIL
+               noahmp401_struc(n)%ts,&                     ! DT
+               noahmp401_struc(n)%noahmp401(t)%cosz,&      ! COSZ
+               fage,&                                      ! FAGE (dummy value)
+               elai,&                                      ! ELAI
+               esai,&                                      ! ESAI
+               noahmp401_struc(n)%noahmp401(t)%tg,&        ! TG
+               noahmp401_struc(n)%noahmp401(t)%tv,&        ! TV
+               noahmp401_struc(n)%noahmp401(t)%snowh,&     ! SNOWH
+               fsno,&                                      ! FSNO
+               noahmp401_struc(n)%noahmp401(t)%fwet,&      ! FWET
+               noahmp401_struc(n)%noahmp401(t)%smc,&       ! SMC
+               noahmp401_struc(n)%noahmp401(t)%sneqvo,&    ! SNEQVO
+               noahmp401_struc(n)%noahmp401(t)%sneqv,&     ! SNEQV
+               noahmp401_struc(n)%noahmp401(t)%qsnow,&     ! QSNOW
+               fveg,&                                      ! FVEG
+               iloc, jloc,&
+               albold, tauss,&                             ! inout
+               albgrd, albgri, albd, albi,fabd,fabi,&      ! out
+               ftdd,ftid,ftii,fsun,frevi,frevd,fregd,&     ! out
+               fregi,bgap,wgap&                            ! out
+               )
+
+          if (fpartype.eq.1) then
+              fpar(t) = fabd(1)  ! direct -> black sky
+          else if (fpartype.eq.2) then
+              fpar(t) = fabi(1)  ! diffuse -> white sky
+          else
+              ! total instantaneous FAPAR = PSAV / PAR
+              ! with
+              !  PSAV = CAD(1) + CAI(1)
+              !  CAD(1) = SOLAD(1) * FABD(1)
+              !  CAI(1) = SOLAI(1) * FABI(1)
+              !  PAR = SOLAD(1) + SOLAI(1)    i.e. total incoming visible radiation
+              !  SOLAD(1) = SWDOWN * 0.7 * 0.5
+              !  SOLAI(1) = SWDOWN * 0.3 * 0.5
+              ! therefore:
+              !  PAR = SWDOWN * 0.5
+              !  PSAV = SWDOWN * 0.5 * (0.7 * FABD(1) + 0.3 * FABI(1))
+              !  FAPAR = 0.7 * FABD(1) + 0.3 * FABI(1)
+              fpar(t) = 0.7 * fabd(1) + 0.3 * fabi(1)
+          endif
+       endif
     enddo
 
 contains
