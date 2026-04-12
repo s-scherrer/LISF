@@ -3123,6 +3123,8 @@ subroutine LIS_lsmda_plugin
    call register_noahmp401_faparda(LIS_CustomInstBsFAPARobsId, 3, .false.)
    call register_noahmp401_faparda(LIS_CustomInstWsFAPARobsId, 4, .false.)
    call register_noahmp401_faparda(LIS_CustomInstFAPARwMLAIupdOId, 2, .true.)
+   call register_noahmp401_faparda(LIS_CustomBsFAPARwMLAIupdOId, 3, .true.)
+   call register_noahmp401_faparda(LIS_CustomWsFAPARwMLAIupdOId, 4, .true.)
    call register_noahmp401_vodda(LIS_CustomVODobsId)
    call register_noahmp401_vodda_only_lai(LIS_CustomVODonlyLAIobsId)
    call register_noahmp401_vodda_only_sm(LIS_CustomVODonlySMobsId)

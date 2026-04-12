@@ -307,8 +307,12 @@ module LIS_pluginIndices
         "Custom InstFAPAR with MAXLAI update"
    character*50, public,  parameter :: LIS_CustomInstBsFAPARobsId      = &
         "Custom InstBlackSkyFAPAR"
+   character*50, public,  parameter :: LIS_CustomBsFAPARwMLAIupdOId      = &
+        "Custom InstBlackSkyFAPAR with MAXLAI update"
    character*50, public,  parameter :: LIS_CustomInstWsFAPARobsId      = &
         "Custom InstWhiteSkyFAPAR"
+   character*50, public,  parameter :: LIS_CustomWsFAPARwMLAIupdOId      = &
+        "Custom InstWhiteSkyFAPAR with MAXLAI update"
    character*50, public,  parameter :: LIS_CustomVODobsId      = &
         "Custom VOD"
    character*50, public,  parameter :: LIS_CustomVODonlySMobsId      = &

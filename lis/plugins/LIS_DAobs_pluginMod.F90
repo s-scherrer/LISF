@@ -1016,6 +1016,15 @@ subroutine LIS_DAobs_plugin
    call registerwritedaobs(trim(LIS_CustomInstBsFAPARobsId)//char(0),&
         write_CustomFAPAR)
 
+   call registerdaobsclass(trim(LIS_CustomBsFAPARwMLAIupdOId),"LSM")
+   call registerdaobssetup(trim(LIS_CustomBsFAPARwMLAIupdOId)//char(0),&
+        CustomInstBsFAPAR_setup)
+   call registerreaddaobs(trim(LIS_CustomBsFAPARwMLAIupdOId)//char(0),&
+        read_CustomFAPAR)
+   call registerwritedaobs(trim(LIS_CustomBsFAPARwMLAIupdOId)//char(0),&
+        write_CustomFAPAR)
+
+
    call registerdaobsclass(trim(LIS_CustomInstWsFAPARobsId),"LSM")
    call registerdaobssetup(trim(LIS_CustomInstWsFAPARobsId)//char(0),&
         CustomInstWsFAPAR_setup)
@@ -1023,6 +1032,15 @@ subroutine LIS_DAobs_plugin
         read_CustomFAPAR)
    call registerwritedaobs(trim(LIS_CustomInstWsFAPARobsId)//char(0),&
         write_CustomFAPAR)
+
+   call registerdaobsclass(trim(LIS_CustomWsFAPARwMLAIupdOId),"LSM")
+   call registerdaobssetup(trim(LIS_CustomWsFAPARwMLAIupdOId)//char(0),&
+        CustomInstWsFAPAR_setup)
+   call registerreaddaobs(trim(LIS_CustomWsFAPARwMLAIupdOId)//char(0),&
+        read_CustomFAPAR)
+   call registerwritedaobs(trim(LIS_CustomWsFAPARwMLAIupdOId)//char(0),&
+        write_CustomFAPAR)
+
 #endif
 
 #if ( defined DA_OBS_CUSTOM_SSM )
