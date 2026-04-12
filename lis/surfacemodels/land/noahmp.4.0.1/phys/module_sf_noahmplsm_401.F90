@@ -3278,7 +3278,7 @@ ENDIF   ! CROPTYPE == 0
            WGAP    = (1.0-BGAP) * EXP(-0.5*NEWVAI/COSZ)
            GAP     = MIN(1.0-FVEG, BGAP+WGAP)
 
-           !KOPEN   = 0.05
+           ! KOPEN   = 0.05
            ! Manual implementation of eq. (2) via a Kronrod15 quadrature
            KOPEN = KOPEN_INTEGRAL(DENFVEG, parameters%RC, BB)
            
@@ -9041,7 +9041,7 @@ END  SUBROUTINE SHALLOWWATERTABLE
      ! Parameter 0.2 comes from chosen threshold, which is also encoded
      ! in the starting values for MAXLAI
      ALEAFPT = LOG(1. - LOG(0.2)/(0.01*MAXLAI)) / MAXLAI
-     ALEAFPT = MIN(ALEAFPT*XLAI, 100)  ! to avoid overflow
+     ALEAFPT = MIN(ALEAFPT*XLAI, 100.0)   ! to avoid overflow
      LEAFPT = EXP(0.01*(1.-EXP(ALEAFPT))*XLAI)
 
      NONLEF = 1.0 - LEAFPT
