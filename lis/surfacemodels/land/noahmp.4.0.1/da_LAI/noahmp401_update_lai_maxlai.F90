@@ -103,10 +103,10 @@ subroutine noahmp401_update_lai_maxlai(n, LSM_State, LSM_Incr_State)
           LIS_surface(n,LIS_rc%lsm_index)%tile(t)%row)
 
      laitmp =  lai(t) + laiincr(t)
-     maxlaitmp = maxlai(t) + maxlaiincr(t)
 
-
-     if(laitmp.lt.laimin.or.laitmp.gt.laimax.or.maxlaitmp.lt.maxlaimin.or.maxlaitmp.gt.maxlaimax) then
+     ! maxlai will not be checked, instead, the update will be limited to be
+     ! above the minimum & below the maximum
+     if(laitmp.lt.laimin.or.laitmp.gt.laimax) then
         update_flag(gid) = .false.
         perc_violation(gid) = perc_violation(gid) +1
      endif
