@@ -176,8 +176,10 @@ subroutine noahmp401_update_lai_maxlai(n, LSM_State, LSM_Incr_State)
         else
            lai(t) = lai(t) + laiincr(t)
         endif
-        if(maxlaitmp.lt.maxlaimin.or.maxlaitmp.gt.maxlaimax) then
-           maxlai(t) = maxlaimean(gid)
+        if(maxlaitmp.lt.maxlaimin) then
+           maxlai(t) = maxlaimin
+        else if(maxlaitmp.gt.maxlaimax) then
+           maxlai(t) = maxlaimax
         else
            maxlai(t) = maxlai(t) + maxlaiincr(t)
         endif

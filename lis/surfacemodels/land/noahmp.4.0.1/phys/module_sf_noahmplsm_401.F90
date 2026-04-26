@@ -9041,8 +9041,10 @@ END  SUBROUTINE SHALLOWWATERTABLE
      ! Parameter 0.2 comes from chosen threshold, which is also encoded
      ! in the starting values for MAXLAI
      ALEAFPT = LOG(1. - LOG(0.2)/(0.01*MAXLAI)) / MAXLAI
-     ALEAFPT = MIN(ALEAFPT*XLAI, 100.0)   ! to avoid overflow
-     LEAFPT = EXP(0.01*(1.-EXP(ALEAFPT))*XLAI)
+     ALEAFPT = MIN(100.0, MAX(-100.0, ALEAFPT*XLAI))   ! to avoid overflow
+     ALEAFPT = 0.01*(1. - EXP(ALEAFPT))*XLAI
+     ALEAFPT = MIN(100.0, MAX(-100.0, ALEAFPT))
+     LEAFPT = EXP(ALEAFPT)
 
      NONLEF = 1.0 - LEAFPT
      STEMPT = XLAI/10.0*LEAFPT
