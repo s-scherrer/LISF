@@ -545,7 +545,9 @@ module NoahMP401_module
 
         ! for FAPAR DA
         real                      :: cosz
-        real                      :: maxlai
+        real                      :: maxlai  ! maxlai parameter
+        real                      :: maximum_annual_lai ! maximum LAI of the last year
+        real                      :: maximum_lai_nsamples ! number of samples
  
     end type noahmp401dec
 

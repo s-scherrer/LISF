@@ -841,6 +841,19 @@ subroutine NoahMP401_main(n)
             NOAHMP401_struc(n)%noahmp401(t)%pgs             = tmp_pgs
             NOAHMP401_struc(n)%noahmp401(t)%gecros_state(:) = tmp_gecros_state(:)
 
+            ! maximum annual LAI to reset maxlai parameter
+            if (tmp_hour.eq.0 .and. tmp_minute.eq.0) then
+                NOAHMP401_struc(n)%noahmp401(t)%maximum_lai_nsamples = NOAHMP401_struc(n)%noahmp401(t)%maximum_lai_nsamples + 1
+                NOAHMP401_struc(n)%noahmp401(t)%maximum_lai = MAX(tmp_lai, NOAHMP401_struc(n)%noahmp401(t)%maximum_lai)
+                if (tmp_month.eq.2 and tmp_day.eq.15 .and. NOAHMP401_struc(n)%noahmp401(t)%maximum_lai_nsamples > 150) then
+                    ! reset maxlai mid of February to the maximum LAI value
+                    ! during the year
+                    NOAHMP401_struc(n)%maxlai = NOAHMP401_struc(n)%noahmp401(t)%maximum_lai
+                    NOAHMP401_struc(n)%noahmp401(t)%maximum_lai_nsamples = 0
+                    NOAHMP401_struc(n)%noahmp401(t)%maximum_lai = 0.0
+                end if
+            end if
+
             ! save output variables from local variables to global variables
             NOAHMP401_struc(n)%noahmp401(t)%tsk       = tmp_tsk
             NOAHMP401_struc(n)%noahmp401(t)%hfx       = tmp_hfx
