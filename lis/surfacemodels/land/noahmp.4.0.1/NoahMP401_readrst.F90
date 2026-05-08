@@ -87,6 +87,7 @@ subroutine NoahMP401_readrst()
 !    fastcp                     - NoahMP401 short-lived carbon in shallow soil [g/m2]
 !    lai                        - NoahMP401 leaf area index [-]
 !    sai                        - NoahMP401 stem area index [-]
+!    max                        - NoahMP401 maximum leaf area index parameter [-]
 !    tauss                      - NoahMP401 snow age factor [-]
 !    smoiseq                    - NoahMP401 equilibrium volumetric soil moisture content [m3/m3]
 !    smcwtd                     - NoahMP401 soil moisture content in the layer to the water table when deep [-]
@@ -391,7 +392,9 @@ subroutine NoahMP401_readrst()
                                      varname="SAI", wformat=wformat)
 
             ! for now, use the default value at the start -> TODO: add to restart file and read from file
-            NOAHMP401_struc(n)%noahmp401%maxlai = -1.0
+            ! read: stem area index
+            call LIS_readvar_restart(ftn, n, LIS_rc%lsm_index, NOAHMP401_struc(n)%noahmp401%maxlai, &
+                                     varname="MAXLAI", wformat=wformat)
  
             ! read: snow age factor
             call LIS_readvar_restart(ftn, n, LIS_rc%lsm_index, NOAHMP401_struc(n)%noahmp401%tauss, &

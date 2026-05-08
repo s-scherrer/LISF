@@ -259,6 +259,7 @@ subroutine NoahMP401_dump_restart(n, ftn, wformat)
     integer :: fastcp_ID
     integer :: lai_ID
     integer :: sai_ID
+    integer :: maxlai_ID
     integer :: tauss_ID
     integer :: smoiseq_ID
     integer :: smcwtd_ID
@@ -495,6 +496,11 @@ subroutine NoahMP401_dump_restart(n, ftn, wformat)
       !TODO: replace -99999 and 99999 with correct values for valid_min and valid_max
       call LIS_writeHeader_restart(ftn, n, dimID, sai_ID, "SAI", &
                                    "stem area index", &
+                                   "-", vlevels=1, valid_min=-99999.0, valid_max=99999.0)
+      ! write the header for state variable maxlai
+      !TODO: replace -99999 and 99999 with correct values for valid_min and valid_max
+      call LIS_writeHeader_restart(ftn, n, dimID, maxlai_ID, "MAXLAI", &
+                                   "maximum leaf area index parameter", &
                                    "-", vlevels=1, valid_min=-99999.0, valid_max=99999.0)
       ! write the header for state variable tauss
       !TODO: replace -99999 and 99999 with correct values for valid_min and valid_max
@@ -740,6 +746,10 @@ subroutine NoahMP401_dump_restart(n, ftn, wformat)
     ! stem area index
     call LIS_writevar_restart(ftn, n, LIS_rc%lsm_index, NOAHMP401_struc(n)%noahmp401%sai, &
                               varid=sai_ID, dim=1, wformat=wformat)
+
+    ! maximum leaf area index
+    call LIS_writevar_restart(ftn, n, LIS_rc%lsm_index, NOAHMP401_struc(n)%noahmp401%maxlai, &
+                              varid=maxlai_ID, dim=1, wformat=wformat)
 
     ! snow age factor
     call LIS_writevar_restart(ftn, n, LIS_rc%lsm_index, NOAHMP401_struc(n)%noahmp401%tauss, &
