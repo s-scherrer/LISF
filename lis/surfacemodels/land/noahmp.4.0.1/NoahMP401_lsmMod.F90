@@ -210,6 +210,7 @@ module NoahMP401_lsmMod
         integer            :: pedo_opt
         integer            :: crop_opt
         integer            :: urban_opt
+        integer            :: reset_maxlai
         type(NoahMP401dec), pointer :: noahmp401(:)
     end type NoahMP401_type_dec
 

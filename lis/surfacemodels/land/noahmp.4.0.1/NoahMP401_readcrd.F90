@@ -547,6 +547,22 @@ subroutine NoahMP401_readcrd()
                  " not defined")
         enddo
 
+        ! optional maxlai reset
+        call ESMF_ConfigFindLabel(LIS_config, &
+             "Noah-MP.4.0.1 reset MAXLAI:", rc = rc)
+        if (rc.ne.0) then
+            do n=1,LIS_rc%nnest
+                call ESMF_ConfigGetAttribute(LIS_config, NOAHMP401_struc(n)%reset_maxlai, rc=rc)
+                call LIS_verify(rc, &
+                     "Noah-MP.4.0.1 reset MAXLAI:"//&
+                     " not defined")
+            enddo
+        else
+            do n=1,LIS_rc%nnest
+                NOAHMP401_struc(n)%reset_maxlai = 0
+            enddo
+        endif
+
         ! optional gecros crop
 
         !!! no need to initialize Gecros crop model state variables
@@ -563,6 +579,8 @@ subroutine NoahMP401_readcrd()
                    " not defined")
           enddo
         endif
+
+
     endif
      
     deallocate(nids)
