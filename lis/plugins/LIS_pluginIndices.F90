@@ -299,6 +299,8 @@ module LIS_pluginIndices
         "Custom LAI"
    character*50, public,  parameter :: LIS_CustomLAIsmobsId      = &
         "Custom LAI with soil moisture update"
+   character*50, public,  parameter :: LIS_CustomLAIwMLAIupdOId      = &
+        "Custom LAI with MAXLAI update"
    character*50, public,  parameter :: LIS_CustomDailyFAPARobsId      = &
         "Custom DailyFAPAR"
    character*50, public,  parameter :: LIS_CustomInstFAPARobsId      = &

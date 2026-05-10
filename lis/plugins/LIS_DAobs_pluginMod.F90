@@ -971,6 +971,14 @@ subroutine LIS_DAobs_plugin
         read_CustomLAI)
    call registerwritedaobs(trim(LIS_CustomLAIobsId)//char(0),&
         write_CustomLAI)
+
+   call registerdaobsclass(trim(LIS_CustomLAIwMLAIupdOId),"LSM")
+   call registerdaobssetup(trim(LIS_CustomLAIwMLAIupdOId)//char(0),&
+        CustomInstFAPAR_setup)
+   call registerreaddaobs(trim(LIS_CustomLAIwMLAIupdOId)//char(0),&
+        read_CustomFAPAR)
+   call registerwritedaobs(trim(LIS_CustomLAIwMLAIupdOId)//char(0),&
+        write_CustomFAPAR)
 #endif
 
 #if ( defined DA_OBS_CUSTOM_LAI_SM )

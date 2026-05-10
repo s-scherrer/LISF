@@ -3116,7 +3116,8 @@ subroutine LIS_lsmda_plugin
    call registerlsmdadescalestatevar(trim(LIS_noahmp401Id)//"+"//&
         trim(LIS_CGLSlaismobsId)//char(0),noahmp401_descale_laisoilm)
 
-   call register_noahmp401_laida(LIS_CustomLAIobsId)
+   call register_noahmp401_laida(LIS_CustomLAIobsId, .false.)
+   call register_noahmp401_laida(LIS_CustomInstFAPARwMLAIupdOId, .true.)
    call register_noahmp401_laismda(LIS_CustomLAIsmobsId)
    call register_noahmp401_faparda(LIS_CustomDailyFAPARobsId, 1, .false.)
    call register_noahmp401_faparda(LIS_CustomInstFAPARobsId, 2, .false.)
@@ -4390,18 +4391,30 @@ contains
              trim(obsId)//char(0),noahmp36_descale_veg)
     end subroutine register_noahmp36_laida
 
-    subroutine register_noahmp401_laida(obsId)
+    subroutine register_noahmp401_laida(obsId, maxlaiupdate)
         implicit none
         character*50, intent(in) :: obsId
+        logical, intent(in)      :: maxlaiupdate
 
        call registerlsmdainit(trim(LIS_noahmp401Id)//"+"//&
             trim(obsId)//char(0),noahmp401_daveg_init)
-       call registerlsmdagetstatevar(trim(LIS_noahmp401Id)//"+"//&
-            trim(obsId)//char(0),noahmp401_getvegvars)
-       call registerlsmdasetstatevar(trim(LIS_noahmp401Id)//"+"//&
-            trim(obsId)//char(0),noahmp401_setvegvars)
-       call registerlsmdaupdatestate(trim(LIS_noahmp401Id)//"+"//&
-            trim(obsId)//char(0),noahmp401_updatevegvars)
+
+        if (maxlaiupdate) then
+            call registerlsmdagetstatevar(trim(LIS_noahmp401Id)//"+"//&
+                trim(obsId)//char(0),noahmp401_get_lai_maxlai)
+            call registerlsmdasetstatevar(trim(LIS_noahmp401Id)//"+"//&
+                trim(obsId)//char(0),noahmp401_set_lai_maxlai)
+            call registerlsmdaupdatestate(trim(LIS_noahmp401Id)//"+"//&
+                trim(obsId)//char(0),noahmp401_update_lai_maxlai)
+        else
+            call registerlsmdagetstatevar(trim(LIS_noahmp401Id)//"+"//&
+                trim(obsId)//char(0),noahmp401_getvegvars)
+            call registerlsmdasetstatevar(trim(LIS_noahmp401Id)//"+"//&
+                trim(obsId)//char(0),noahmp401_setvegvars)
+            call registerlsmdaupdatestate(trim(LIS_noahmp401Id)//"+"//&
+                trim(obsId)//char(0),noahmp401_updatevegvars)
+        endif
+
        call registerlsmdaqcstate(trim(LIS_noahmp401Id)//"+"//&
             trim(obsId)//char(0),noahmp401_qcveg)
        call registerlsmdascalestatevar(trim(LIS_noahmp401Id)//"+"//&
