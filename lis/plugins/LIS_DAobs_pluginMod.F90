@@ -284,7 +284,7 @@ subroutine LIS_DAobs_plugin
 #endif
 #if ( defined DA_OBS_CUSTOM_FAPAR )
     use CustomFAPAR_Mod,       only :&
-         CustomDailyFAPAR_setup, CustomInstFAPAR_setup, &
+         CustomInstFAPAR_setup, &
          CustomInstBsFAPAR_setup, CustomInstWsFAPAR_setup, &
          read_CustomFAPAR, write_CustomFAPAR
 #endif
@@ -992,14 +992,6 @@ subroutine LIS_DAobs_plugin
 #endif
 
 #if ( defined DA_OBS_CUSTOM_FAPAR )
-   call registerdaobsclass(trim(LIS_CustomDailyFAPARobsId),"LSM")
-   call registerdaobssetup(trim(LIS_CustomDailyFAPARobsId)//char(0),&
-        CustomDailyFAPAR_setup)
-   call registerreaddaobs(trim(LIS_CustomDailyFAPARobsId)//char(0),&
-        read_CustomFAPAR)
-   call registerwritedaobs(trim(LIS_CustomDailyFAPARobsId)//char(0),&
-        write_CustomFAPAR)
-
    call registerdaobsclass(trim(LIS_CustomInstFAPARobsId),"LSM")
    call registerdaobssetup(trim(LIS_CustomInstFAPARobsId)//char(0),&
         CustomInstFAPAR_setup)

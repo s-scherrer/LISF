@@ -205,11 +205,9 @@ subroutine NoahMP401_main(n)
     real                 :: tmp_fira               ! total net longwave radiation [+ to atm] [W/m2]
     real                 :: tmp_apar               ! photosyn active energy absorbed by canopy [W/m2]
     real                 :: tmp_par                ! total photosyn active energy [W/m2]
-    real                 :: tmp_daily_par          ! total photosyn active energy [W/m2]
     real                 :: tmp_psn                ! total photosynthesis [+] [umol co2/m2/s]
     real                 :: tmp_sav                ! solar radiation absorbed by vegetation [W/m2]
     real                 :: tmp_psav               ! photosyn. active solar radiation absorbed by vegetation [W/m2]
-    real                 :: tmp_daily_psav         ! photosyn. active solar radiation absorbed by vegetation [W/m2]
     real                 :: tmp_bsfpar             ! 
     real                 :: tmp_wsfpar             ! 
     real                 :: tmp_sag                ! solar radiation absorbed by ground [W/m2]
@@ -938,9 +936,6 @@ subroutine NoahMP401_main(n)
             endif
 
 
-            ! save PAR, PSAV, FAPAR for daily mean FAPAR
-            call noahmp401_struc(n)%noahmp401(t)%daily_par_avg%add_value(tmp_par)
-            call noahmp401_struc(n)%noahmp401(t)%daily_psav_avg%add_value(tmp_psav)
             ! instantaneous FAPAR
             if (tmp_par .gt. 0) then
                 tmp_fapar = tmp_psav / tmp_par
@@ -948,23 +943,6 @@ subroutine NoahMP401_main(n)
                 tmp_fapar = 0.
             endif
             NOAHMP401_struc(n)%noahmp401(t)%fapar = tmp_fapar
-            ! daily average FAPAR
-            tmp_daily_par = noahmp401_struc(n)%noahmp401(t)%daily_par_avg%get()
-            tmp_daily_psav = noahmp401_struc(n)%noahmp401(t)%daily_psav_avg%get()
-            if (tmp_daily_par .lt. 0.0) then
-               write(LIS_logunit, *) "[ERR] daily_par_avg < 0.0"
-               write(LIS_logunit, *) "[ERR] daily_par_avg = ", tmp_daily_par
-               call noahmp401_struc(n)%noahmp401(t)%daily_par_avg%print_state()
-               call noahmp401_struc(n)%noahmp401(t)%daily_par_avg%reinit()
-            endif
-            if (tmp_daily_psav .lt. 0.0) then
-               write(LIS_logunit, *) "[ERR] daily_psav_avg < 0.0"
-               write(LIS_logunit, *) "[ERR] daily_psav_avg = ", tmp_daily_psav
-               call noahmp401_struc(n)%noahmp401(t)%daily_psav_avg%print_state()
-               call noahmp401_struc(n)%noahmp401(t)%daily_psav_avg%reinit()
-            endif
-            tmp_fapar = tmp_daily_psav / (tmp_daily_par + 1e-8)  ! addition of a small value to avoid divide by zero
-            NOAHMP401_struc(n)%noahmp401(t)%daily_fapar = tmp_fapar
             NOAHMP401_struc(n)%noahmp401(t)%bsfpar = tmp_bsfpar
             NOAHMP401_struc(n)%noahmp401(t)%wsfpar = tmp_wsfpar
 
@@ -1275,10 +1253,6 @@ subroutine NoahMP401_main(n)
             call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_FAPAR, value = NOAHMP401_struc(n)%noahmp401(t)%fapar, &
                                               vlevel=1, unit="-", direction="-", surface_type = LIS_rc%lsm_index)
 
-            ![ 62] output variable: daily fapar (unit=-). ***  daily mean fration of absorbed photosynthesically active energy
-            call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_DAILY_FAPAR, value = NOAHMP401_struc(n)%noahmp401(t)%daily_fapar, &
-                                              vlevel=1, unit="-", direction="-", surface_type = LIS_rc%lsm_index)
-
             ![ 62] output variable: inst direct fapar (unit=-). *** instantaneous fraction of direct absorbed photosynthesically active energy
             call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_BSFPAR, value = NOAHMP401_struc(n)%noahmp401(t)%bsfpar, &
                                               vlevel=1, unit="-", direction="-", surface_type = LIS_rc%lsm_index)
@@ -1286,14 +1260,6 @@ subroutine NoahMP401_main(n)
             ![ 62] output variable: inst direct fapar (unit=-). *** instantaneous fraction of diffuse absorbed photosynthesically active energy
             call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_WSFPAR, value = NOAHMP401_struc(n)%noahmp401(t)%wsfpar, &
                                               vlevel=1, unit="-", direction="-", surface_type = LIS_rc%lsm_index)
-
-            !![ 62] output variable: psav (unit=W/m2 ). ***  photosynthetically active solar radiation absorbed by vegetation
-            call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_DAILY_PSAV, value = tmp_daily_psav, &
-                                              vlevel=1, unit="W m-2", direction="IN", surface_type = LIS_rc%lsm_index)
-
-            !![ 62] output variable: par (unit=W/m2 ). ***  photosynthetically active solar radiation absorbed by vegetation
-            call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_DAILY_PAR, value = tmp_daily_par, &
-                                              vlevel=1, unit="W m-2", direction="IN", surface_type = LIS_rc%lsm_index)
 
             !![ 62] output variable: psav (unit=W/m2 ). ***  photosynthetically active solar radiation absorbed by vegetation
             call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_PSAV, value = tmp_psav, &

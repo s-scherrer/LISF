@@ -524,7 +524,7 @@ subroutine LIS_lsmda_plugin
    external NoahMP401_updatelaisoilm
    
    ! NOAHMP4.0.1 FAPAR DA
-   external NoahMP401_getdailyfaparpred
+   external NoahMP401_getfaparpred
    external NoahMP401_getinstfaparpred
    external NoahMP401_getinstbsfaparpred
    external NoahMP401_getinstwsfaparpred
@@ -3119,13 +3119,12 @@ subroutine LIS_lsmda_plugin
    call register_noahmp401_laida(LIS_CustomLAIobsId, .false.)
    call register_noahmp401_laida(LIS_CustomInstFAPARwMLAIupdOId, .true.)
    call register_noahmp401_laismda(LIS_CustomLAIsmobsId)
-   call register_noahmp401_faparda(LIS_CustomDailyFAPARobsId, 1, .false.)
-   call register_noahmp401_faparda(LIS_CustomInstFAPARobsId, 2, .false.)
-   call register_noahmp401_faparda(LIS_CustomInstBsFAPARobsId, 3, .false.)
-   call register_noahmp401_faparda(LIS_CustomInstWsFAPARobsId, 4, .false.)
-   call register_noahmp401_faparda(LIS_CustomInstFAPARwMLAIupdOId, 2, .true.)
-   call register_noahmp401_faparda(LIS_CustomBsFAPARwMLAIupdOId, 3, .true.)
-   call register_noahmp401_faparda(LIS_CustomWsFAPARwMLAIupdOId, 4, .true.)
+   call register_noahmp401_faparda(LIS_CustomInstFAPARobsId, 1, .false.)
+   call register_noahmp401_faparda(LIS_CustomInstBsFAPARobsId, 2, .false.)
+   call register_noahmp401_faparda(LIS_CustomInstWsFAPARobsId, 3, .false.)
+   call register_noahmp401_faparda(LIS_CustomInstFAPARwMLAIupdOId, 1, .true.)
+   call register_noahmp401_faparda(LIS_CustomBsFAPARwMLAIupdOId, 2, .true.)
+   call register_noahmp401_faparda(LIS_CustomWsFAPARwMLAIupdOId, 3, .true.)
    call register_noahmp401_vodda(LIS_CustomVODobsId)
    call register_noahmp401_vodda_only_lai(LIS_CustomVODonlyLAIobsId)
    call register_noahmp401_vodda_only_sm(LIS_CustomVODonlySMobsId)
@@ -4461,7 +4460,7 @@ contains
         ! are different.
         implicit none
         character*50, intent(in) :: obsId
-        ! 1 = daily, 2 = total, 3 = black-sky, 4 = white-sky
+        ! 1 = total, 2 = black-sky, 3 = white-sky
         integer, intent(in)      :: type
         logical, intent(in)      :: maxlaiupdate
 
@@ -4493,14 +4492,11 @@ contains
         ! observation related
         if (type.eq.1) then
             call registerlsmdagetobspred(trim(LIS_noahmp401Id)//"+"//&
-                trim(obsId)//char(0),noahmp401_getdailyfaparpred)
+                trim(obsId)//char(0),noahmp401_getinstfaparpred)
         else if (type.eq.2) then
             call registerlsmdagetobspred(trim(LIS_noahmp401Id)//"+"//&
-                trim(obsId)//char(0),noahmp401_getinstfaparpred)
-        else if (type.eq.3) then
-            call registerlsmdagetobspred(trim(LIS_noahmp401Id)//"+"//&
                 trim(obsId)//char(0),noahmp401_getinstbsfaparpred)
-        else if (type.eq.4) then
+        else if (type.eq.3) then
             call registerlsmdagetobspred(trim(LIS_noahmp401Id)//"+"//&
                 trim(obsId)//char(0),noahmp401_getinstwsfaparpred)
         endif

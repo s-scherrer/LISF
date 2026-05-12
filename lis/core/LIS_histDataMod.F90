@@ -403,9 +403,6 @@ module LIS_histDataMod
   public ::   LIS_MOC_FAPAR
   public ::   LIS_MOC_BSFPAR
   public ::   LIS_MOC_WSFPAR
-  public ::   LIS_MOC_DAILY_FAPAR  ! due to nonlinearity, daily FAPAR cannot be calculated by averaging FAPAR
-  public ::   LIS_MOC_DAILY_PAR
-  public ::   LIS_MOC_DAILY_PSAV
   public ::   LIS_MOC_PAR
   public ::   LIS_MOC_PSAV
   public ::   LIS_MOC_PSCO2   
@@ -944,9 +941,6 @@ module LIS_histDataMod
     integer ::  LIS_MOC_FAPAR   = -9999
     integer ::  LIS_MOC_BSFPAR   = -9999
     integer ::  LIS_MOC_WSFPAR   = -9999
-    integer ::  LIS_MOC_DAILY_FAPAR   = -9999
-    integer ::  LIS_MOC_DAILY_PSAV   = -9999
-    integer ::  LIS_MOC_DAILY_PAR   = -9999
     integer ::  LIS_MOC_PSAV   = -9999
     integer ::  LIS_MOC_PAR   = -9999
     integer ::  LIS_MOC_PSCO2   = -9999
@@ -4975,44 +4969,6 @@ contains
         call register_dataEntry(LIS_MOC_LSM_COUNT, LIS_MOC_WSFPAR, &
             LIS_histData(n)%head_lsm_list,&
             n, 1, ntiles,(/"-"/), 1, (/"-"/),1,1,1,&
-            model_patch=.true.)
-    endif
-
-    Call ESMF_ConfigFindLabel(modelSpecConfig, "DailyFAPAR:", rc = rc)
-    Call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
-         "DailyFAPAR", &
-         "daily mean fraction_of_absorbed_photosynthesis_active_energy_by_canopy",   &
-         "daily mean fraction of absorbed photosynthesis active radiation energy by canopy",rc)
-    if ( rc == 1 ) then
-        call register_dataEntry(LIS_MOC_LSM_COUNT, LIS_MOC_DAILY_FAPAR, &
-            LIS_histData(n)%head_lsm_list,&
-            n, 1, ntiles,(/"-"/), 1, (/"-"/),1,1,1,&
-            model_patch=.true.)
-    endif
-
-
-    Call ESMF_ConfigFindLabel(modelSpecConfig, "DailyPSAV:", rc = rc)
-    Call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
-         "DailyPSAV", &
-         "daily_photosynthetically_active_solar_radiation_absorbed_by_vegetation",   &
-         "daily mean photosynthetically active solar radiation absorbed by vegetation",rc)
-    if ( rc == 1 ) then
-        call register_dataEntry(LIS_MOC_LSM_COUNT, LIS_MOC_DAILY_PSAV, &
-            LIS_histData(n)%head_lsm_list,&
-            n, 1, ntiles,(/"W/m2"/), 2, (/"IN ", "OUT"/),1,1,1,&
-            model_patch=.true.)
-    endif
-
-
-    Call ESMF_ConfigFindLabel(modelSpecConfig, "DailyPAR:", rc = rc)
-    Call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
-         "DailyPAR", &
-         "daily_photosynthetically_active_solar_radiation",   &
-         "daily mean photosynthetically active solar radiation",rc)
-    if ( rc == 1 ) then
-        call register_dataEntry(LIS_MOC_LSM_COUNT, LIS_MOC_DAILY_PAR, &
-            LIS_histData(n)%head_lsm_list,&
-            n, 1, ntiles,(/"W/m2"/), 2, (/"IN ", "OUT"/),1,1,1,&
             model_patch=.true.)
     endif
 

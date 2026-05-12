@@ -538,11 +538,6 @@ module NoahMP401_module
         real, pointer      :: wtrflx(:)
 #endif
 
-        ! For daily FAPAR output
-        real                      :: daily_fapar ! daily average of fapar
-        type(LIS_TemporalAverage) :: daily_par_avg
-        type(LIS_TemporalAverage) :: daily_psav_avg
-
         ! for FAPAR DA
         real                      :: cosz
         real                      :: maxlai  ! maxlai parameter

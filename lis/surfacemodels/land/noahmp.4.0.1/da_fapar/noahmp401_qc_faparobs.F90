@@ -93,7 +93,7 @@ subroutine noahmp401_qc_faparobs(n,k,OBS_State)
       c = LIS_surface(n,LIS_rc%lsm_index)%tile(t)%col
       r = LIS_surface(n,LIS_rc%lsm_index)%tile(t)%row
       gid = c+(r-1)*LIS_rc%lnc(n)
-      val = noahmp401_struc(n)%noahmp401(t)%daily_fapar
+      val = noahmp401_struc(n)%noahmp401(t)%fapar
       if (val .ne. LIS_rc%udef) then
           ! calculating mean and variance using Welford's online algorithm
           mu_old = forecast_gridspace(gid)
