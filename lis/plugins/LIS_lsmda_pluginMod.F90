@@ -3117,7 +3117,7 @@ subroutine LIS_lsmda_plugin
         trim(LIS_CGLSlaismobsId)//char(0),noahmp401_descale_laisoilm)
 
    call register_noahmp401_laida(LIS_CustomLAIobsId, .false.)
-   call register_noahmp401_laida(LIS_CustomInstFAPARwMLAIupdOId, .true.)
+   call register_noahmp401_laida(LIS_CustomLAIwMLAIupdOId, .true.)
    call register_noahmp401_laismda(LIS_CustomLAIsmobsId)
    call register_noahmp401_faparda(LIS_CustomInstFAPARobsId, 1, .false.)
    call register_noahmp401_faparda(LIS_CustomInstBsFAPARobsId, 2, .false.)
