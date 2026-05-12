@@ -304,14 +304,6 @@ contains
 #endif
             enddo ! end of tile (t) loop
 
-            ! SG: initialise temporal average for FAPAR
-            do t=1, LIS_rc%npatch(n, LIS_rc%lsm_index)
-                call NOAHMP401_struc(n)%noahmp401(t)%daily_par_avg%init(&
-                     NOAHMP401_struc(n)%ts, 86400.0)
-                call NOAHMP401_struc(n)%noahmp401(t)%daily_psav_avg%init(&
-                     NOAHMP401_struc(n)%ts, 86400.0)
-            enddo ! end of tile (t) loop
-
             !------------------------------------------------------------------------
             ! Model timestep Alarm
             !------------------------------------------------------------------------
