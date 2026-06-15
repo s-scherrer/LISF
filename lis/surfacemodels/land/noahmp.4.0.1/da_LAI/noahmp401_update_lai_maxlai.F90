@@ -151,6 +151,11 @@ subroutine noahmp401_update_lai_maxlai(n, LSM_State, LSM_Incr_State)
      endif
      if(nmaxlaimean(gid).gt.0) then
         maxlaimean(gid) = maxlaimean(gid)/nmaxlaimean(gid)
+        if (maxlaimean(gid).lt.maxlaimin) then
+           maxlaimean(gid) = maxlaimin
+        else if (maxlaimean(gid).gt.maxlaimax) then
+           maxlaimean(gid) = maxlaimax
+        endif
      endif
   enddo
 
@@ -161,7 +166,6 @@ subroutine noahmp401_update_lai_maxlai(n, LSM_State, LSM_Incr_State)
           LIS_surface(n,LIS_rc%lsm_index)%tile(t)%row)
 
      laitmp =  lai(t) + laiincr(t)
-     maxlaitmp =  maxlai(t) + maxlaiincr(t)
 
 ! If the update is unphysical, simply set to the average of
 ! the good ensemble members. If all else fails, do not
@@ -169,20 +173,20 @@ subroutine noahmp401_update_lai_maxlai(n, LSM_State, LSM_Incr_State)
 
      if(update_flag(gid)) then
         lai(t) = laitmp
-        maxlai(t) = maxlaitmp
      elseif(perc_violation(gid).lt.0.8) then
         if(laitmp.lt.laimin.or.laitmp.gt.laimax) then
            lai(t) = laimean(gid)
         else
            lai(t) = lai(t) + laiincr(t)
         endif
-        if(maxlaitmp.lt.maxlaimin) then
-           maxlai(t) = maxlaimin
-        else if(maxlaitmp.gt.maxlaimax) then
-           maxlai(t) = maxlaimax
-        else
-           maxlai(t) = maxlai(t) + maxlaiincr(t)
-        endif
+     endif
+
+! update MAXLAI
+     maxlaitmp =  maxlai(t) + maxlaiincr(t)
+     if (maxlaitmp.lt.maxlaimin.or.maxlaitmp.gt.maxlaimax) then
+         maxlai(t) = maxlaimean(gid)
+     else
+         maxlai(t) = maxlaitmp
      endif
   enddo
 
